@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
-import 'signup_screen.dart'; // Import SignUpScreen
 
-class SignInScreen extends StatelessWidget {
-  const SignInScreen({super.key});
+class SignUpScreen extends StatelessWidget {
+  const SignUpScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5), // Light gray background
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        title: const Text('Sign Up'),
+        backgroundColor: Colors.blue,
+      ),
       body: Center(
         child: Card(
           elevation: 5,
@@ -21,10 +24,20 @@ class SignInScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Sign In',
+                  'Create an Account',
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
+                TextFormField(
+                  decoration: InputDecoration(
+                    labelText: 'Full Name',
+                    prefixIcon: const Icon(Icons.person),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
                 TextFormField(
                   decoration: InputDecoration(
                     labelText: 'Email',
@@ -57,22 +70,16 @@ class SignInScreen extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      // Handle sign-in logic
+                      // Handle sign-up logic
                     },
-                    child: const Text('Sign In'),
+                    child: const Text('Sign Up'),
                   ),
                 ),
                 TextButton(
                   onPressed: () {
-                    // Navigate to SignUpScreen
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SignUpScreen(),
-                      ),
-                    );
+                    Navigator.pop(context); // Go back to Sign-In Screen
                   },
-                  child: const Text('Create a new account'),
+                  child: const Text('Already have an account? Sign In'),
                 ),
               ],
             ),
