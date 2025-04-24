@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/signin_control.dart'; // Make sure this path is correct
-import 'signup_screen.dart';
+import 'user_type.dart';
 
 class SignInScreen extends StatelessWidget {
   SignInScreen({super.key});
@@ -91,7 +91,7 @@ class SignInScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const SignUpScreen(),
+                        builder: (context) => const UserTypeSelectionScreen(),
                       ),
                     );
                   },

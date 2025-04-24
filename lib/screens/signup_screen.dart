@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class SignUpScreen extends StatelessWidget {
-  const SignUpScreen({super.key});
+  final String userType;
+
+  const SignUpScreen({super.key, required this.userType});
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +25,12 @@ class SignUpScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Create an Account',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                Text(
+                  'Create a $userType Account',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
@@ -58,6 +63,44 @@ class SignUpScreen extends StatelessWidget {
                   ),
                   obscureText: true,
                 ),
+                const SizedBox(height: 15),
+                // If the user is a company, ask for the company name
+                if (userType == 'Company')
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Company Name',
+                      prefixIcon: const Icon(Icons.business),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                // If the user is an office, ask for the office name and capacity
+                if (userType == 'Office')
+                  Column(
+                    children: [
+                      TextFormField(
+                        decoration: InputDecoration(
+                          labelText: 'Office Name',
+                          prefixIcon: const Icon(Icons.apartment),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        decoration: InputDecoration(
+                          labelText: 'Office Capacity',
+                          prefixIcon: const Icon(Icons.group),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ],
+                  ),
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
@@ -70,7 +113,7 @@ class SignUpScreen extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      // Handle sign-up logic
+                      // Handle sign-up logic (validate input and call the API)
                     },
                     child: const Text('Sign Up'),
                   ),
