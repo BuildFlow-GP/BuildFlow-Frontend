@@ -32,7 +32,9 @@ dependencies:
     sdk: flutter
   get: ^4.6.6
   http: ^0.13.6
-  flutter_secure_storage: ^5.0.2 # Add this line
+  flutter_secure_storage: ^5.0.2 
+  logger: ^2.0.2  
+
 
 
 

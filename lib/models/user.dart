@@ -17,7 +17,7 @@ class User {
     required this.profileImageUrl,
   });
 
-  // Method to convert the response data into a User object
+  // Factory constructor to create a User instance from JSON
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       name: json['name'] ?? 'No Name',
@@ -27,8 +27,7 @@ class User {
       bankAccount: json['bank_account'] ?? 'No Bank Account',
       location: json['location'] ?? 'No Location',
       profileImageUrl:
-          json['profile_image_url'] ??
-          'https://via.placeholder.com/150', // default image URL
+          json['profile_image_url'] ?? 'https://via.placeholder.com/150',
     );
   }
 }

@@ -3,9 +3,11 @@ import '../models/user.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:logger/logger.dart';
 
 // Replace this with your actual API base URL
 const String apiUrl = 'http://localhost:5000/api/profile';
+final Logger logger = Logger();
 
 // Function to fetch user data
 Future<User?> fetchUserProfile() async {
@@ -33,7 +35,7 @@ Future<User?> fetchUserProfile() async {
       throw Exception('Failed to load profile');
     }
   } catch (e) {
-    print('Error fetching profile: $e');
+    logger.e('Error fetching profile: $e');
     return null;
   }
 }
