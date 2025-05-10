@@ -16,4 +16,18 @@ class User {
     required this.location,
     required this.profileImageUrl,
   });
+
+  // Factory constructor to create a User instance from JSON
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      name: json['name'] ?? 'No Name',
+      email: json['email'] ?? 'No Email',
+      phone: json['phone'] ?? 'No Phone',
+      idNumber: json['id_number'] ?? 'No ID Number',
+      bankAccount: json['bank_account'] ?? 'No Bank Account',
+      location: json['location'] ?? 'No Location',
+      profileImageUrl:
+          json['profile_image_url'] ?? 'https://via.placeholder.com/150',
+    );
+  }
 }
