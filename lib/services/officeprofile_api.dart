@@ -1,12 +1,17 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../models/office.dart';
 
 class ApiService {
   static const String baseUrl = 'http://localhost:5000/api';
+  static final _storage = FlutterSecureStorage();
 
-  static Future<Office?> fetchOfficeProfile(String token) async {
+  static Future<Office?> fetchOfficeProfile() async {
+    final token = await _storage.read(key: 'jwt_token');
+    if (token == null) return null;
+
     final response = await http.get(
       Uri.parse('$baseUrl/profile'),
       headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
@@ -16,7 +21,6 @@ class ApiService {
       final data = json.decode(response.body);
       return Office.fromJson(data['user']);
     } else {
-      // Handle error
       return null;
     }
   }
@@ -25,10 +29,12 @@ class ApiService {
     Office office,
     File? imageFile,
   ) async {
+    final token = await _storage.read(key: 'jwt_token');
+    if (token == null) return false;
+
     final uri = Uri.parse('$baseUrl/profile');
-    var request = http.MultipartRequest('PUT', uri);
-    request.headers[HttpHeaders.authorizationHeader] =
-        'Bearer your_jwt_token_here';
+    final request = http.MultipartRequest('PUT', uri);
+    request.headers[HttpHeaders.authorizationHeader] = 'Bearer $token';
 
     request.fields['name'] = office.name;
     request.fields['email'] = office.email;
@@ -42,13 +48,17 @@ class ApiService {
     }
 
     final response = await request.send();
+    return response.statusCode == 200;
+  }
+
+  static Future<List<Office>> fetchSuggestedOffices() async {
+    final response = await http.get(Uri.parse('$baseUrl/offices/suggestions'));
 
     if (response.statusCode == 200) {
-      // Successfully updated
-      return true;
+      final List data = json.decode(response.body);
+      return data.map((e) => Office.fromJson(e)).toList();
     } else {
-      // Handle error
-      return false;
+      throw Exception('Failed to load suggested offices');
     }
   }
 }

@@ -3,14 +3,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/office.dart';
-import '../services/api_service.dart';
+import '../services/officeprofile_api.dart';
 
 class OfficeProfilePage extends StatefulWidget {
   final Office office;
 
-  const OfficeProfilePage({Key? key, required this.office}) : super(key: key);
+  const OfficeProfilePage({super.key, required this.office});
 
   @override
+  // ignore: library_private_types_in_public_api
   _OfficeProfilePageState createState() => _OfficeProfilePageState();
 }
 
