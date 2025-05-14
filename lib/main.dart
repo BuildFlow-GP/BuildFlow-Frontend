@@ -1,6 +1,20 @@
 import 'package:flutter/material.dart';
-import 'app.dart'; // Import the actual app configuration
+//import 'app.dart'; // Import the actual app configuration
+import 'screens/user_profile.dart'; // Import the user profile screen
 
 void main() {
   runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Sign In',
+      home: UserProfilePage(),
+    );
+  }
 }
