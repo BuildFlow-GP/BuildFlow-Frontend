@@ -1,25 +1,75 @@
+// models/office.dart
 class Office {
-  final String name;
-  final String location;
-  final int capacity;
-  final double rating;
-  final int points;
-  final String bankAccount;
-  final int staffCount;
-  final int activeProjects;
-  final String branches;
-  final String profileImageUrl;
+  final int id;
+  String name;
+  String email;
+  String phone;
+  String location;
+  int? capacity;
+  double? rating;
+  bool isAvailable;
+  int points;
+  String? bankAccount;
+  int? staffCount;
+  int activeProjectsCount;
+  String? branches;
+  String? profileImage;
+  DateTime createdAt;
 
   Office({
+    required this.id,
     required this.name,
+    required this.email,
+    required this.phone,
     required this.location,
-    required this.capacity,
-    required this.rating,
+    this.capacity,
+    this.rating,
+    required this.isAvailable,
     required this.points,
-    required this.bankAccount,
-    required this.staffCount,
-    required this.activeProjects,
-    required this.branches,
-    required this.profileImageUrl,
+    this.bankAccount,
+    this.staffCount,
+    required this.activeProjectsCount,
+    this.branches,
+    this.profileImage,
+    required this.createdAt,
   });
+
+  factory Office.fromJson(Map<String, dynamic> json) {
+    return Office(
+      id: json['id'],
+      name: json['name'],
+      email: json['email'],
+      phone: json['phone'] ?? '',
+      location: json['location'],
+      capacity: json['capacity'],
+      rating: (json['rating'] as num?)?.toDouble(),
+      isAvailable: json['is_available'] ?? true,
+      points: json['points'] ?? 0,
+      bankAccount: json['bank_account'],
+      staffCount: json['staff_count'],
+      activeProjectsCount: json['active_projects_count'] ?? 0,
+      branches: json['branches'],
+      profileImage: json['profile_image'],
+      createdAt: DateTime.parse(json['created_at']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'location': location,
+      'capacity': capacity,
+      'rating': rating,
+      'is_available': isAvailable,
+      'points': points,
+      'bank_account': bankAccount,
+      'staff_count': staffCount,
+      'active_projects_count': activeProjectsCount,
+      'branches': branches,
+      'profile_image': profileImage,
+      'created_at': createdAt.toIso8601String(),
+    };
+  }
 }
