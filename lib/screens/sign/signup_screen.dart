@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'signin_screen.dart';
+
 class SignUpScreen extends StatelessWidget {
   final String userType;
 
@@ -120,7 +122,13 @@ class SignUpScreen extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context); // Go back to Sign-In Screen
+                    // Navigator.pop(context); // Go back to Sign-In Screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SignInScreen(),
+                      ),
+                    );
                   },
                   child: const Text('Already have an account? Sign In'),
                 ),
