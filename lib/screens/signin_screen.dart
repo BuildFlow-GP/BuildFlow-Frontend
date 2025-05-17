@@ -11,7 +11,7 @@ class SignInScreen extends StatelessWidget {
   final TextEditingController passwordController = TextEditingController();
 
   // Login controller from GetX
-  final LoginController loginController = Get.put(LoginController());
+  // final LoginController loginController = Get.put(LoginController());
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +80,7 @@ class SignInScreen extends StatelessWidget {
                         return;
                       }
 
-                      await loginController.login(email, password);
+                      //  await loginController.login(email, password);
                       // You can check login success and navigate accordingly
                     },
                     child: const Text('Sign In'),
