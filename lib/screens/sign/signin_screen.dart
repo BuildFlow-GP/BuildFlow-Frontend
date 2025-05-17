@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/signin_control.dart';
+import '../../controllers/signin_control.dart';
 import 'user_type.dart';
 
 class SignInScreen extends StatefulWidget {

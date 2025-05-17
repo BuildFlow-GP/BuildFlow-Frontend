@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/signin_screen.dart';
+import 'screens/sign/signin_screen.dart';
 import 'package:get/get.dart';
 
 void main() {
