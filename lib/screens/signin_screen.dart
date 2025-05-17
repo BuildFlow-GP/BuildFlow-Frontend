@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/signin_control.dart'; // Make sure this path is correct
+import '../controllers/signin_control.dart';
 import 'user_type.dart';
 
 class SignInScreen extends StatelessWidget {
   SignInScreen({super.key});
 
-  // Text editing controllers
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
-  // Login controller from GetX
-  // final LoginController loginController = Get.put(LoginController());
+  final LoginController loginController = Get.put(LoginController());
 
   @override
   Widget build(BuildContext context) {
@@ -57,34 +54,28 @@ class SignInScreen extends StatelessWidget {
                   obscureText: true,
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    onPressed: () async {
-                      final email = emailController.text.trim();
-                      final password = passwordController.text.trim();
-
-                      // Optional: Validate input before submitting
-                      if (email.isEmpty || password.isEmpty) {
-                        Get.snackbar(
-                          'Error',
-                          'Please enter email and password',
-                        );
-                        return;
-                      }
-
-                      //  await loginController.login(email, password);
-                      // You can check login success and navigate accordingly
-                    },
-                    child: const Text('Sign In'),
-                  ),
+                Obx(
+                  () =>
+                      loginController.isLoading.value
+                          ? const CircularProgressIndicator()
+                          : SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                final email = emailController.text.trim();
+                                final password = passwordController.text.trim();
+                                if (email.isEmpty || password.isEmpty) {
+                                  Get.snackbar(
+                                    'Error',
+                                    'Please enter all fields',
+                                  );
+                                } else {
+                                  loginController.login(email, password);
+                                }
+                              },
+                              child: const Text('Sign In'),
+                            ),
+                          ),
                 ),
                 TextButton(
                   onPressed: () {
