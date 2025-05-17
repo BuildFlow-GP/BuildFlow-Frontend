@@ -1,33 +1,45 @@
-class User {
-  final String name;
-  final String email;
-  final String phone;
-  final String idNumber;
-  final String bankAccount;
-  final String location;
-  final String profileImageUrl;
+class UserModel {
+  final int id;
+  String name;
+  String email;
+  String phone;
+  String? idNumber;
+  String? bankAccount;
+  String? location;
+  String? profileImage;
+  final String createdAt;
 
-  User({
+  UserModel({
+    required this.id,
     required this.name,
     required this.email,
     required this.phone,
-    required this.idNumber,
-    required this.bankAccount,
-    required this.location,
-    required this.profileImageUrl,
+    this.idNumber,
+    this.bankAccount,
+    this.location,
+    this.profileImage,
+    required this.createdAt,
   });
 
-  // Factory constructor to create a User instance from JSON
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      name: json['name'] ?? 'No Name',
-      email: json['email'] ?? 'No Email',
-      phone: json['phone'] ?? 'No Phone',
-      idNumber: json['id_number'] ?? 'No ID Number',
-      bankAccount: json['bank_account'] ?? 'No Bank Account',
-      location: json['location'] ?? 'No Location',
-      profileImageUrl:
-          json['profile_image_url'] ?? 'https://via.placeholder.com/150',
-    );
-  }
+  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
+    id: json['id'],
+    name: json['name'],
+    email: json['email'],
+    phone: json['phone'] ?? '',
+    idNumber: json['id_number'],
+    bankAccount: json['bank_account'],
+    location: json['location'],
+    profileImage: json['profile_image'],
+    createdAt: json['created_at'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "name": name,
+    "email": email,
+    "phone": phone,
+    "id_number": idNumber,
+    "bank_account": bankAccount,
+    "location": location,
+    "profile_image": profileImage,
+  };
 }
