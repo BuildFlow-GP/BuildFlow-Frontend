@@ -1,9 +1,8 @@
-// login_controller.dart
 import 'package:get/get.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/signin_api.dart';
-import '../screens/home_page.dart'; // Your UserProfilePage
 import 'dart:developer';
+import '../screens/home_page.dart';
 
 class LoginController extends GetxController {
   final AuthService _authService = AuthService();
@@ -13,16 +12,20 @@ class LoginController extends GetxController {
   Future<void> login(String email, String password) async {
     try {
       isLoading.value = true;
+
       final result = await _authService.login(email, password);
 
-      // ✅ Save token
       final token = result['token'];
-      if (token != null) {
-        await storage.write(key: 'jwt_token', value: token);
+      final user = result['user'];
+      final userType = result['userType'];
 
-        // ✅ Navigate to profile page
+      if (token != null && user != null) {
+        await storage.write(key: 'jwt_token', value: token);
+        await storage.write(key: 'user_type', value: userType);
+
+        Get.offAll(() => const HomeScreen());
       } else {
-        Get.snackbar('Error', 'Token not found in response');
+        Get.snackbar('Error', 'Login failed. Invalid response.');
       }
     } catch (e) {
       log('Login error: $e');
