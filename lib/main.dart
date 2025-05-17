@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-//import 'app.dart'; // Import the actual app configuration
-import 'screens/office_profile.dart'; // Import your home screen
+import 'screens/signin_screen.dart';
+import 'package:get/get.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,10 +11,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
+      title: 'BuildFlow',
       debugShowCheckedModeBanner: false,
-      title: 'Sign In',
-      home: OfficeProfileScreen(isOwner: true),
+      home: SignInScreen(),
     );
   }
 }

@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import '../screens/user_profile.dart';
+import '../screens/company_profile.dart';
+import '../screens/office_profile.dart';
 
 class Navbar extends StatelessWidget {
-  final VoidCallback onProfileTap;
+  final String userType; // "individual", "company", or "office"
+  final int userId; // Logged-in user ID
   final VoidCallback onLogoutTap;
 
   const Navbar({
-    required this.onProfileTap,
+    required this.userType,
+    required this.userId,
     required this.onLogoutTap,
     super.key,
   });
@@ -19,36 +24,86 @@ class Navbar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Logo and App Name
-          Row(
-            children: [
-              Icon(Icons.business, color: Colors.white),
-              const SizedBox(width: 10),
-              Text(
-                "BuildFlow",
-                style: TextStyle(color: Colors.white, fontSize: 20),
-              ),
-            ],
+          Flexible(
+            flex: 1,
+            child: Row(
+              children: const [
+                Icon(Icons.business, color: Colors.white),
+                SizedBox(width: 10),
+                Text(
+                  "BuildFlow",
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
 
           // Menu Items
-          Row(
-            children: [
-              _navItem("About Us", () {}),
-              _navItem("Contact Us", () {}),
-              _navItem("Categories", () {}),
-              _navItem("Profile", onProfileTap),
-              _navItem("Logout", onLogoutTap),
-            ],
+          Flexible(
+            flex: 2,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _navItem("About Us", () {}),
+                  _navItem("Contact Us", () {}),
+                  _navItem("Categories", () {}),
+                  _navItem("Profile", () => _navigateToProfile(context)),
+                  _navItem("Logout", onLogoutTap),
+                ],
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _navItem(String label, VoidCallback onTap) {
+  static Widget _navItem(String label, VoidCallback onTap) {
     return TextButton(
       onPressed: onTap,
       child: Text(label, style: const TextStyle(color: Colors.white)),
     );
+  }
+
+  void _navigateToProfile(BuildContext context) {
+    switch (userType.toLowerCase()) {
+      case 'individual':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => UserProfileScreen(
+                  isOwner: true, // required parameter
+                ),
+          ),
+        );
+        break;
+      case 'company':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => CompanyProfileScreen(
+                  isOwner: true, // required parameter
+                ),
+          ),
+        );
+        break;
+      case 'office':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => OfficeProfileScreen(
+                  isOwner: true, // required parameter
+                ),
+          ),
+        );
+        break;
+      default:
+        debugPrint("Unknown userType: $userType");
+    }
   }
 }

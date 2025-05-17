@@ -3,12 +3,19 @@ import 'package:get/get.dart';
 import '../controllers/signin_control.dart';
 import 'user_type.dart';
 
-class SignInScreen extends StatelessWidget {
-  SignInScreen({super.key});
+class SignInScreen extends StatefulWidget {
+  const SignInScreen({super.key});
 
+  @override
+  State<SignInScreen> createState() => _SignInScreenState();
+}
+
+class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final LoginController loginController = Get.put(LoginController());
+
+  String? selectedUserType;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +60,30 @@ class SignInScreen extends StatelessWidget {
                   ),
                   obscureText: true,
                 ),
+                const SizedBox(height: 15),
+                DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  value: selectedUserType,
+                  decoration: InputDecoration(
+                    labelText: 'User Type',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Individual',
+                      child: Text('Individual'),
+                    ),
+                    DropdownMenuItem(value: 'Company', child: Text('Company')),
+                    DropdownMenuItem(value: 'Office', child: Text('Office')),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedUserType = value;
+                    });
+                  },
+                ),
                 const SizedBox(height: 20),
                 Obx(
                   () =>
@@ -64,13 +95,20 @@ class SignInScreen extends StatelessWidget {
                               onPressed: () {
                                 final email = emailController.text.trim();
                                 final password = passwordController.text.trim();
-                                if (email.isEmpty || password.isEmpty) {
+
+                                if (email.isEmpty ||
+                                    password.isEmpty ||
+                                    selectedUserType == null) {
                                   Get.snackbar(
                                     'Error',
-                                    'Please enter all fields',
+                                    'Please fill all fields',
                                   );
                                 } else {
-                                  loginController.login(email, password);
+                                  loginController.login(
+                                    email,
+                                    password,
+                                    selectedUserType!,
+                                  );
                                 }
                               },
                               child: const Text('Sign In'),
