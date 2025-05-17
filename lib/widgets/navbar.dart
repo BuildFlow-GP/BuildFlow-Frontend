@@ -27,14 +27,16 @@ class Navbar extends StatelessWidget {
           Flexible(
             flex: 1,
             child: Row(
-              children: const [
-                Icon(Icons.business, color: Colors.white),
-                SizedBox(width: 10),
-                Text(
-                  "BuildFlow",
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                  overflow: TextOverflow.ellipsis,
+              children: [
+                Expanded(
+                  child: Text(
+                    'BuildFlow',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
+                Icon(Icons.person),
+                SizedBox(width: 10),
               ],
             ),
           ),

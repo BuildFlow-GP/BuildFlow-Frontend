@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 // import '../models/office_model.dart';
 import '../widgets/navbar.dart';
 import '../widgets/about_section.dart';
@@ -7,6 +8,8 @@ import '../widgets/about_section.dart';
 import '../widgets/action_buttons.dart';
 import '../widgets/contact_us.dart';
 // import '../services/officeprofile_api.dart';
+import '../models/session.dart';
+import '../screens/signin_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,12 +26,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
   }
 
-  void _goToProfile() {
-    // Navigate to profile screen
-  }
-
   void _logout() {
-    // Handle logout
+    Session.clearSession();
+    Get.offAll(() => const SignInScreen());
   }
 
   @override
@@ -37,7 +37,11 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Navbar(onProfileTap: _goToProfile, onLogoutTap: _logout),
+            Navbar(
+              userType: Session.userType,
+              userId: Session.userId,
+              onLogoutTap: _logout,
+            ),
             const AboutSection(),
             isLoading
                 ? const CircularProgressIndicator()

@@ -25,6 +25,7 @@ class AuthService {
       );
 
       final data = jsonDecode(response.body);
+
       logger.i('Response: ${response.body}');
       if (response.statusCode == 200) {
         return data;
