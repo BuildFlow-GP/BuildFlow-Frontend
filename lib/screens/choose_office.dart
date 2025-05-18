@@ -49,6 +49,7 @@ class _ChooseOfficeScreenState extends State<ChooseOfficeScreen> {
   }
 
   Widget _buildOfficeCard(Office office) {
+    logger.i("Loading image from: ${office.imageUrl}"); // 🔍 Add this line
     return GestureDetector(
       onTap: () => _onOfficeSelected(office),
       child: AnimatedContainer(
