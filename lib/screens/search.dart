@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import '../../models/user_model.dart';
@@ -22,15 +23,33 @@ class _SearchScreenState extends State<SearchScreen>
   List<CompanyModel> companies = [];
 
   late TabController _tabController;
+  Timer? _debounce;
   bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _searchController.addListener(_onSearchChanged);
   }
 
-  void performSearch() async {
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    _debounce?.cancel();
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      performSearch();
+    });
+  }
+
+  Future<void> performSearch() async {
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
 
@@ -55,7 +74,6 @@ class _SearchScreenState extends State<SearchScreen>
       ),
       title: Text(user.name),
       onTap: () {
-        // Navigate to User Profile
         logger.i('Navigate to User ID: ${user.id}');
       },
     );
@@ -73,7 +91,6 @@ class _SearchScreenState extends State<SearchScreen>
           'Rating: ${office.rating?.toStringAsFixed(1) ?? 'N/A'} | ${office.location}',
         ),
         onTap: () {
-          // Navigate to Office Profile
           logger.i('Navigate to Office ID: ${office.id}');
         },
       ),
@@ -92,75 +109,88 @@ class _SearchScreenState extends State<SearchScreen>
           'Rating: ${company.rating?.toStringAsFixed(1) ?? 'N/A'} | ${company.location}',
         ),
         onTap: () {
-          // Navigate to Company Profile
           logger.i('Navigate to Company ID: ${company.id}');
         },
       ),
     );
   }
 
+  Widget _buildTabBar() {
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.blue.shade100,
+        ),
+        labelColor: Colors.blue[800],
+        unselectedLabelColor: Colors.grey[600],
+        tabs: const [
+          Tab(text: 'Users'),
+          Tab(text: 'Offices'),
+          Tab(text: 'Companies'),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final _ = MediaQuery.of(context).size.width > 600;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Search'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Users'),
-            Tab(text: 'Offices'),
-            Tab(text: 'Companies'),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
+      appBar: AppBar(title: const Text('Search')),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            TextField(
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search by name, email, or location...',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: performSearch,
-                ),
+                prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onSubmitted: (_) => performSearch(),
             ),
-          ),
-          if (isLoading)
-            const Expanded(child: Center(child: CircularProgressIndicator()))
-          else
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  // Users
-                  ListView.builder(
-                    itemCount: users.length,
-                    itemBuilder:
-                        (context, index) => buildUserCard(users[index]),
-                  ),
-                  // Offices
-                  ListView.builder(
-                    itemCount: offices.length,
-                    itemBuilder:
-                        (context, index) => buildOfficeCard(offices[index]),
-                  ),
-                  // Companies
-                  ListView.builder(
-                    itemCount: companies.length,
-                    itemBuilder:
-                        (context, index) => buildCompanyCard(companies[index]),
-                  ),
-                ],
+            const SizedBox(height: 10),
+            _buildTabBar(),
+            const SizedBox(height: 10),
+            if (isLoading)
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // Users
+                    ListView.builder(
+                      itemCount: users.length,
+                      itemBuilder:
+                          (context, index) => buildUserCard(users[index]),
+                    ),
+                    // Offices
+                    ListView.builder(
+                      itemCount: offices.length,
+                      itemBuilder:
+                          (context, index) => buildOfficeCard(offices[index]),
+                    ),
+                    // Companies
+                    ListView.builder(
+                      itemCount: companies.length,
+                      itemBuilder:
+                          (context, index) =>
+                              buildCompanyCard(companies[index]),
+                    ),
+                  ],
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
