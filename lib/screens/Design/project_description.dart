@@ -26,9 +26,12 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   String? kitchenType = 'Open';
   bool masterHasBathroom = false;
 
-  final TextEditingController generalDescriptionController = TextEditingController();
-  final TextEditingController interiorDesignController = TextEditingController();
-  final TextEditingController roomDistributionController = TextEditingController();
+  final TextEditingController generalDescriptionController =
+      TextEditingController();
+  final TextEditingController interiorDesignController =
+      TextEditingController();
+  final TextEditingController roomDistributionController =
+      TextEditingController();
 
   List<String> directions = ['North', 'South', 'East', 'West'];
 
@@ -66,39 +69,56 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text('Number of Floors', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Number of Floors',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             DropdownButtonFormField<int>(
               value: floorCount,
-              items: [1, 2, 3].map((e) => DropdownMenuItem(value: e, child: Text('$e'))).toList(),
+              items:
+                  [1, 2, 3]
+                      .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
+                      .toList(),
               onChanged: (val) => setState(() => floorCount = val),
               decoration: const InputDecoration(border: OutlineInputBorder()),
             ),
             const SizedBox(height: 16),
 
-            const Text('Rooms Count', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Rooms Count',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             _buildNumberField('Bedrooms', bedroomsController),
             _buildNumberField('Bathrooms', bathroomsController),
             _buildNumberField('Kitchens', kitchensController),
             _buildNumberField('Balconies', balconiesController),
 
             const SizedBox(height: 16),
-            const Text('Special Rooms', style: TextStyle(fontWeight: FontWeight.bold)),
-            ...specialRooms.map((room) => CheckboxListTile(
-              title: Text(room),
-              value: selectedSpecialRooms.contains(room),
-              onChanged: (val) {
-                setState(() {
-                  if (val == true) {
-                    selectedSpecialRooms.add(room);
-                  } else {
-                    selectedSpecialRooms.remove(room);
-                  }
-                });
-              },
-            )),
+            const Text(
+              'Special Rooms',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            ...specialRooms.map(
+              (room) => CheckboxListTile(
+                title: Text(room),
+                value: selectedSpecialRooms.contains(room),
+                onChanged: (val) {
+                  setState(() {
+                    if (val == true) {
+                      selectedSpecialRooms.add(room);
+                    } else {
+                      selectedSpecialRooms.remove(room);
+                    }
+                  });
+                },
+              ),
+            ),
 
             const SizedBox(height: 16),
-            const Text('Room Direction Preferences', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Room Direction Preferences',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             Row(
               children: [
                 Expanded(
@@ -113,7 +133,12 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   flex: 2,
                   child: DropdownButtonFormField<String>(
                     value: selectedDirection,
-                    items: directions.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                    items:
+                        directions
+                            .map(
+                              (d) => DropdownMenuItem(value: d, child: Text(d)),
+                            )
+                            .toList(),
                     onChanged: (val) => setState(() => selectedDirection = val),
                     decoration: const InputDecoration(labelText: 'Direction'),
                   ),
@@ -137,10 +162,19 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             }),
 
             const SizedBox(height: 16),
-            const Text('Kitchen Type', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Kitchen Type',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             DropdownButtonFormField<String>(
               value: kitchenType,
-              items: ['Open', 'Closed'].map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
+              items:
+                  ['Open', 'Closed']
+                      .map(
+                        (type) =>
+                            DropdownMenuItem(value: type, child: Text(type)),
+                      )
+                      .toList(),
               onChanged: (val) => setState(() => kitchenType = val),
               decoration: const InputDecoration(border: OutlineInputBorder()),
             ),
@@ -153,9 +187,21 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             ),
 
             const SizedBox(height: 16),
-            _buildTextField('General Design Description', generalDescriptionController, lines: 3),
-            _buildTextField('Interior Design Description', interiorDesignController, lines: 3),
-            _buildTextField('Room Distribution Across Floors', roomDistributionController, lines: 3),
+            _buildTextField(
+              'General Design Description',
+              generalDescriptionController,
+              lines: 3,
+            ),
+            _buildTextField(
+              'Interior Design Description',
+              interiorDesignController,
+              lines: 3,
+            ),
+            _buildTextField(
+              'Room Distribution Across Floors',
+              roomDistributionController,
+              lines: 3,
+            ),
 
             const SizedBox(height: 20),
             ElevatedButton(
@@ -194,7 +240,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {int lines = 1}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    int lines = 1,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: TextFormField(

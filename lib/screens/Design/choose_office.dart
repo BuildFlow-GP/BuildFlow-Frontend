@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import '../../services/choose_office_api.dart';
+import 'project_description.dart'; // Import the project description screen
 
 final logger = Logger();
 
@@ -16,6 +17,7 @@ class _ChooseOfficeScreenState extends State<ChooseOfficeScreen> {
   List<Office> _filteredOffices = [];
   bool _isLoading = true;
   String _searchQuery = '';
+  Office? _selectedOffice;
 
   @override
   void initState() {
@@ -40,26 +42,48 @@ class _ChooseOfficeScreenState extends State<ChooseOfficeScreen> {
             return office.name.toLowerCase().contains(_searchQuery) ||
                 office.location.toLowerCase().contains(_searchQuery);
           }).toList();
+      // Reset selection if filtered list does not contain the selected office
+      if (_selectedOffice != null &&
+          !_filteredOffices.contains(_selectedOffice)) {
+        _selectedOffice = null;
+      }
     });
   }
 
-  void _onOfficeSelected(Office office) {
-    logger.i('Selected office: ${office.name}');
-    Navigator.pop(context, office); // Return selected office
+  void _onOfficeTapped(Office office) {
+    setState(() {
+      _selectedOffice = office;
+    });
+    logger.i('Tapped office: ${office.name}');
   }
 
-  Widget _buildOfficeCard(Office office) {
-    logger.i("Loading image from: ${office.imageUrl}"); // 🔍 Add this line
+  void _onNextPressed() {
+    if (_selectedOffice != null) {
+      logger.i('Selected office confirmed: ${_selectedOffice!.name}');
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ProjectDetailsScreen()),
+      );
+    }
+  }
+
+  Widget _buildOfficeCard(Office office, double cardWidth) {
+    final bool isSelected = _selectedOffice == office;
     return GestureDetector(
-      onTap: () => _onOfficeSelected(office),
+      onTap: () => _onOfficeTapped(office),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        margin: const EdgeInsets.symmetric(vertical: 8),
+        width: cardWidth,
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: Colors.white,
+          color: isSelected ? Colors.blue.shade100 : Colors.white,
+          border: Border.all(
+            color: isSelected ? Colors.blue : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
           boxShadow: const [
             BoxShadow(
               color: Colors.black12,
@@ -76,31 +100,37 @@ class _ChooseOfficeScreenState extends State<ChooseOfficeScreen> {
                 office.imageUrl.isNotEmpty
                     ? office.imageUrl
                     : 'https://via.placeholder.com/80',
-                width: 80,
-                height: 80,
+                width: cardWidth * 0.2,
+                height: cardWidth * 0.2,
                 fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     office.name,
-                    style: const TextStyle(
-                      fontSize: 18,
+                    style: TextStyle(
+                      fontSize: cardWidth > 400 ? 18 : 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(office.location),
-                  const SizedBox(height: 4),
+                  Text(
+                    office.location,
+                    style: TextStyle(fontSize: cardWidth > 400 ? 14 : 12),
+                  ),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
                       const Icon(Icons.star, color: Colors.amber, size: 16),
                       const SizedBox(width: 4),
-                      Text(office.rating.toString()),
+                      Text(
+                        office.rating.toString(),
+                        style: TextStyle(fontSize: cardWidth > 400 ? 14 : 12),
+                      ),
                     ],
                   ),
                 ],
@@ -114,6 +144,10 @@ class _ChooseOfficeScreenState extends State<ChooseOfficeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Adjust card width based on screen size (responsive)
+    double screenWidth = MediaQuery.of(context).size.width;
+    double cardWidth = screenWidth > 600 ? 600 : screenWidth * 0.9;
+
     return Scaffold(
       appBar: AppBar(title: const Text("Choose an Office")),
       body: Padding(
@@ -142,9 +176,25 @@ class _ChooseOfficeScreenState extends State<ChooseOfficeScreen> {
                                 itemCount: _filteredOffices.length,
                                 itemBuilder: (context, index) {
                                   final office = _filteredOffices[index];
-                                  return _buildOfficeCard(office);
+                                  return Center(
+                                    child: _buildOfficeCard(office, cardWidth),
+                                  );
                                 },
                               ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed:
+                          _selectedOffice == null ? null : _onNextPressed,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(cardWidth, 48),
+                      ),
+                      child: Text(
+                        _selectedOffice == null
+                            ? 'Select an office to continue'
+                            : 'Next',
+                        style: const TextStyle(fontSize: 16),
+                      ),
                     ),
                   ],
                 ),
