@@ -29,8 +29,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null)
+    if (pickedFile != null) {
       setState(() => _profileImage = File(pickedFile.path));
+    }
   }
 
   void _toggleEdit() {
