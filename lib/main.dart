@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'screens/sign/signin_screen.dart';
+//import 'screens/sign/signin_screen.dart';
 import 'package:get/get.dart';
+import 'screens/choose_office.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +15,8 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'BuildFlow',
       debugShowCheckedModeBanner: false,
-      home: SignInScreen(),
+      //home: SignInScreen(),
+      home: ChooseOfficeScreen(),
     );
   }
 }
