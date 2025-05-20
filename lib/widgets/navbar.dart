@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/profiles/user_profile.dart';
 import '../screens/profiles/company_profile.dart';
-import '../screens/profiles/office_profile.dart';
 
 class Navbar extends StatelessWidget {
   final String userType; // "individual", "company", or "office"
@@ -94,15 +93,15 @@ class Navbar extends StatelessWidget {
         );
         break;
       case 'office':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => OfficeProfileScreen(
-                  isOwner: true, // required parameter
-                ),
-          ),
-        );
+        // Navigator.push(
+        //   context,
+        //   // MaterialPageRoute(
+        //   //   builder:
+        //   //       // (context) => OfficeProfileScreen(
+        //   //         // isOwner: true, // required parameter
+        //   //       // ),
+        //   // ),
+        // );
         break;
       default:
         debugPrint("Unknown userType: $userType");

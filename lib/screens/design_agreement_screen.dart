@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:logger/logger.dart';
 
 class DesignAgreementScreen extends StatefulWidget {
   const DesignAgreementScreen({super.key});
@@ -7,6 +8,8 @@ class DesignAgreementScreen extends StatefulWidget {
   @override
   State<DesignAgreementScreen> createState() => _DesignAgreementScreenState();
 }
+
+final Logger logger = Logger();
 
 class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
   final TextEditingController _nameController = TextEditingController();
@@ -45,10 +48,11 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
       setState(() {
         _pdfFilePath = result.files.single.path;
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('PDF Uploaded: ${result.files.single.name}')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF Uploaded: ${result.files.single.name}')),
+        );
+      }
     }
   }
 
@@ -63,16 +67,16 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
     String basinNumber = _basinNumberController.text;
     String areaName = _areaNameController.text;
 
-    print("Name: $name");
-    print("Identifier: $id");
-    print("Address: $address");
-    print("Phone: $phone");
-    print("Bank Account: $bankAccount");
-    print("Area (sqm): $area");
-    print("Plot Number: $plotNumber");
-    print("Basin Number: $basinNumber");
-    print("Area Name: $areaName");
-    print("PDF File Path: $_pdfFilePath");
+    logger.i("Name: $name");
+    logger.i("Identifier: $id");
+    logger.i("Address: $address");
+    logger.i("Phone: $phone");
+    logger.i("Bank Account: $bankAccount");
+    logger.i("Area (sqm): $area");
+    logger.i("Plot Number: $plotNumber");
+    logger.i("Basin Number: $basinNumber");
+    logger.i("Area Name: $areaName");
+    logger.i("PDF File Path: $_pdfFilePath");
 
     ScaffoldMessenger.of(
       context,
