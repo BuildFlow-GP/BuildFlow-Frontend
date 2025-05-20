@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
 
    
-  get: ^4.6.6
+ # get: ^4.6.6
   http: ^0.13.6
   flutter_secure_storage: ^5.0.2 
   logger: ^2.0.2  
@@ -26,13 +26,10 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
 
   cupertino_icons: ^1.0.8
-<<<<<<< HEAD
   get: ^4.7.2
-=======
   file_picker: ^5.0.1 # or the latest version
   webview_flutter: ^4.2.1 # Add this line for WebView support
 
->>>>>>> 3c6d5fa5d111c9154620ac85d42783745a2e15a4
 
 dev_dependencies:
   flutter_test:
