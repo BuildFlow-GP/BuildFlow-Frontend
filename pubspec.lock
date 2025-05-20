@@ -195,11 +195,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+<<<<<<< HEAD
+=======
   flutter_web_plugins:
     dependency: transitive
     description: flutter
     source: sdk
     version: "0.0.0"
+>>>>>>> 3c6d5fa5d111c9154620ac85d42783745a2e15a4
   get:
     dependency: "direct main"
     description:
@@ -208,6 +211,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.7.2"
+<<<<<<< HEAD
+=======
   http:
     dependency: "direct main"
     description:
@@ -296,6 +301,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.7"
+>>>>>>> 3c6d5fa5d111c9154620ac85d42783745a2e15a4
   leak_tracker:
     dependency: transitive
     description:
@@ -469,6 +475,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+<<<<<<< HEAD
+=======
   webview_flutter:
     dependency: "direct main"
     description:
@@ -509,6 +517,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.13.0"
+>>>>>>> 3c6d5fa5d111c9154620ac85d42783745a2e15a4
 sdks:
   dart: ">=3.7.0 <4.0.0"
   flutter: ">=3.27.0"
