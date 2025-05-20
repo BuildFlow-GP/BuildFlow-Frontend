@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/signin_api.dart';
-import '../models/user_model.dart'; // Add this
+import '../models/user_model.dart';
 import '../models/session.dart';
 import '../screens/home_page.dart';
 import 'package:logger/logger.dart';
@@ -14,15 +14,16 @@ class LoginController extends GetxController {
 
   var isLoading = false.obs;
 
-  Future<void> login(String email, String password, String userType) async {
+  Future<void> login(String email, String password) async {
     try {
       isLoading.value = true;
 
-      final result = await _authService.signIn(email, password, userType);
+      final result = await _authService.signIn(email, password);
       final token = result['token'];
       final userData = result['user'];
+      final userType = result['userType'];
 
-      if (token != null && userData != null) {
+      if (token != null && userData != null && userType != null) {
         final user = UserModel.fromJson(userData);
 
         if (!kIsWeb) {
@@ -36,7 +37,7 @@ class LoginController extends GetxController {
         Get.offAll(() => const HomeScreen());
       } else {
         Get.snackbar('Error', 'Login failed. Invalid credentials.');
-        logger.w('Login failed: token or user is null');
+        logger.w('Login failed: token/user/userType is null');
       }
     } catch (e) {
       logger.e('Login error: $e');

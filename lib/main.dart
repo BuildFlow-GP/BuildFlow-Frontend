@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-// import 'screens/sign/signin_screen.dart';
+import 'screens/sign/signin_screen.dart';
 import 'package:get/get.dart';
-import 'screens/search.dart';
+//import 'screens/search.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,8 +15,8 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'BuildFlow',
       debugShowCheckedModeBanner: false,
-      // home: SignInScreen(),
-      home: const SearchScreen(),
+      home: SignInScreen(),
+      // home: const SearchScreen(),
     );
   }
 }
