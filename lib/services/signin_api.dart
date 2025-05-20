@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import '../services/session.dart';
 
 class AuthService {
   final String baseUrl = 'http://localhost:5000/api/auth';
@@ -20,6 +21,16 @@ class AuthService {
       logger.i('Response: ${response.body}');
 
       if (response.statusCode == 200) {
+        final token = data['token'];
+        final userType = data['type'];
+        final user = data['user'];
+
+        // خزن التوكن و بيانات السيشن باستخدام Session class
+        if (token != null) await Session.setToken(token);
+        if (userType != null && user != null && user['id'] != null) {
+          await Session.setSession(type: userType, id: user['id']);
+        }
+
         return data;
       } else {
         logger.e('Login failed: ${response.body}');
@@ -29,5 +40,15 @@ class AuthService {
       logger.e('Error during login request: $e');
       rethrow;
     }
+  }
+
+  // جلب التوكن باستخدام Session
+  Future<String?> getToken() async {
+    return await Session.getToken();
+  }
+
+  // مسح السيشن بالكامل عند تسجيل الخروج
+  Future<void> logout() async {
+    await Session.clear();
   }
 }

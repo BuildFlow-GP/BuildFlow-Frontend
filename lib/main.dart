@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'screens/sign/signin_screen.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart'; // ✅ ضروري لتخزين التوكن
+
 //import 'screens/search.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // مهم قبل async init
+  await GetStorage.init(); // ✅ تهيئة التخزين المحلي
   runApp(const MyApp());
 }
 

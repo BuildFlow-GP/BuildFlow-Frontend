@@ -8,7 +8,6 @@ import '../widgets/about_section.dart';
 // import '../widgets/action_buttons.dart'; // We will put buttons directly here
 import '../widgets/contact_us.dart';
 // import '../services/officeprofile_api.dart';
-import '../models/session.dart';
 import 'sign/signin_screen.dart';
 import 'Design/type_of_project.dart'; // import for navigation
 
@@ -29,7 +28,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _logout() {
-    Session.clearSession();
     Get.offAll(() => const SignInScreen());
   }
 
@@ -39,11 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Navbar(
-              userType: Session.userType,
-              userId: Session.userId,
-              onLogoutTap: _logout,
-            ),
+            Navbar(onLogoutTap: _logout),
             const AboutSection(),
             isLoading
                 ? const CircularProgressIndicator()

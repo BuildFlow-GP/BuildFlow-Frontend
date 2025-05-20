@@ -1,15 +1,16 @@
 import 'package:get/get.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:get_storage/get_storage.dart'; // ✅ لتخزين التوكن على الويب
 import '../services/signin_api.dart';
 import '../models/user_model.dart';
-import '../models/session.dart';
+import '../services/session.dart';
 import '../screens/home_page.dart';
 import 'package:logger/logger.dart';
 
 class LoginController extends GetxController {
   final AuthService _authService = AuthService();
-  final storage = FlutterSecureStorage();
+  final storage = FlutterSecureStorage(); // للموبايل
+  final webStorage = GetStorage(); // للويب
   final Logger logger = Logger();
 
   var isLoading = false.obs;
@@ -26,14 +27,11 @@ class LoginController extends GetxController {
       if (token != null && userData != null && userType != null) {
         final user = UserModel.fromJson(userData);
 
-        if (!kIsWeb) {
-          await storage.write(key: 'jwt_token', value: token);
-          await storage.write(key: 'user_type', value: userType);
-        }
+        // استعمل Session مباشرة للتخزين
+        await Session.setToken(token);
+        await Session.setSession(type: userType, id: user.id);
 
         logger.i('Login successful: ${user.toJson()}');
-        Session.setSession(type: userType, id: user.id);
-
         Get.offAll(() => const HomeScreen());
       } else {
         Get.snackbar('Error', 'Login failed. Invalid credentials.');

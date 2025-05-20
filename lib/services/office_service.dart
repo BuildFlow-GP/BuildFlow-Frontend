@@ -1,20 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:logger/logger.dart';
+import '../services/session.dart'; // استيراد Session
 
 class OfficeService {
   final String baseUrl = 'http://localhost:5000/api/offices';
-  final storage = const FlutterSecureStorage();
   final Logger logger = Logger();
 
   Future<String?> _getToken() async {
-    return await storage.read(key: 'jwt_token');
+    return await Session.getToken();
   }
 
-  // ✅ 1. Get Office by ID
   Future<Map<String, dynamic>> getOffice(String officeId) async {
     final token = await _getToken();
     final url = Uri.parse('$baseUrl/$officeId');
@@ -35,7 +33,6 @@ class OfficeService {
     }
   }
 
-  // ✅ 2. Update Office Profile
   Future<void> updateOffice(
     String officeId,
     Map<String, dynamic> updatedData,
@@ -58,7 +55,6 @@ class OfficeService {
     }
   }
 
-  // ✅ 3. Upload Office Profile Image
   Future<void> uploadProfileImage(String officeId, File imageFile) async {
     final token = await _getToken();
     final url = Uri.parse('$baseUrl/$officeId/upload-image');
@@ -83,7 +79,6 @@ class OfficeService {
     }
   }
 
-  // ✅ 4. Get Reviews for an Office
   Future<List<dynamic>> getOfficeReviews(String officeId) async {
     final token = await _getToken();
     final url = Uri.parse('http://localhost:5000/api/reviews/office/$officeId');
@@ -104,7 +99,6 @@ class OfficeService {
     }
   }
 
-  // ✅ 5. Submit Review for Office
   Future<void> submitOfficeReview(
     String officeId,
     double rating,

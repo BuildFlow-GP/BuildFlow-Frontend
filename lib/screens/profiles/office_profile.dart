@@ -3,8 +3,8 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
+import '../../services/session.dart'; // عدل المسار حسب مكان ملف Session
 
 class OfficeProfileScreen extends StatefulWidget {
   final bool isOwner;
@@ -25,7 +25,6 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
   File? _profileImage;
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
-  final storage = const FlutterSecureStorage();
   final Logger logger = Logger();
 
   Map<String, dynamic> formData = {};
@@ -41,8 +40,9 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
     fetchReviews();
   }
 
+  // استدعاء التوكن من Session class
   Future<String?> getToken() async {
-    return await storage.read(key: 'jwt_token');
+    return await Session.getToken();
   }
 
   Future<void> fetchOfficeData() async {
@@ -231,7 +231,6 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // تصميم متجاوب (Responsive)
     final isWeb = MediaQuery.of(context).size.width > 600;
 
     if (isLoading) return const Center(child: CircularProgressIndicator());
@@ -254,7 +253,6 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
                 ? Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // عمود الصورة والزر
                     Expanded(
                       flex: 1,
                       child: Column(
@@ -282,7 +280,6 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
                       ),
                     ),
                     const SizedBox(width: 32),
-                    // عمود البيانات + التقييمات
                     Expanded(
                       flex: 2,
                       child: Column(
