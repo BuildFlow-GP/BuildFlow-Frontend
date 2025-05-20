@@ -14,7 +14,6 @@ dependencies:
    
   get: ^4.6.6
   http: ^0.13.6
-
   flutter_secure_storage: ^5.0.2 
   logger: ^2.0.2  
   image_picker: ^1.0.7
@@ -29,9 +28,6 @@ dependencies:
   cupertino_icons: ^1.0.8
   file_picker: ^5.0.1 # or the latest version
   webview_flutter: ^4.2.1 # Add this line for WebView support
-  flutter_secure_storage: ^5.0.2 
-  logger: ^2.0.2  
-  image_picker: ^1.0.7
 
 
 dev_dependencies:
