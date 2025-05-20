@@ -11,6 +11,10 @@ class ProjectModel {
   String? agreementFile;
   String? document2D;
   String? document3D;
+  double? landArea; // مساحة الأرض
+  String? plotNumber; // رقم القطعة
+  String? basinNumber; // رقم الحوض
+  String? landLocation; // موقع الأرض
   final String createdAt;
 
   ProjectModel({
@@ -26,6 +30,10 @@ class ProjectModel {
     this.agreementFile,
     this.document2D,
     this.document3D,
+    this.landArea,
+    this.plotNumber,
+    this.basinNumber,
+    this.landLocation,
     required this.createdAt,
   });
 
@@ -45,6 +53,13 @@ class ProjectModel {
     agreementFile: json['agreement_file'],
     document2D: json['document_2d'],
     document3D: json['document_3d'],
+    landArea:
+        json['land_area'] != null
+            ? double.tryParse(json['land_area'].toString())
+            : null,
+    plotNumber: json['plot_number'],
+    basinNumber: json['basin_number'],
+    landLocation: json['land_location'],
     createdAt: json['created_at'],
   );
 
@@ -60,5 +75,9 @@ class ProjectModel {
     "agreement_file": agreementFile,
     "document_2d": document2D,
     "document_3d": document3D,
+    "land_area": landArea,
+    "plot_number": plotNumber,
+    "basin_number": basinNumber,
+    "land_location": landLocation,
   };
 }

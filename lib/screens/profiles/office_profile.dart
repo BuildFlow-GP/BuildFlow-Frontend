@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:logger/logger.dart';
+import '../../services/office_service.dart';
+import '../../services/review_service.dart';
+import '../../services/session.dart';
 
 class OfficeProfileScreen extends StatefulWidget {
   final bool isOwner;
-  const OfficeProfileScreen({required this.isOwner, super.key});
+  final int officeId;
+
+  const OfficeProfileScreen({
+    required this.isOwner,
+    required this.officeId,
+    super.key,
+  });
 
   @override
   State<OfficeProfileScreen> createState() => _OfficeProfileScreenState();
@@ -15,95 +25,255 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
   File? _profileImage;
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
+  final Logger logger = Logger();
 
-  final Map<String, dynamic> formData = {
-    "name": "Office One",
-    "email": "office@example.com",
-    "phone": "01012345678",
-    "location": "Cairo",
-    "capacity": "50",
-    "rating": "4.5",
-    "is_available": true,
-    "points": "100",
-    "bank_account": "123-456-789",
-    "staff_count": "15",
-    "active_projects_count": "3",
-    "branches": "Giza, Alexandria",
-  };
+  Map<String, dynamic> formData = {};
+  List<Map<String, dynamic>> reviews = [];
+  bool isLoading = true;
 
-  void _toggleEdit() {
-    if (isEditMode && _formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      // TODO: Send PUT/PATCH request to backend
+  @override
+  void initState() {
+    super.initState();
+    fetchOfficeData();
+    fetchReviews();
+  }
+
+  Future<void> fetchOfficeData() async {
+    try {
+      final token = await Session.getToken();
+      final data = await OfficeService.getOffice(widget.officeId, token);
+      setState(() {
+        formData = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      logger.e('Error loading office data: $e');
+      setState(() => isLoading = false);
     }
-    setState(() => isEditMode = !isEditMode);
+  }
+
+  Future<void> fetchReviews() async {
+    try {
+      final token = await Session.getToken();
+      final data = await ReviewService.getOfficeReviews(widget.officeId, token);
+      setState(() {
+        reviews = List<Map<String, dynamic>>.from(data);
+      });
+    } catch (e) {
+      logger.e('Error loading reviews: $e');
+    }
   }
 
   Future<void> _pickImage() async {
     final picked = await _picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) setState(() => _profileImage = File(picked.path));
+    if (picked != null) {
+      setState(() => _profileImage = File(picked.path));
+    }
   }
 
-  Widget _buildField(String label, String field) {
+  Future<void> _saveChanges() async {
+    if (!_formKey.currentState!.validate()) return;
+    _formKey.currentState!.save();
+
+    final token = await Session.getToken();
+    try {
+      await OfficeService.updateOffice(widget.officeId, formData, token);
+
+      if (_profileImage != null) {
+        await OfficeService.uploadOfficeImage(
+          widget.officeId,
+          _profileImage!,
+          token,
+        );
+      }
+
+      setState(() => isEditMode = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Office updated successfully')),
+        );
+      }
+    } catch (e) {
+      logger.e('Error updating office: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update office')),
+        );
+      }
+    }
+  }
+
+  Widget _buildField(String label, String field, {bool isNumber = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         isEditMode
             ? TextFormField(
-              initialValue: formData[field].toString(),
+              initialValue: formData[field]?.toString() ?? '',
+              keyboardType:
+                  isNumber ? TextInputType.number : TextInputType.text,
+              validator:
+                  (val) => (val == null || val.isEmpty) ? 'Required' : null,
               onSaved: (val) => formData[field] = val,
             )
             : Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(formData[field].toString()),
+              child: Text(formData[field]?.toString() ?? '-'),
             ),
         const SizedBox(height: 10),
       ],
     );
   }
 
+  Widget _buildReviews() {
+    if (reviews.isEmpty) return const Text('No reviews yet.');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Reviews',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        const SizedBox(height: 10),
+        ...reviews.map((r) {
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 5),
+            child: ListTile(
+              title: Text('Rating: ${r['rating']} ⭐'),
+              subtitle: Text(r['comment'] ?? ''),
+              trailing: Text('By: ${r['user']?['name'] ?? 'Unknown'}'),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isWeb = MediaQuery.of(context).size.width > 600;
+
+    if (isLoading) return const Center(child: CircularProgressIndicator());
+
+    final profileImage =
+        _profileImage != null
+            ? FileImage(_profileImage!)
+            : (formData['profile_image'] != null &&
+                        formData['profile_image'] != ''
+                    ? NetworkImage(formData['profile_image'])
+                    : const AssetImage("assets/office.png"))
+                as ImageProvider;
+
     return Scaffold(
       appBar: AppBar(title: const Text("Office Profile")),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              GestureDetector(
-                onTap: isEditMode ? _pickImage : null,
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundImage:
-                      _profileImage != null
-                          ? FileImage(_profileImage!)
-                          : const AssetImage("assets/office.png")
-                              as ImageProvider,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildField("Name", "name"),
-              _buildField("Email", "email"),
-              _buildField("Phone", "phone"),
-              _buildField("Location", "location"),
-              _buildField("Capacity", "capacity"),
-              _buildField("Rating", "rating"),
-              _buildField("Points", "points"),
-              _buildField("Bank Account", "bank_account"),
-              _buildField("Staff Count", "staff_count"),
-              _buildField("Active Projects", "active_projects_count"),
-              _buildField("Branches", "branches"),
-              const SizedBox(height: 10),
-              if (widget.isOwner)
-                ElevatedButton(
-                  onPressed: _toggleEdit,
-                  child: Text(isEditMode ? "Save" : "Edit"),
-                ),
-            ],
-          ),
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child:
+              isWeb
+                  ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          children: [
+                            GestureDetector(
+                              onTap:
+                                  widget.isOwner && isEditMode
+                                      ? _pickImage
+                                      : null,
+                              child: CircleAvatar(
+                                radius: 80,
+                                backgroundImage: profileImage,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            if (widget.isOwner)
+                              ElevatedButton(
+                                onPressed:
+                                    isEditMode
+                                        ? _saveChanges
+                                        : () =>
+                                            setState(() => isEditMode = true),
+                                child: Text(isEditMode ? "Save" : "Edit"),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 32),
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildField("Name", "name"),
+                            _buildField("Email", "email"),
+                            _buildField("Phone", "phone"),
+                            _buildField("Location", "location"),
+                            _buildField("Capacity", "capacity", isNumber: true),
+                            _buildField("Rating", "rating"),
+                            _buildField("Points", "points", isNumber: true),
+                            _buildField("Bank Account", "bank_account"),
+                            _buildField(
+                              "Staff Count",
+                              "staff_count",
+                              isNumber: true,
+                            ),
+                            _buildField(
+                              "Active Projects",
+                              "active_projects_count",
+                              isNumber: true,
+                            ),
+                            _buildField("Branches", "branches"),
+                            const SizedBox(height: 20),
+                            _buildReviews(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                  : Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: widget.isOwner && isEditMode ? _pickImage : null,
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundImage: profileImage,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildField("Name", "name"),
+                      _buildField("Email", "email"),
+                      _buildField("Phone", "phone"),
+                      _buildField("Location", "location"),
+                      _buildField("Capacity", "capacity", isNumber: true),
+                      _buildField("Rating", "rating"),
+                      _buildField("Points", "points", isNumber: true),
+                      _buildField("Bank Account", "bank_account"),
+                      _buildField("Staff Count", "staff_count", isNumber: true),
+                      _buildField(
+                        "Active Projects",
+                        "active_projects_count",
+                        isNumber: true,
+                      ),
+                      _buildField("Branches", "branches"),
+                      if (widget.isOwner)
+                        ElevatedButton(
+                          onPressed:
+                              isEditMode
+                                  ? _saveChanges
+                                  : () => setState(() => isEditMode = true),
+                          child: Text(isEditMode ? "Save" : "Edit"),
+                        ),
+                      const SizedBox(height: 20),
+                      _buildReviews(),
+                    ],
+                  ),
         ),
       ),
     );

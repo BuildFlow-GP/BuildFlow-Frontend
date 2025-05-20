@@ -17,14 +17,15 @@ class _NoPermitScreenState extends State<NoPermitScreen> {
   bool step3 = false;
   bool step4 = false;
 
-  // Pages for each navigation item
-  final List<Widget> _pages = [
-    const Center(child: Text('Home Screen')),
-    const Center(child: Text('Search Screen')),
-    const Center(child: Text('Likes Screen')),
-    const Center(child: Text('Notifications Screen')),
-    const Center(child: Text('Profile Screen')),
-  ];
+
+  // // Pages for each navigation item
+  // final List<Widget> _pages = [
+  //   const Center(child: Text('Home Screen')),
+  //   const Center(child: Text('Search Screen')),
+  //   const Center(child: Text('Likes Screen')),
+  //   const Center(child: Text('Notifications Screen')),
+  //   const Center(child: Text('Profile Screen')),
+  // ];
 
   @override
   Widget build(BuildContext context) {
