@@ -1,128 +1,62 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
-import 'package:logger/logger.dart';
-import '../services/session.dart'; // استيراد Session
 
 class OfficeService {
-  final String baseUrl = 'http://localhost:5000/api/offices';
-  final Logger logger = Logger();
+  static const String baseUrl = 'http://192.168.1.4:5000/api';
 
-  Future<String?> _getToken() async {
-    return await Session.getToken();
-  }
-
-  Future<Map<String, dynamic>> getOffice(String officeId) async {
-    final token = await _getToken();
-    final url = Uri.parse('$baseUrl/$officeId');
-
+  static Future<Map<String, dynamic>> getOffice(int id, String? token) async {
     final response = await http.get(
-      url,
+      Uri.parse('$baseUrl/offices/$id'),
       headers: {
-        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
       },
     );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      logger.e('Failed to fetch office: ${response.body}');
-      throw Exception('Failed to fetch office profile');
+      throw Exception('Failed to load office');
     }
   }
 
-  Future<void> updateOffice(
-    String officeId,
-    Map<String, dynamic> updatedData,
+  static Future<void> updateOffice(
+    int id,
+    Map<String, dynamic> data,
+    String? token,
   ) async {
-    final token = await _getToken();
-    final url = Uri.parse('$baseUrl/$officeId');
-
     final response = await http.put(
-      url,
+      Uri.parse('$baseUrl/offices/$id'),
       headers: {
-        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
       },
-      body: jsonEncode(updatedData),
+      body: jsonEncode(data),
     );
 
     if (response.statusCode != 200) {
-      logger.e('Failed to update office: ${response.body}');
-      throw Exception('Failed to update office profile');
+      throw Exception('Failed to update office');
     }
   }
 
-  Future<void> uploadProfileImage(String officeId, File imageFile) async {
-    final token = await _getToken();
-    final url = Uri.parse('$baseUrl/$officeId/upload-image');
-
-    final request =
-        http.MultipartRequest('POST', url)
-          ..headers['Authorization'] = 'Bearer $token'
-          ..files.add(
-            await http.MultipartFile.fromPath(
-              'image',
-              imageFile.path,
-              contentType: MediaType('image', 'jpeg'),
-            ),
-          );
-
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-
-    if (response.statusCode != 200) {
-      logger.e('Image upload failed: ${response.body}');
-      throw Exception('Failed to upload profile image');
-    }
-  }
-
-  Future<List<dynamic>> getOfficeReviews(String officeId) async {
-    final token = await _getToken();
-    final url = Uri.parse('http://localhost:5000/api/reviews/office/$officeId');
-
-    final response = await http.get(
-      url,
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      logger.e('Failed to fetch reviews: ${response.body}');
-      throw Exception('Failed to fetch reviews');
-    }
-  }
-
-  Future<void> submitOfficeReview(
-    String officeId,
-    double rating,
-    String comment,
+  static Future<void> uploadOfficeImage(
+    int id,
+    File image,
+    String? token,
   ) async {
-    final token = await _getToken();
-    final url = Uri.parse('http://localhost:5000/api/reviews');
-
-    final response = await http.post(
-      url,
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'office_id': officeId,
-        'rating': rating,
-        'comment': comment,
-      }),
+    final request = http.MultipartRequest(
+      'PUT',
+      Uri.parse('$baseUrl/offices/$id'),
     );
+    request.files.add(
+      await http.MultipartFile.fromPath('profile_image', image.path),
+    );
+    if (token != null) request.headers['Authorization'] = 'Bearer $token';
 
-    if (response.statusCode != 201) {
-      logger.e('Failed to submit review: ${response.body}');
-      throw Exception('Failed to submit review');
+    final response = await request.send();
+    if (response.statusCode != 200) {
+      throw Exception('Failed to upload image');
     }
   }
 }
