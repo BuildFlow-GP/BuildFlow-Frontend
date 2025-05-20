@@ -15,8 +15,6 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController passwordController = TextEditingController();
   final LoginController loginController = Get.put(LoginController());
 
-  String? selectedUserType;
-
   @override
   Widget build(BuildContext context) {
     final isWeb = MediaQuery.of(context).size.width > 600;
@@ -41,7 +39,6 @@ class _SignInScreenState extends State<SignInScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Logo Image
                     Padding(
                       padding: const EdgeInsets.only(bottom: 20),
                       child: Image.asset('assets/logo.png', height: 80),
@@ -76,36 +73,6 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                       obscureText: true,
                     ),
-                    const SizedBox(height: 15),
-                    DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      value: selectedUserType,
-                      decoration: InputDecoration(
-                        labelText: 'User Type',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'Individual',
-                          child: Text('Individual'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Company',
-                          child: Text('Company'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Office',
-                          child: Text('Office'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          selectedUserType = value;
-                        });
-                      },
-                    ),
                     const SizedBox(height: 20),
                     Obx(
                       () =>
@@ -119,19 +86,13 @@ class _SignInScreenState extends State<SignInScreen> {
                                     final password =
                                         passwordController.text.trim();
 
-                                    if (email.isEmpty ||
-                                        password.isEmpty ||
-                                        selectedUserType == null) {
+                                    if (email.isEmpty || password.isEmpty) {
                                       Get.snackbar(
                                         'Error',
                                         'Please fill all fields',
                                       );
                                     } else {
-                                      loginController.login(
-                                        email,
-                                        password,
-                                        selectedUserType!,
-                                      );
+                                      loginController.login(email, password);
                                     }
                                   },
                                   child: const Text('Sign In'),

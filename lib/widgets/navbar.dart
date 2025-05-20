@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+
 import '../screens/profiles/user_profile.dart';
 import '../screens/profiles/company_profile.dart';
 import '../screens/profiles/office_profile.dart';
+import '../services/session.dart'; // تأكد من مسار ملف السيشن
 
-class Navbar extends StatelessWidget {
-  final String userType; // "individual", "company", or "office"
-  final int userId; // Logged-in user ID
+class Navbar extends StatefulWidget {
   final VoidCallback onLogoutTap;
 
-  const Navbar({
-    required this.userType,
-    required this.userId,
-    required this.onLogoutTap,
-    super.key,
-  });
+  const Navbar({required this.onLogoutTap, super.key});
 
+  @override
+  State<Navbar> createState() => _NavbarState();
+}
+
+class _NavbarState extends State<Navbar> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -27,16 +28,13 @@ class Navbar extends StatelessWidget {
           Flexible(
             flex: 1,
             child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'BuildFlow',
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-                Icon(Icons.person),
+              children: const [
+                Icon(Icons.house, color: Colors.white),
                 SizedBox(width: 10),
+                Text(
+                  'BuildFlow',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
               ],
             ),
           ),
@@ -51,8 +49,8 @@ class Navbar extends StatelessWidget {
                   _navItem("About Us", () {}),
                   _navItem("Contact Us", () {}),
                   _navItem("Categories", () {}),
-                  _navItem("Profile", () => _navigateToProfile(context)),
-                  _navItem("Logout", onLogoutTap),
+                  _navItem("Profile", () => _navigateToProfile()),
+                  _navItem("Logout", widget.onLogoutTap),
                 ],
               ),
             ),
@@ -69,43 +67,70 @@ class Navbar extends StatelessWidget {
     );
   }
 
-  void _navigateToProfile(BuildContext context) {
-    switch (userType.toLowerCase()) {
-      case 'individual':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => UserProfileScreen(
-                  isOwner: true, // required parameter
-                ),
-          ),
-        );
-        break;
-      case 'company':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => CompanyProfileScreen(
-                  isOwner: true, // required parameter
-                ),
-          ),
-        );
-        break;
-      case 'office':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => OfficeProfileScreen(
-                  isOwner: true, // required parameter
-                ),
-          ),
-        );
-        break;
-      default:
-        debugPrint("Unknown userType: $userType");
+  void _navigateToProfile() async {
+    final token = await Session.getToken();
+
+    if (token == null) {
+      debugPrint("No token found");
+      return;
+    }
+
+    try {
+      // Parse JWT payload
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        debugPrint("Invalid token format");
+        return;
+      }
+
+      final payload = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
+      final data = json.decode(payload);
+
+      final userType =
+          data['userType']?.toString(); // ✅ استخدم اسم الحقل الصحيح من الباك
+      final int id = data['id'];
+
+      // تحقق إذا الويجت مازال mounted قبل استخدام context
+      if (!mounted) return;
+
+      if (userType == null) {
+        debugPrint('Token data is incomplete: type or id is null');
+        return;
+      }
+
+      switch (userType.toLowerCase()) {
+        case 'individual':
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const UserProfileScreen(isOwner: true),
+            ),
+          );
+          break;
+        case 'company':
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CompanyProfileScreen(isOwner: true),
+            ),
+          );
+          break;
+        case 'office':
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => OfficeProfileScreen(isOwner: true, officeId: id),
+            ),
+          );
+          break;
+        default:
+          debugPrint("Unknown userType: $userType");
+      }
+    } catch (e) {
+      debugPrint("Error parsing token: $e");
     }
   }
 }
