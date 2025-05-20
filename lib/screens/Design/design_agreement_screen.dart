@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+
 import 'package:logger/logger.dart';
 
 class DesignAgreementScreen extends StatefulWidget {
@@ -8,6 +9,7 @@ class DesignAgreementScreen extends StatefulWidget {
   @override
   State<DesignAgreementScreen> createState() => _DesignAgreementScreenState();
 }
+
 
 final Logger logger = Logger();
 
@@ -48,6 +50,7 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
       setState(() {
         _pdfFilePath = result.files.single.path;
       });
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('PDF Uploaded: ${result.files.single.name}')),
@@ -67,6 +70,7 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
     String basinNumber = _basinNumberController.text;
     String areaName = _areaNameController.text;
 
+
     logger.i("Name: $name");
     logger.i("Identifier: $id");
     logger.i("Address: $address");
@@ -77,6 +81,7 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
     logger.i("Basin Number: $basinNumber");
     logger.i("Area Name: $areaName");
     logger.i("PDF File Path: $_pdfFilePath");
+
 
     ScaffoldMessenger.of(
       context,
