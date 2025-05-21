@@ -17,7 +17,6 @@ class _NoPermitScreenState extends State<NoPermitScreen> {
   bool step3 = false;
   bool step4 = false;
 
-
   // // Pages for each navigation item
   // final List<Widget> _pages = [
   //   const Center(child: Text('Home Screen')),
@@ -48,17 +47,14 @@ class _NoPermitScreenState extends State<NoPermitScreen> {
                           children: [
                             Row(
                               children: [
-                                // Logo Placeholder
+                                // Logo Image
                                 Container(
                                   width: 50,
                                   height: 50,
-                                  color: Colors.white,
                                   margin: const EdgeInsets.only(right: 8),
-                                  child: const Center(
-                                    child: Text(
-                                      'Logo',
-                                      style: TextStyle(color: Colors.blue),
-                                    ),
+                                  child: Image.asset(
+                                    'assets/images/logoo.png',
+                                    fit: BoxFit.contain,
                                   ),
                                 ),
                                 const Text(
@@ -71,6 +67,7 @@ class _NoPermitScreenState extends State<NoPermitScreen> {
                                 ),
                               ],
                             ),
+
                             Row(
                               children: [
                                 TextButton(
