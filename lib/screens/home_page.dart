@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Navbar(onLogoutTap: _logout),
+            //       Navbar(onLogoutTap: _logout),
             const AboutSection(),
             isLoading
                 ? const CircularProgressIndicator()
