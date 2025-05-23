@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
 import 'dart:convert';
 
 import '../screens/profiles/user_profile.dart';
@@ -132,5 +132,63 @@ class _NavbarState extends State<Navbar> {
     } catch (e) {
       debugPrint("Error parsing token: $e");
     }
+  }
+}*/
+
+import 'package:buildflow_frontend/themes/app_colors.dart';
+import 'package:flutter/material.dart';
+
+class Navbar extends StatelessWidget {
+  const Navbar({super.key});
+
+  static Widget _navItem(String label, VoidCallback onTap) {
+    return TextButton(
+      onPressed: onTap,
+      child: Text(label, style: const TextStyle(color: Colors.white)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      color: AppColors.primary,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Logo and App Name
+          Flexible(
+            flex: 1,
+            child: Row(
+              children: [
+                Image.asset('assets/logoo.png', width: 70, height: 70),
+                const SizedBox(width: 10),
+                const Text(
+                  'BuildFlow',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ],
+            ),
+          ),
+
+          // Menu Items
+          Flexible(
+            flex: 2,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  _navItem("About Us", () {}),
+                  _navItem("Contact Us", () {}),
+                  _navItem("Categories", () {}),
+                  _navItem("Logout", () {}),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
