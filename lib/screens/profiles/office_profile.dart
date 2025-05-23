@@ -127,26 +127,42 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
   }
 
   Widget _buildReviews() {
-    if (reviews.isEmpty) return const Text('No reviews yet.');
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 20),
+        const Text(
+          'Office Rating',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        Row(
+          children: [
+            Text(
+              formData['rating']?.toStringAsFixed(1) ?? '-',
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.star, color: Colors.amber, size: 32),
+          ],
+        ),
+        const SizedBox(height: 20),
         const Text(
           'Reviews',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         const SizedBox(height: 10),
-        ...reviews.map((r) {
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 5),
-            child: ListTile(
-              title: Text('Rating: ${r['rating']} ⭐'),
-              subtitle: Text(r['comment'] ?? ''),
-              trailing: Text('By: ${r['user']?['name'] ?? 'Unknown'}'),
-            ),
-          );
-        }),
+        if (reviews.isEmpty)
+          const Text('No reviews yet.')
+        else
+          ...reviews.map((r) {
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 5),
+              child: ListTile(
+                subtitle: Text(r['comment'] ?? ''),
+                trailing: Text('By: ${r['user']?['name'] ?? 'Unknown'}'),
+              ),
+            );
+          }).toList(),
       ],
     );
   }
@@ -215,7 +231,6 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
                             _buildField("Phone", "phone"),
                             _buildField("Location", "location"),
                             _buildField("Capacity", "capacity", isNumber: true),
-                            _buildField("Rating", "rating"),
                             _buildField("Points", "points", isNumber: true),
                             _buildField("Bank Account", "bank_account"),
                             _buildField(
@@ -229,7 +244,6 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
                               isNumber: true,
                             ),
                             _buildField("Branches", "branches"),
-                            const SizedBox(height: 20),
                             _buildReviews(),
                           ],
                         ),
@@ -252,7 +266,6 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
                       _buildField("Phone", "phone"),
                       _buildField("Location", "location"),
                       _buildField("Capacity", "capacity", isNumber: true),
-                      _buildField("Rating", "rating"),
                       _buildField("Points", "points", isNumber: true),
                       _buildField("Bank Account", "bank_account"),
                       _buildField("Staff Count", "staff_count", isNumber: true),
@@ -270,7 +283,6 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
                                   : () => setState(() => isEditMode = true),
                           child: Text(isEditMode ? "Save" : "Edit"),
                         ),
-                      const SizedBox(height: 20),
                       _buildReviews(),
                     ],
                   ),
