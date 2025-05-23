@@ -615,7 +615,7 @@ class _NoPermitScreenState extends State<NoPermitScreen> {
         builder: (context, constraints) {
           return Column(
             children: [
-              const Navbar(),
+              //  const Navbar(),
               const SizedBox(height: 20),
               Expanded(
                 child: SingleChildScrollView(

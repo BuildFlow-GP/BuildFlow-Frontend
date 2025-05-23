@@ -27,9 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
     // You can implement data loading here if needed and update isLoading accordingly
   }
 
-  void _logout() {
-    Get.offAll(() => const SignInScreen());
-  }
+  // void _logout() {
+  //   Get.offAll(() => const SignInScreen());
+  // }
 
   @override
   Widget build(BuildContext context) {
