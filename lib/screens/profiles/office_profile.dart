@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:logger/logger.dart';
-import '../../services/office_service.dart';
+import '../../services/office_profile_service.dart';
 import '../../services/review_service.dart';
 import '../../services/session.dart';
 
@@ -162,7 +162,7 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
                 trailing: Text('By: ${r['user']?['name'] ?? 'Unknown'}'),
               ),
             );
-          }).toList(),
+          }),
       ],
     );
   }

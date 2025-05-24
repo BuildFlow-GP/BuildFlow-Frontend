@@ -594,7 +594,7 @@ import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:buildflow_frontend/utils/responsive.dart';
 
 class NoPermitScreen extends StatefulWidget {
-  const NoPermitScreen({Key? key}) : super(key: key);
+  const NoPermitScreen({super.key});
 
   @override
   State<NoPermitScreen> createState() => _NoPermitScreenState();

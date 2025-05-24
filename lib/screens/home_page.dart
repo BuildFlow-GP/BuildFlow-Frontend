@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 // import '../models/office_model.dart';
-import '../widgets/navbar.dart';
 import '../widgets/about_section.dart';
 // import '../widgets/office_suggestions.dart';
 // import '../widgets/project_suggestions.dart';
 // import '../widgets/action_buttons.dart'; // We will put buttons directly here
 import '../widgets/contact_us.dart';
 // import '../services/officeprofile_api.dart';
-import 'sign/signin_screen.dart';
 import 'Design/type_of_project.dart'; // import for navigation
 
 class HomeScreen extends StatefulWidget {
