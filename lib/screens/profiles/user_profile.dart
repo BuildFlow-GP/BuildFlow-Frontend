@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../../services/user_profile_service.dart';
+import '../../services/Profiles/user_profile_service.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final bool isOwner;

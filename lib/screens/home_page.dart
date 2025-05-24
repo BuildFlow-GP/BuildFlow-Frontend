@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// import '../models/office_model.dart';
 import '../widgets/about_section.dart';
-// import '../widgets/office_suggestions.dart';
-// import '../widgets/project_suggestions.dart';
-// import '../widgets/action_buttons.dart'; // We will put buttons directly here
 import '../widgets/contact_us.dart';
-// import '../services/officeprofile_api.dart';
 import 'Design/type_of_project.dart'; // import for navigation
+// import '../services/Suggestions/office_suggestion_service.dart';
+// import '../services/Suggestions/company_suggestion_service.dart';
+// import '../widgets/Suggestions/suggestion_list.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

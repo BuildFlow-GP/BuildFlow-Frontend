@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import '../screens/profiles/office_profile.dart';
-import '../screens/profiles/company_profile.dart';
-//import '../../services/session.dart';
+import '../../screens/profiles/office_profile.dart';
+import '../../screens/profiles/company_profile.dart';
 
 class ProfileSuggestionCard extends StatelessWidget {
   final String name;
