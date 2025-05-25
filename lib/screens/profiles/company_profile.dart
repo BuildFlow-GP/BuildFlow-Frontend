@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../../services/company_service.dart';
+import '../../services/Profiles/company_profile_service.dart';
 
 class CompanyProfileScreen extends StatefulWidget {
   final bool isOwner;

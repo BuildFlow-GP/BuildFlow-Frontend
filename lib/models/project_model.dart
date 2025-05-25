@@ -1,3 +1,5 @@
+import 'office_model.dart'; // تأكدي من أن المسار صحيح لملف OfficeModel
+
 class ProjectModel {
   final int id;
   String name;
@@ -11,11 +13,13 @@ class ProjectModel {
   String? agreementFile;
   String? document2D;
   String? document3D;
-  double? landArea; // مساحة الأرض
-  String? plotNumber; // رقم القطعة
-  String? basinNumber; // رقم الحوض
-  String? landLocation; // موقع الأرض
+  double? landArea;
+  String? plotNumber;
+  String? basinNumber;
+  String? landLocation;
   final String createdAt;
+  OfficeModel? office; // <-- الإضافة الجديدة
+  // يمكنك إضافة UserModel? user; و CompanyModel? company; بنفس الطريقة إذا احتجتِ لها
 
   ProjectModel({
     required this.id,
@@ -35,33 +39,43 @@ class ProjectModel {
     this.basinNumber,
     this.landLocation,
     required this.createdAt,
+    this.office, // <-- الإضافة الجديدة
   });
 
-  factory ProjectModel.fromJson(Map<String, dynamic> json) => ProjectModel(
-    id: json['id'],
-    name: json['name'],
-    description: json['description'],
-    status: json['status'],
-    budget:
-        json['budget'] != null
-            ? double.tryParse(json['budget'].toString())
-            : null,
-    startDate: json['start_date'],
-    endDate: json['end_date'],
-    location: json['location'],
-    licenseFile: json['license_file'],
-    agreementFile: json['agreement_file'],
-    document2D: json['document_2d'],
-    document3D: json['document_3d'],
-    landArea:
-        json['land_area'] != null
-            ? double.tryParse(json['land_area'].toString())
-            : null,
-    plotNumber: json['plot_number'],
-    basinNumber: json['basin_number'],
-    landLocation: json['land_location'],
-    createdAt: json['created_at'],
-  );
+  factory ProjectModel.fromJson(Map<String, dynamic> json) {
+    return ProjectModel(
+      id: json['id'],
+      name: json['name'],
+      description: json['description'],
+      status: json['status'],
+      budget:
+          json['budget'] != null
+              ? double.tryParse(json['budget'].toString())
+              : null,
+      startDate: json['start_date'],
+      endDate: json['end_date'],
+      location: json['location'],
+      licenseFile: json['license_file'],
+      agreementFile: json['agreement_file'],
+      document2D: json['document_2d'],
+      document3D: json['document_3d'],
+      landArea:
+          json['land_area'] != null
+              ? double.tryParse(json['land_area'].toString())
+              : null,
+      plotNumber: json['plot_number'],
+      basinNumber: json['basin_number'],
+      landLocation: json['land_location'],
+      createdAt: json['created_at'],
+      office:
+          json['office'] !=
+                  null // <-- الإضافة الجديدة
+              ? OfficeModel.fromJson(json['office']) // <-- الإضافة الجديدة
+              : null, // <-- الإضافة الجديدة
+      // user: json['user'] != null ? UserModel.fromJson(json['user']) : null, // إذا أردتِ المستخدم
+      // company: json['company'] != null ? CompanyModel.fromJson(json['company']) : null, // إذا أردتِ الشركة
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     "name": name,
@@ -79,5 +93,8 @@ class ProjectModel {
     "plot_number": plotNumber,
     "basin_number": basinNumber,
     "land_location": landLocation,
+    // لا نرسل عادة الكائنات المتداخلة الكاملة عند إنشاء/تحديث المشروع،
+    // بل نرسل الـ id الخاص بالمكتب مثلاً. هذا يعتمد على تصميم الـ API.
+    // "office_id": office?.id, // مثال إذا كان الـ API يتوقع office_id
   };
 }

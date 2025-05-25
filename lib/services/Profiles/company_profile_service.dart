@@ -1,32 +1,31 @@
-// services/user_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'session.dart';
+import '../session.dart';
 import 'package:logger/logger.dart';
 
-class UserService {
-  static const String baseUrl = "http://localhost:5000/api/users";
+class CompanyService {
+  static const String baseUrl = 'http://localhost:5000/api/companies';
 
-  static Future<Map<String, dynamic>?> getUserProfile() async {
+  static Future<Map<String, dynamic>?> fetchProfile() async {
     final Logger logger = Logger();
 
     final token = await Session.getToken();
-    final res = await http.get(
+    final response = await http.get(
       Uri.parse('$baseUrl/me'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
-    if (res.statusCode == 200) {
-      return jsonDecode(res.body);
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
     } else {
-      logger.e("Error fetching user profile: ${res.body}");
+      logger.e('Failed to load profile: ${response.body}');
       return null;
     }
   }
 
-  static Future<bool> updateUserProfile(Map<String, dynamic> data) async {
+  static Future<bool> updateProfile(Map<String, dynamic> data) async {
     final token = await Session.getToken();
-    final res = await http.post(
+    final response = await http.put(
       Uri.parse('$baseUrl/me'),
       headers: {
         'Authorization': 'Bearer $token',
@@ -35,6 +34,6 @@ class UserService {
       body: jsonEncode(data),
     );
 
-    return res.statusCode == 200;
+    return response.statusCode == 200;
   }
 }
