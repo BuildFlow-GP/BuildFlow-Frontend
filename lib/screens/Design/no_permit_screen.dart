@@ -588,10 +588,10 @@ class Navbar extends StatelessWidget {
 
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:buildflow_frontend/widgets/navbar.dart';
+//import 'package:buildflow_frontend/widgets/navbar.dart';
 import 'package:buildflow_frontend/widgets/bottom_nav_item.dart';
 import 'package:buildflow_frontend/themes/app_colors.dart';
-import 'package:buildflow_frontend/utils/responsive.dart';
+//import 'package:buildflow_frontend/utils/responsive.dart';
 
 class NoPermitScreen extends StatefulWidget {
   const NoPermitScreen({super.key});

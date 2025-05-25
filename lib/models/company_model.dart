@@ -1,6 +1,6 @@
 class CompanyModel {
   final int id;
-  String name;
+  String name; // أصبح nullable
   String? email;
   String? phone;
   String? description;
@@ -10,11 +10,11 @@ class CompanyModel {
   String? bankAccount;
   int? staffCount;
   String? profileImage;
-  final String createdAt;
+  String? createdAt; // أصبح nullable
 
   CompanyModel({
     required this.id,
-    required this.name,
+    required this.name, // لم يعد required
     this.email,
     this.phone,
     this.description,
@@ -24,30 +24,32 @@ class CompanyModel {
     this.bankAccount,
     this.staffCount,
     this.profileImage,
-    required this.createdAt,
+    this.createdAt, // لم يعد required
   });
 
-  factory CompanyModel.fromJson(Map<String, dynamic> json) => CompanyModel(
-    id: json['id'],
-    name: json['name'],
-    email: json['email'],
-    phone: json['phone'],
-    description: json['description'],
-    rating: json['rating']?.toDouble(),
-    companyType: json['company_type'],
-    location: json['location'],
-    bankAccount: json['bank_account'],
-    staffCount: json['staff_count'],
-    profileImage: json['profile_image'],
-    createdAt: json['created_at'],
-  );
+  factory CompanyModel.fromJson(Map<String, dynamic> json) {
+    return CompanyModel(
+      id: json['id'] as int,
+      name: json['name'] as String, // سيأخذ null إذا كان name غير موجود أو null
+      email: json['email'] as String?,
+      phone: json['phone'] as String?,
+      description: json['description'] as String?,
+      rating: (json['rating'] as num?)?.toDouble(),
+      companyType: json['company_type'] as String?,
+      location: json['location'] as String?,
+      bankAccount: json['bank_account'] as String?,
+      staffCount: json['staff_count'] as int?,
+      profileImage: json['profile_image'] as String?,
+      createdAt: json['created_at'] as String?,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     "name": name,
     "email": email,
     "phone": phone,
     "description": description,
-    "rating": rating,
+    // "rating": rating, // عادة لا يرسل
     "company_type": companyType,
     "location": location,
     "bank_account": bankAccount,
