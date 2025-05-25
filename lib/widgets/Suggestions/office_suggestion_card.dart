@@ -44,7 +44,12 @@ class _OfficeSuggestionCardState extends State<OfficeSuggestionCard> {
           borderRadius: BorderRadius.circular(12.0),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(_isHovered ? 0.15 : 0.08),
+              color: const Color.fromARGB(
+                255,
+                84,
+                83,
+                83,
+              ).withOpacity(_isHovered ? 0.15 : 0.08),
               blurRadius: elevation * 2,
               spreadRadius: 0.5,
               offset: Offset(0, elevation / 2),

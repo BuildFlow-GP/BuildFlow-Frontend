@@ -50,9 +50,12 @@ class _ProjectSuggestionCardState extends State<ProjectSuggestionCard> {
           color: Theme.of(context).cardColor, // استخدام لون الكرت من الثيم
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(
-                _isHovered ? 0.12 : 0.07,
-              ), // ظل أخف قليلاً للمشاريع
+              color: const Color.fromARGB(
+                255,
+                198,
+                196,
+                196,
+              ).withOpacity(_isHovered ? 0.12 : 0.07), // ظل أخف قليلاً للمشاريع
               blurRadius: elevation * 1.5,
               spreadRadius: 0.3,
               offset: Offset(0, elevation / 2.5),

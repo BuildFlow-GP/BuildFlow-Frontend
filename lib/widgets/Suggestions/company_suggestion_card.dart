@@ -50,7 +50,7 @@ class _CompanySuggestionCardState extends State<CompanySuggestionCard> {
           ), // نفس الـ borderRadius للـ Card
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(
+              color: const Color.fromARGB(255, 115, 115, 115).withOpacity(
                 _isHovered ? 0.15 : 0.08,
               ), // ظل أغمق قليلاً عند التمرير
               blurRadius: elevation * 2, // زيادة انتشار الظل مع الـ elevation
