@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'screens/search.dart';
 import 'widgets/drawer_wrapper.dart';
 import 'screens/payment_screen.dart';
+import 'screens/Design/type_of_project.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // مهم قبل async init
@@ -21,8 +22,8 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'BuildFlow',
       debugShowCheckedModeBanner: false,
-      home: ChooseOfficeScreen(),
-      //home: DrawerWrapper(child: const PaymentScreen()),
+      //home: TypeOfProjectPage(),
+      home: DrawerWrapper(child: const TypeOfProjectPage()),
       //home: DrawerWrapper(child: const NoPermitScreen()),
     );
   }
