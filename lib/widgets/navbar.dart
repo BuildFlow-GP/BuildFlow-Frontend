@@ -39,14 +39,6 @@ class Navbar extends StatelessWidget {
                 children: [
                   Image.asset('assets/logoo.png', width: 70, height: 70),
                   const SizedBox(width: 10),
-                  const Text(
-                    'BuildFlow',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
                 ],
               ),
             ),
