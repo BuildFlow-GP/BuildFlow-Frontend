@@ -27,6 +27,10 @@ class SignUpScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Image.asset('assets/logoo.png', height: 80),
+                ),
                 Text(
                   'Create a $userType Account',
                   style: const TextStyle(

@@ -3,15 +3,16 @@ import 'package:get/get.dart'; // ما زلتِ تستخدمين Get للتنق�
 import '../widgets/about_section.dart';
 import '../widgets/contact_us.dart';
 import 'Design/type_of_project.dart'; // للتنقل
+import '../widgets/navbar.dart';
 
 // استيراد المودلز والسيرفس والكروت الجديدة
 import '../models/office_model.dart';
 import '../models/company_model.dart';
 import '../models/project_model.dart';
-import '../services/suggestion_service.dart'; // تأكدي من المسار الصحيح
-import '../widgets/suggestions/office_suggestion_card.dart'; // تأكدي من المسار الصحيح
-import '../widgets/suggestions/company_suggestion_card.dart'; // تأكدي من المسار الصحيح
-import '../widgets/suggestions/project_suggestion_card.dart'; // تأكدي من المسار الصحيح
+import '../services/suggestion_service.dart';
+import '../widgets/suggestions/office_suggestion_card.dart';
+import '../widgets/suggestions/company_suggestion_card.dart';
+import '../widgets/suggestions/project_suggestion_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -172,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch, // لجعل الأقسام تمتد
           children: [
-            // Navbar(onLogoutTap: _logout), // إذا كان لديك Navbar
+            Navbar(), // إذا كان لديك Navbar
             const AboutSection(), // قسم "عنا"
             // أزرار الإجراءات الرئيسية
             Padding(
