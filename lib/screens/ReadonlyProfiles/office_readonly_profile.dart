@@ -19,10 +19,10 @@ class OfficeProfileScreen extends StatefulWidget {
   final bool isOwner;
 
   const OfficeProfileScreen({
-    Key? key,
+    super.key,
     required this.officeId,
     this.isOwner = false,
-  }) : super(key: key);
+  });
 
   @override
   _OfficeProfileScreenState createState() => _OfficeProfileScreenState();
@@ -319,8 +319,9 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
   }
 
   Widget _buildOfficeInfoSection() {
-    if (_office == null)
+    if (_office == null) {
       return const SizedBox.shrink(); // لا تعرض إذا لم يتم تحميل المكتب
+    }
 
     return Card(
       elevation: 3,
