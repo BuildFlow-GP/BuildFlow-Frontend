@@ -5,6 +5,7 @@ import '../../models/user_model.dart';
 import '../../models/office_model.dart';
 import '../../models/company_model.dart';
 import '../services/search_service.dart';
+import 'ReadonlyProfiles/company_readonly_profile.dart';
 import 'ReadonlyProfiles/office_readonly_profile.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -123,6 +124,17 @@ class _SearchScreenState extends State<SearchScreen>
           'Rating: ${company.rating?.toStringAsFixed(1) ?? 'N/A'} | ${company.location}',
         ),
         onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => CompanyrProfileScreen(
+                    companyId: company.id,
+                    isOwner: false,
+                  ),
+            ),
+          );
+
           logger.i('Navigate to Company ID: ${company.id}');
         },
       ),

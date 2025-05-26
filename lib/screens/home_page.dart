@@ -1,9 +1,10 @@
 import 'dart:convert';
 
-import 'package:buildflow_frontend/screens/profiles/company_profile.dart';
+import 'profiles/company_profile.dart';
 import 'ReadonlyProfiles/office_readonly_profile.dart';
-import 'package:buildflow_frontend/screens/profiles/user_profile.dart';
-import 'package:buildflow_frontend/services/session.dart';
+import 'ReadonlyProfiles/company_readonly_profile.dart';
+import 'profiles/user_profile.dart';
+import '../services/session.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // ما زلتِ تستخدمين Get للتنقل
 import '../widgets/about_section.dart';
@@ -305,6 +306,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   (company) => CompanySuggestionCard(
                     company: company,
                     onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => CompanyrProfileScreen(
+                                companyId: company.id,
+                                isOwner: false,
+                              ),
+                        ),
+                      );
                       // TODO: Navigate to Company Profile Page with company.id
                       print(
                         'Tapped on Company: ${company.name} (ID: ${company.id})',
@@ -407,7 +418,9 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const CompanyProfileScreen(isOwner: true),
+              builder:
+                  (context) =>
+                      CompanyProfileScreen(isOwner: true, companyId: id),
             ),
           );
           break;
