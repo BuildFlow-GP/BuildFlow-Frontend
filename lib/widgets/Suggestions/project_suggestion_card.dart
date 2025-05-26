@@ -31,7 +31,7 @@ class _ProjectSuggestionCardState extends State<ProjectSuggestionCard> {
 
     // التعامل مع القيم التي قد تكون null (إذا كنتِ على الطريقة الأولى)
     final String projectName = widget.project.name;
-    final String projectStatus = widget.project.status;
+    final String? projectStatus = widget.project.status;
     final String? officeName = widget.project.office?.name;
 
     return MouseRegion(

@@ -4,7 +4,7 @@ class ProjectModel {
   final int id;
   String name;
   String? description;
-  String status;
+  String? status;
   double? budget;
   String? startDate;
   String? endDate;
@@ -25,7 +25,7 @@ class ProjectModel {
     required this.id,
     required this.name,
     this.description,
-    required this.status,
+    this.status,
     this.budget,
     this.startDate,
     this.endDate,
@@ -45,28 +45,28 @@ class ProjectModel {
   factory ProjectModel.fromJson(Map<String, dynamic> json) {
     return ProjectModel(
       id: json['id'],
-      name: json['name'],
-      description: json['description'],
-      status: json['status'],
+      name: json['name'] as String? ?? 'Unknown Name',
+      description: json['description'] as String? ?? 'Unknown Description',
+      status: json['status'] as String? ?? 'Unknown Status',
       budget:
           json['budget'] != null
               ? double.tryParse(json['budget'].toString())
-              : null,
-      startDate: json['start_date'],
-      endDate: json['end_date'],
-      location: json['location'],
-      licenseFile: json['license_file'],
-      agreementFile: json['agreement_file'],
-      document2D: json['document_2d'],
-      document3D: json['document_3d'],
+              : null as double?,
+      startDate: json['start_date'] as String? ?? 'Unknown Start Date',
+      endDate: json['end_date'] as String? ?? 'Unknown End Date',
+      location: json['location'] as String? ?? 'Unknown Location',
+      licenseFile: json['license_file'] as String? ?? 'Unknown License',
+      agreementFile: json['agreement_file'] as String? ?? 'Unknown Agreement',
+      document2D: json['document_2d'] as String? ?? 'Unknown Document 2D',
+      document3D: json['document_3d'] as String? ?? 'Unknown Document 3D',
       landArea:
           json['land_area'] != null
               ? double.tryParse(json['land_area'].toString())
-              : null,
-      plotNumber: json['plot_number'],
-      basinNumber: json['basin_number'],
-      landLocation: json['land_location'],
-      createdAt: json['created_at'],
+              : null as double?,
+      plotNumber: json['plot_number'] as String? ?? 'Unknown Plot Number',
+      basinNumber: json['basin_number'] as String? ?? 'Unknown Basin Number',
+      landLocation: json['land_location'] as String? ?? 'Unknown Land Location',
+      createdAt: json['created_at'] as String? ?? 'Unknown Created At',
       office:
           json['office'] !=
                   null // <-- الإضافة الجديدة

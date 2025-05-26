@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:buildflow_frontend/screens/profiles/company_profile.dart';
-import 'package:buildflow_frontend/screens/profiles/office_profile.dart';
+import 'ReadonlyProfiles/office_readonly_profile.dart';
 import 'package:buildflow_frontend/screens/profiles/user_profile.dart';
 import 'package:buildflow_frontend/services/session.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +19,7 @@ import '../services/suggestion_service.dart';
 import '../widgets/suggestions/office_suggestion_card.dart';
 import '../widgets/suggestions/company_suggestion_card.dart';
 import '../widgets/suggestions/project_suggestion_card.dart';
+import 'search.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -218,6 +219,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(fontSize: 16),
                     ),
                   ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Get.to(() => const SearchScreen());
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text("Search", style: TextStyle(fontSize: 16)),
+                  ),
                   const SizedBox(width: 16),
                   OutlinedButton(
                     onPressed: () {
@@ -253,7 +266,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   (office) => OfficeSuggestionCard(
                     office: office,
                     onTap: () {
-                      // TODO: Navigate to Office Profile Page with office.id
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => OfficeProfileScreen(
+                                officeId: office.id,
+                                isOwner: false,
+                              ),
+                        ),
+                      );
+
                       print(
                         'Tapped on Office: ${office.name} (ID: ${office.id})',
                       );

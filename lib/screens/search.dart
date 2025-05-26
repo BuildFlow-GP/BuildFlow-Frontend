@@ -5,6 +5,7 @@ import '../../models/user_model.dart';
 import '../../models/office_model.dart';
 import '../../models/company_model.dart';
 import '../services/search_service.dart';
+import 'ReadonlyProfiles/office_readonly_profile.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -91,6 +92,19 @@ class _SearchScreenState extends State<SearchScreen>
           'Rating: ${office.rating?.toStringAsFixed(1) ?? 'N/A'} | ${office.location}',
         ),
         onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) =>
+                      OfficeProfileScreen(officeId: office.id, isOwner: false),
+            ),
+          );
+
+          print('Tapped on Office: ${office.name} (ID: ${office.id})');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Navigate to profile of ${office.name}')),
+          );
           logger.i('Navigate to Office ID: ${office.id}');
         },
       ),
