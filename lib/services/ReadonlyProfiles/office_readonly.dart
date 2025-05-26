@@ -7,8 +7,7 @@ import '../../models/review_model.dart'; // استخدام ReviewModel الخا�
 import '../session.dart';
 
 class OfficeProfileService {
-  static const String _baseUrl =
-      'http://localhost:5000/api'; // تأكدي أن هذا هو الـ base URL الصحيح للمكاتب
+  static const String _baseUrl = 'http://localhost:5000/api';
 
   Future<OfficeModel> getOfficeDetails(int officeId) async {
     final response = await http.get(Uri.parse('$_baseUrl/offices/$officeId'));
@@ -27,7 +26,6 @@ class OfficeProfileService {
   }
 
   Future<List<ProjectModel>> getOfficeProjects(int officeId) async {
-    // تأكدي من أن هذا الـ endpoint صحيح: GET /api/offices/:officeId/projects
     final response = await http.get(
       Uri.parse('$_baseUrl/$officeId/officeprojects'),
     );
@@ -51,7 +49,6 @@ class OfficeProfileService {
   }
 
   Future<List<Review>> getOfficeReviews(int officeId) async {
-    // تأكدي من أن هذا الـ endpoint صحيح: GET /api/offices/:officeId/reviews
     final response = await http.get(
       Uri.parse('$_baseUrl/$officeId/officereviews'),
     );
