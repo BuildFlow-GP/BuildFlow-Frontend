@@ -10,7 +10,7 @@ import '../../services/session.dart';
 // افترض أن UserModel موجود في المسار الصحيح
 // import '../../models/user_model.dart';
 
-class OfficeProfileScreen extends StatefulWidget {
+class OfficerProfileScreen extends StatefulWidget {
   final int officeId;
   // isOwner يمكن تحديده ديناميكياً داخل الشاشة بناءً على Session.getUserId()
   // ومقارنته مع office.ownerId (إذا كان موجوداً في OfficeModel)
@@ -18,17 +18,17 @@ class OfficeProfileScreen extends StatefulWidget {
   // سأفترض حالياً أننا نمرره، ولكن يمكن تحسين هذا.
   final bool isOwner;
 
-  const OfficeProfileScreen({
+  const OfficerProfileScreen({
     super.key,
     required this.officeId,
     this.isOwner = false,
   });
 
   @override
-  _OfficeProfileScreenState createState() => _OfficeProfileScreenState();
+  _OfficerProfileScreenState createState() => _OfficerProfileScreenState();
 }
 
-class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
+class _OfficerProfileScreenState extends State<OfficerProfileScreen> {
   final OfficeProfileService _profileService = OfficeProfileService();
   OfficeModel? _office;
   List<ProjectModel> _projects = [];

@@ -271,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         context,
                         MaterialPageRoute(
                           builder:
-                              (context) => OfficeProfileScreen(
+                              (context) => OfficerProfileScreen(
                                 officeId: office.id,
                                 isOwner: false,
                               ),
@@ -429,7 +429,8 @@ class _HomeScreenState extends State<HomeScreen> {
             context,
             MaterialPageRoute(
               builder:
-                  (context) => OfficeProfileScreen(isOwner: true, officeId: id),
+                  (context) =>
+                      OfficerProfileScreen(isOwner: true, officeId: id),
             ),
           );
           break;
