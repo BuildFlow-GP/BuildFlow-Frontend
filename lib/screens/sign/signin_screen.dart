@@ -41,7 +41,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(bottom: 20),
-                      child: Image.asset('assets/logo.png', height: 80),
+                      child: Image.asset('assets/logoo.png', height: 80),
                     ),
                     const Text(
                       'Sign In',

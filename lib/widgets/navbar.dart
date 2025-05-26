@@ -1,14 +1,10 @@
+// import 'dart:convert';
 
-import 'dart:convert';
-
-
+// import 'package:buildflow_frontend/screens/sign/signin_screen.dart';
+import 'package:buildflow_frontend/services/session.dart';
 import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:buildflow_frontend/widgets/drawer_wrapper.dart';
-import '../screens/profiles/user_profile.dart';
-import '../screens/profiles/company_profile.dart';
-import '../screens/profiles/office_profile.dart';
-import '../services/session.dart'; // تأكد من مسار ملف السيشن
 
 class Navbar extends StatelessWidget {
   const Navbar({super.key});
@@ -20,6 +16,8 @@ class Navbar extends StatelessWidget {
     {'label': 'Categories', 'icon': Icons.category},
     {'label': 'Logout', 'icon': Icons.logout},
   ];
+
+  BuildContext? get context => null;
 
   @override
   Widget build(BuildContext context) {
@@ -195,7 +193,7 @@ void _navigateToProfile() async {
     print('Navigating to home');
   }
 
-  void _handleNavTap(String label) {
+  Future<void> _handleNavTap(String label) async {
     // Implement navigation based on label
     switch (label) {
       case 'About Us':
@@ -208,6 +206,10 @@ void _navigateToProfile() async {
         print('Navigating to Categories');
         break;
       case 'Logout':
+        // Implement logout logic
+        // For example, clear session and navigate to login screen
+        await Session.clear();
+
         print('Logging out');
         break;
     }

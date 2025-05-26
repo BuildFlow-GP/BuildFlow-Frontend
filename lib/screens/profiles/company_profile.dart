@@ -5,7 +5,11 @@ import '../../services/Profiles/company_profile_service.dart';
 
 class CompanyProfileScreen extends StatefulWidget {
   final bool isOwner;
-  const CompanyProfileScreen({required this.isOwner, super.key});
+  const CompanyProfileScreen({
+    required this.isOwner,
+    super.key,
+    required int companyId,
+  });
 
   @override
   State<CompanyProfileScreen> createState() => _CompanyProfileScreenState();

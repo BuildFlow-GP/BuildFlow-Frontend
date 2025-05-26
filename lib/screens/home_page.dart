@@ -1,17 +1,26 @@
+import 'dart:convert';
+
+import 'profiles/company_profile.dart';
+import 'ReadonlyProfiles/office_readonly_profile.dart';
+import 'ReadonlyProfiles/company_readonly_profile.dart';
+import 'profiles/user_profile.dart';
+import '../services/session.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // ما زلتِ تستخدمين Get للتنقل
 import '../widgets/about_section.dart';
 import '../widgets/contact_us.dart';
 import 'Design/type_of_project.dart'; // للتنقل
+import '../widgets/navbar.dart';
 
 // استيراد المودلز والسيرفس والكروت الجديدة
 import '../models/office_model.dart';
 import '../models/company_model.dart';
 import '../models/project_model.dart';
-import '../services/suggestion_service.dart'; // تأكدي من المسار الصحيح
-import '../widgets/suggestions/office_suggestion_card.dart'; // تأكدي من المسار الصحيح
-import '../widgets/suggestions/company_suggestion_card.dart'; // تأكدي من المسار الصحيح
-import '../widgets/suggestions/project_suggestion_card.dart'; // تأكدي من المسار الصحيح
+import '../services/suggestion_service.dart';
+import '../widgets/suggestions/office_suggestion_card.dart';
+import '../widgets/suggestions/company_suggestion_card.dart';
+import '../widgets/suggestions/project_suggestion_card.dart';
+import 'search.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -172,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch, // لجعل الأقسام تمتد
           children: [
-            // Navbar(onLogoutTap: _logout), // إذا كان لديك Navbar
+            Navbar(), // إذا كان لديك Navbar
             const AboutSection(), // قسم "عنا"
             // أزرار الإجراءات الرئيسية
             Padding(
@@ -194,6 +203,34 @@ class _HomeScreenState extends State<HomeScreen> {
                       "Start New Project",
                       style: TextStyle(fontSize: 16),
                     ),
+                  ),
+
+                  ElevatedButton(
+                    onPressed: () {
+                      _navigateToProfile();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text(
+                      "Profile",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Get.to(() => const SearchScreen());
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text("Search", style: TextStyle(fontSize: 16)),
                   ),
                   const SizedBox(width: 16),
                   OutlinedButton(
@@ -230,7 +267,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   (office) => OfficeSuggestionCard(
                     office: office,
                     onTap: () {
-                      // TODO: Navigate to Office Profile Page with office.id
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => OfficeProfileScreen(
+                                officeId: office.id,
+                                isOwner: false,
+                              ),
+                        ),
+                      );
+
                       print(
                         'Tapped on Office: ${office.name} (ID: ${office.id})',
                       );
@@ -259,6 +306,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   (company) => CompanySuggestionCard(
                     company: company,
                     onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => CompanyrProfileScreen(
+                                companyId: company.id,
+                                isOwner: false,
+                              ),
+                        ),
+                      );
                       // TODO: Navigate to Company Profile Page with company.id
                       print(
                         'Tapped on Company: ${company.name} (ID: ${company.id})',
@@ -313,5 +370,74 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  void _navigateToProfile() async {
+    final token = await Session.getToken();
+
+    if (token == null) {
+      debugPrint("No token found");
+      return;
+    }
+
+    try {
+      // Parse JWT payload
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        debugPrint("Invalid token format");
+        return;
+      }
+
+      final payload = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
+      final data = json.decode(payload);
+
+      final userType =
+          data['userType']?.toString(); // ✅ استخدم اسم الحقل الصحيح من الباك
+      final int id = data['id'];
+
+      // تحقق إذا الويجت مازال mounted قبل استخدام context
+      if (!mounted) return;
+
+      if (userType == null) {
+        debugPrint('Token data is incomplete: type or id is null');
+        return;
+      }
+
+      switch (userType.toLowerCase()) {
+        case 'individual':
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const UserProfileScreen(isOwner: true),
+            ),
+          );
+          break;
+        case 'company':
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) =>
+                      CompanyProfileScreen(isOwner: true, companyId: id),
+            ),
+          );
+          break;
+        case 'office':
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => OfficeProfileScreen(isOwner: true, officeId: id),
+            ),
+          );
+          break;
+        default:
+          debugPrint("Unknown userType: $userType");
+      }
+    } catch (e) {
+      debugPrint("Error parsing token: $e");
+    }
   }
 }
