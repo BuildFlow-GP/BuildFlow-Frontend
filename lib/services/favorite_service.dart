@@ -10,7 +10,7 @@ import '../services/session.dart'; // للتوكن
 
 import 'ReadonlyProfiles/office_readonly.dart'; // أو اسم السيرفس الصحيح
 import 'ReadonlyProfiles/company_readonly.dart';
-import 'my_project_list.dart';
+import 'project_service.dart';
 
 class FavoriteService {
   final String _baseUrl = 'http://localhost:5000/api';

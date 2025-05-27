@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import '../services/my_project_list.dart';
+import '../services/project_service.dart';
 
 import '../models/userprojects/project_simplified_model.dart';
 
 import '../widgets/my_project_card.dart';
+import 'ReadonlyProfiles/project_readonly.dart';
 
 // import 'project_details_screen.dart';
 class MyProjectsScreen extends StatefulWidget {
@@ -72,17 +73,18 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                   project:
                       project, //  MyProjectCard يجب أن يتوقع نفس نوع ProjectModel
                   onTap: () {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (context) =>
-                    //         ProjectDetailsScreen(projectId: project.id),
-                    //   ),
-                    // ).then((value) {
-                    //   if (value == true) {
-                    //     _refreshProjects();
-                    //   }
-                    // });
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                ProjectDetailsScreen(projectId: project.id),
+                      ),
+                    ).then((value) {
+                      if (value == true) {
+                        _refreshProjects();
+                      }
+                    });
                     print("Tapped on project: ${project.name}");
                   },
                 );

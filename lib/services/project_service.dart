@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/userprojects/project_simplified_model.dart';
 import '../services/session.dart';
 import '../utils/Constants.dart';
+import '../models/project_readonly_model.dart'; // تأكدي من أن المسار صحيح لملف ProjectModel
 
 class ProjectService {
   final String _baseUrl = Constants.baseUrl;
@@ -82,7 +83,7 @@ class ProjectService {
   }
 
   // (2) دالة لجلب تفاصيل مشروع واحد (هذه التي كانت ناقصة)
-  Future<ProjectModel> getProjectDetails(int projectId) async {
+  Future<ProjectreadonlyModel> getProjectDetails(int projectId) async {
     final token =
         await Session.getToken(); // التوكن قد يكون اختيارياً هنا إذا كانت تفاصيل المشروع عامة
     final response = await http.get(
@@ -97,7 +98,7 @@ class ProjectService {
     );
 
     if (response.statusCode == 200) {
-      return ProjectModel.fromJson(
+      return ProjectreadonlyModel.fromJson(
         jsonDecode(response.body) as Map<String, dynamic>,
       );
     } else if (response.statusCode == 404) {
