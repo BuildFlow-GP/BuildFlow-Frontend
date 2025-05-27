@@ -4,9 +4,9 @@ import '../services/favorite_service.dart';
 import '../models/fav/userfav_model.dart';
 
 // استيراد المودلز الفعلية OfficeModel, CompanyModel, ProjectModel
-import '../models/office_model.dart';
-import '../models/company_model.dart';
-import '../models/project_model.dart';
+import '../models/Basic/office_model.dart';
+import '../models/Basic/company_model.dart';
+import '../models/Basic/project_model.dart';
 
 //import 'profiles/project_details_screen.dart'; // أو اسم شاشة تفاصيل المشروع
 import '../screens/ReadonlyProfiles/office_readonly_profile.dart';

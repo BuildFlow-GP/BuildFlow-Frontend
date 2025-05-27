@@ -1,7 +1,7 @@
 // screens/profiles/user_profile_screen.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // لتنسيق التاريخ
-import '../../models/user_model.dart';
+import '../../models/Basic/user_model.dart';
 import '../../services/ReadonlyProfiles/user_readonly.dart';
 
 class UserrProfileScreen extends StatefulWidget {

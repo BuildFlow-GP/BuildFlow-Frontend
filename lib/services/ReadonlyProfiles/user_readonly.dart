@@ -1,12 +1,13 @@
 // services/user_profile_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../models/user_model.dart'; // تأكدي من المسار الصحيح
+import '../../models/Basic/user_model.dart'; // تأكدي من المسار الصحيح
+import '../../utils/constants.dart'; // تأكدي من وجود هذا الملف في المسار الصحيح
 
 class UserProfileService {
   // استخدمي نفس الـ baseUrl من الـ backend
   // وافترض أن مسار المستخدمين هو /api/users
-  static const String _baseUrl = 'http://localhost:5000/api/users';
+  static const String _baseUrl = '${Constants.baseUrl}/users';
 
   // لجلب تفاصيل مستخدم معين (للعرض العام)
   Future<UserModel> getUserDetails(int userId) async {

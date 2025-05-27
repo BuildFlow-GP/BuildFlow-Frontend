@@ -19,9 +19,9 @@ import '../widgets/contact_us.dart';
 import 'Design/type_of_project.dart';
 import '../widgets/navbar.dart';
 
-import '../models/office_model.dart';
-import '../models/company_model.dart';
-import '../models/project_model.dart';
+import '../models/Basic/office_model.dart';
+import '../models/Basic/company_model.dart';
+import '../models/Basic/project_model.dart';
 import '../services/suggestion_service.dart';
 import '../widgets/suggestions/office_suggestion_card.dart';
 import '../widgets/suggestions/company_suggestion_card.dart';

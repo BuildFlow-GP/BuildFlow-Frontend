@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/office_model.dart'; // تأكدي من المسار الصحيح
+import '../../models/Basic/office_model.dart'; // تأكدي من المسار الصحيح
 
 class OfficeSuggestionCard extends StatelessWidget {
   // تم تحويله إلى StatelessWidget مبدئياً

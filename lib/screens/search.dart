@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import '../../models/user_model.dart';
-import '../../models/office_model.dart';
-import '../../models/company_model.dart';
+import '../models/Basic/user_model.dart';
+import '../models/Basic/office_model.dart';
+import '../models/Basic/company_model.dart';
 import '../services/search_service.dart';
 import 'ReadonlyProfiles/company_readonly_profile.dart';
 import 'ReadonlyProfiles/office_readonly_profile.dart';

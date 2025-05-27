@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/project_model.dart'; // أو ProjectSuggestionModel
+import '../../models/Basic/project_model.dart'; // أو ProjectSuggestionModel
 
 class ProjectSuggestionCard extends StatelessWidget {
   // تم تحويله إلى StatelessWidget مبدئياً

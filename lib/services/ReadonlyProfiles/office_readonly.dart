@@ -1,16 +1,17 @@
 // services/office_profile_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../models/office_model.dart';
-import '../../models/project_model.dart';
-import '../../models/review_model.dart'; // استخدام ReviewModel الخاص بكِ
+import '../../models/Basic/office_model.dart';
+import '../../models/Basic/project_model.dart';
+import '../../models/Basic/review_model.dart'; // استخدام ReviewModel الخاص بكِ
 import '../session.dart';
+import '../../utils/constants.dart'; // تأكدي من وجود هذا الملف في المسار الصحيح
 
 class OfficeProfileService {
-  static const String _baseUrl = 'http://localhost:5000/api';
+  static const String _baseUrl = '${Constants.baseUrl}/offices';
 
   Future<OfficeModel> getOfficeDetails(int officeId) async {
-    final response = await http.get(Uri.parse('$_baseUrl/offices/$officeId'));
+    final response = await http.get(Uri.parse('$_baseUrl/$officeId'));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;

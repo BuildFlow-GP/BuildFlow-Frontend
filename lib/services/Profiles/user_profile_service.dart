@@ -1,11 +1,12 @@
 // services/user_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../utils/Constants.dart';
 import '../session.dart';
 import 'package:logger/logger.dart';
 
 class UserService {
-  static const String baseUrl = "http://localhost:5000/api/users";
+  static const String baseUrl = "${Constants.baseUrl}/users";
 
   static Future<Map<String, dynamic>?> getUserProfile() async {
     final Logger logger = Logger();

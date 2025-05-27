@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/fav/userfav_model.dart';
 import '../services/session.dart'; // للتوكن
-//import '../utils/constants.dart';
+import '../utils/constants.dart';
 
 // استيراد المودلز الخاصة بالعناصر المفصلة (OfficeModel, CompanyModel, ProjectModel)
 // واستيراد السيرفسز الخاصة بها (OfficeService, CompanyService, ProjectService)
@@ -13,7 +13,7 @@ import 'ReadonlyProfiles/company_readonly.dart';
 import 'project_service.dart';
 
 class FavoriteService {
-  final String _baseUrl = 'http://localhost:5000/api';
+  final String _baseUrl = Constants.baseUrl;
 
   // جلب قائمة المفضلة (الـ IDs والـ Types)
   Future<List<FavoriteItemModel>> getFavorites() async {

@@ -1,8 +1,8 @@
-import '../project_model.dart';
+import '../Basic/project_model.dart';
 import 'userfav_model.dart';
 
-import '../office_model.dart';
-import '../company_model.dart';
+import '../Basic/office_model.dart';
+import '../Basic/company_model.dart';
 import '../project_readonly_model.dart';
 
 class DetailedFavoriteItem {

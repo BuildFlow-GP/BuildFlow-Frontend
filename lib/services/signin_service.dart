@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import '../services/session.dart';
+import '../../utils/constants.dart'; // تأكدي من وجود هذا الملف في المسار الصحيح
 
 class AuthService {
-  final String baseUrl = 'http://localhost:5000/api/auth';
+  final String baseUrl = '${Constants.baseUrl}/auth';
   final Logger logger = Logger();
 
   Future<Map<String, dynamic>> signIn(String email, String password) async {

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:logger/logger.dart';
-import '../../services/Profiles/office_profile_service.dart';
-import '../../services/review_service.dart';
+import '../../services/Profiles/office/office_profile_service.dart';
+import '../../services/Profiles/office/review_service.dart';
 import '../../services/session.dart';
 
 class OfficeProfileScreen extends StatefulWidget {

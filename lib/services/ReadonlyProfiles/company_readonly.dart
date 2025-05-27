@@ -1,14 +1,14 @@
 // services/company_profile_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../models/company_model.dart';
-import '../../models/project_model.dart';
-import '../../models/review_model.dart'; // استخدام ReviewModel الخاص بكِ (الذي اسمه Review)
+import '../../models/Basic/company_model.dart';
+import '../../models/Basic/project_model.dart';
+import '../../models/Basic/review_model.dart'; // استخدام ReviewModel الخاص بكِ (الذي اسمه Review)
 import '../session.dart'; // للوصول إلى التوكن
+import '../../utils/constants.dart'; // تأكدي من وجود هذا الملف في المسار الصحيح
 
 class CompanyProfileService {
-  static const String _baseUrl =
-      'http://localhost:5000/api/companies'; // تأكدي من صحة هذا المسار
+  static const String _baseUrl = '${Constants.baseUrl}/companies';
 
   Future<CompanyModel> getCompanyDetails(int companyId) async {
     final response = await http.get(Uri.parse('$_baseUrl/$companyId'));

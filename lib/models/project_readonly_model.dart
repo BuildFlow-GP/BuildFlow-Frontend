@@ -1,7 +1,7 @@
 // models/project_model.dart
-import 'user_model.dart'; // لاستخدام UserModel الكامل
-import 'office_model.dart'; // لاستخدام OfficeModel الكامل
-import 'company_model.dart'; // لاستخدام CompanyModel الكامل
+import 'Basic/user_model.dart'; // لاستخدام UserModel الكامل
+import 'Basic/office_model.dart'; // لاستخدام OfficeModel الكامل
+import 'Basic/company_model.dart'; // لاستخدام CompanyModel الكامل
 
 class ProjectreadonlyModel {
   final int id;
@@ -54,13 +54,13 @@ class ProjectreadonlyModel {
 
   factory ProjectreadonlyModel.fromJson(Map<String, dynamic> json) {
     // دالة مساعدة لتحويل النصوص إلى DateTime بأمان
-    DateTime? _parseDate(String? dateString) {
+    DateTime? parseDate(String? dateString) {
       if (dateString == null || dateString.isEmpty) return null;
       return DateTime.tryParse(dateString);
     }
 
     // دالة مساعدة لتحويل النصوص إلى double بأمان
-    double? _parseDouble(dynamic value) {
+    double? parseDouble(dynamic value) {
       if (value == null) return null;
       if (value is num) return value.toDouble();
       if (value is String) return double.tryParse(value);
@@ -74,20 +74,20 @@ class ProjectreadonlyModel {
           'Unnamed Project', // قيمة افتراضية إذا كان null
       description: json['description'] as String?,
       status: json['status'] as String? ?? 'Unknown', // قيمة افتراضية
-      budget: _parseDouble(json['budget']),
-      startDate: _parseDate(json['start_date'] as String?),
-      endDate: _parseDate(json['end_date'] as String?),
+      budget: parseDouble(json['budget']),
+      startDate: parseDate(json['start_date'] as String?),
+      endDate: parseDate(json['end_date'] as String?),
       location: json['location'] as String?,
       licenseFile: json['license_file'] as String?,
       agreementFile: json['agreement_file'] as String?,
       document2D: json['document_2d'] as String?,
       document3D: json['document_3d'] as String?,
-      landArea: _parseDouble(json['land_area']),
+      landArea: parseDouble(json['land_area']),
       plotNumber: json['plot_number'] as String?,
       basinNumber: json['basin_number'] as String?,
       landLocation: json['land_location'] as String?,
       createdAt:
-          _parseDate(json['created_at'] as String?) ??
+          parseDate(json['created_at'] as String?) ??
           DateTime.now(), // قيمة افتراضية
       userId: json['user_id'] as int?, // من جدول المشاريع نفسه
       user:
@@ -124,8 +124,9 @@ class ProjectreadonlyModel {
     data['basin_number'] = basinNumber;
     data['land_location'] = landLocation;
     // عادةً ما نرسل الـ IDs للكائنات المرتبطة بدلاً من الكائنات الكاملة
-    if (user != null)
+    if (user != null) {
       data['user_id'] = user!.id; // أو user_id مباشرة إذا كان متوفراً
+    }
     if (office != null) data['office_id'] = office!.id;
     if (company != null) data['company_id'] = company!.id;
     return data;

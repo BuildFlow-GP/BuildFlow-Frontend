@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/company_model.dart'; // تأكدي من المسار الصحيح
+import '../../models/Basic/company_model.dart'; // تأكدي من المسار الصحيح
 
 class CompanySuggestionCard extends StatelessWidget {
   // تم تحويله إلى StatelessWidget

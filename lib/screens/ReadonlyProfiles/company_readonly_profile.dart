@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:intl/intl.dart';
-import '../../models/company_model.dart';
-import '../../models/project_model.dart';
-import '../../models/review_model.dart'; // استخدام ReviewModel الخاص بكِ (الذي اسمه Review)
+import '../../models/Basic/company_model.dart';
+import '../../models/Basic/project_model.dart';
+import '../../models/Basic/review_model.dart'; // استخدام ReviewModel الخاص بكِ (الذي اسمه Review)
 import '../../services/ReadonlyProfiles/company_readonly.dart';
 import '../../services/session.dart';
 import 'project_readonly_profile.dart';
