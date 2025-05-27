@@ -80,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await Future.wait([
       _fetchSuggestions(),
       _fetchCurrentUserFavorites(),
+      // ignore: body_might_complete_normally_catch_error
     ]).catchError((e) {
       // معالجة خطأ عام إذا فشل أحد الطلبات الرئيسية
       if (mounted) {

@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // لـ DateFormat
 import '../../services/project_service.dart'; // أو اسم السيرفس الصحيح
 import '../../models/project_readonly_model.dart';
-import '../../models/office_model.dart';
-import '../../models/company_model.dart';
-import '../../models/user_model.dart';
+// import '../../models/office_model.dart';
+// import '../../models/company_model.dart';
+// import '../../models/user_model.dart';
 import '../../utils/constants.dart'; // لمسار الصور
 import '../../services/favorite_service.dart'; // لإضافة/إزالة المفضلة
 import '../../services/session.dart'; // للتحقق من التوكن
 // استيراد صفحات بروفايل المكتب والشركة للقراءة فقط (أو العادية)
-import 'office_readonly_profile.dart';
-import 'company_readonly_profile.dart';
+// import 'office_readonly_profile.dart';
+// import 'company_readonly_profile.dart';
 // import 'ReadonlyProfiles/user_readonly_profile.dart'; // إذا كان لديك
 
 class ProjectDetailsScreen extends StatefulWidget {
