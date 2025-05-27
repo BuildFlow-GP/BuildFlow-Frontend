@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../session.dart';
 import 'package:logger/logger.dart';
+import '../../utils/constants.dart';
 
 class CompanyService {
-  static const String baseUrl = 'http://localhost:5000/api/companies';
+  static const String baseUrl = '${Constants.baseUrl}/companies';
 
   static Future<Map<String, dynamic>?> fetchProfile() async {
     final Logger logger = Logger();

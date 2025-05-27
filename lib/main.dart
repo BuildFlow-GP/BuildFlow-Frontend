@@ -24,7 +24,6 @@ class MyApp extends StatelessWidget {
       title: 'BuildFlow',
       debugShowCheckedModeBanner: false,
       home: SignInScreen(),
-
       //home: TypeOfProjectPage(),
       // home: DrawerWrapper(child: const TypeOfProjectPage()),
       //home: DrawerWrapper(child: const NoPermitScreen()),

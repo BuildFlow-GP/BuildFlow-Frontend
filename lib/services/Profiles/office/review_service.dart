@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../../utils/constants.dart';
 
 class ReviewService {
-  static const String baseUrl = 'http://localhost:5000/api';
+  static const String baseUrl = Constants.baseUrl;
 
   static Future<List<dynamic>> getOfficeReviews(
     int officeId,

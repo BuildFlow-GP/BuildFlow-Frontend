@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/user_model.dart';
-import '../models/office_model.dart';
-import '../models/company_model.dart';
+import '../models/Basic/user_model.dart';
+import '../models/Basic/office_model.dart';
+import '../models/Basic/company_model.dart';
+import '../../utils/constants.dart'; // تأكدي من وجود هذا الملف في المسار الصحيح
 
 class SearchService {
-  static const String baseUrl =
-      'http://localhost:5000/api/search'; // غيّر الرابط حسب مشروعك
+  static const String baseUrl = '${Constants.baseUrl}/search';
 
   static Future<List<UserModel>> searchUsers(String query) async {
     final response = await http.get(Uri.parse('$baseUrl/user?q=$query'));

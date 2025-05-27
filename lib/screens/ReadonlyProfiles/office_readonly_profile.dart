@@ -2,15 +2,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:intl/intl.dart'; // لتنسيق التاريخ
-import '../../models/office_model.dart';
-import '../../models/project_model.dart';
-import '../../models/review_model.dart'; // استخدام ReviewModel الخاص بكِ
+import '../../models/Basic/office_model.dart';
+import '../../models/Basic/project_model.dart';
+import '../../models/Basic/review_model.dart'; // استخدام ReviewModel الخاص بكِ
 import '../../services/ReadonlyProfiles/office_readonly.dart';
 import '../../services/session.dart';
+import 'project_readonly_profile.dart';
 // افترض أن UserModel موجود في المسار الصحيح
 // import '../../models/user_model.dart';
 
-class OfficeProfileScreen extends StatefulWidget {
+class OfficerProfileScreen extends StatefulWidget {
   final int officeId;
   // isOwner يمكن تحديده ديناميكياً داخل الشاشة بناءً على Session.getUserId()
   // ومقارنته مع office.ownerId (إذا كان موجوداً في OfficeModel)
@@ -18,17 +19,17 @@ class OfficeProfileScreen extends StatefulWidget {
   // سأفترض حالياً أننا نمرره، ولكن يمكن تحسين هذا.
   final bool isOwner;
 
-  const OfficeProfileScreen({
+  const OfficerProfileScreen({
     super.key,
     required this.officeId,
     this.isOwner = false,
   });
 
   @override
-  _OfficeProfileScreenState createState() => _OfficeProfileScreenState();
+  _OfficerProfileScreenState createState() => _OfficerProfileScreenState();
 }
 
-class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
+class _OfficerProfileScreenState extends State<OfficerProfileScreen> {
   final OfficeProfileService _profileService = OfficeProfileService();
   OfficeModel? _office;
   List<ProjectModel> _projects = [];
@@ -485,7 +486,15 @@ class _OfficeProfileScreenState extends State<OfficeProfileScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Tapped on ${project.name}')),
                         );
-                        // TODO: Navigate to project details screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => ProjectreadDetailsScreen(
+                                  projectId: project.id,
+                                ),
+                          ),
+                        );
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),

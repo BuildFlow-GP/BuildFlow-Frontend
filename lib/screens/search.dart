@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import '../../models/user_model.dart';
-import '../../models/office_model.dart';
-import '../../models/company_model.dart';
+import '../models/Basic/user_model.dart';
+import '../models/Basic/office_model.dart';
+import '../models/Basic/company_model.dart';
 import '../services/search_service.dart';
 import 'ReadonlyProfiles/company_readonly_profile.dart';
 import 'ReadonlyProfiles/office_readonly_profile.dart';
+import 'ReadonlyProfiles/user_readonly_profile.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -76,6 +77,13 @@ class _SearchScreenState extends State<SearchScreen>
       ),
       title: Text(user.name),
       onTap: () {
+        // مثال على الانتقال
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => UserrProfileScreen(userId: user.id),
+          ),
+        );
         logger.i('Navigate to User ID: ${user.id}');
       },
     );
@@ -98,7 +106,7 @@ class _SearchScreenState extends State<SearchScreen>
             MaterialPageRoute(
               builder:
                   (context) =>
-                      OfficeProfileScreen(officeId: office.id, isOwner: false),
+                      OfficerProfileScreen(officeId: office.id, isOwner: false),
             ),
           );
 
