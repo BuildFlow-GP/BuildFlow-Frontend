@@ -1,29 +1,57 @@
 import 'package:flutter/material.dart';
-import '../../models/office_model.dart'; // تأكدي من المسار الصحيح (أو OfficeSuggestionModel)
+import '../../models/office_model.dart'; // تأكدي من المسار الصحيح
 
-class OfficeSuggestionCard extends StatefulWidget {
-  final OfficeModel office; // أو OfficeSuggestionModel
+class OfficeSuggestionCard extends StatelessWidget {
+  // تم تحويله إلى StatelessWidget مبدئياً
+  final OfficeModel office;
+  final bool isFavorite; // مطلوب
   final VoidCallback? onFavoriteToggle;
   final VoidCallback? onTap;
 
   const OfficeSuggestionCard({
     super.key,
     required this.office,
+    required this.isFavorite, // أصبح مطلوباً
     this.onFavoriteToggle,
     this.onTap,
   });
 
   @override
-  State<OfficeSuggestionCard> createState() => _OfficeSuggestionCardState();
+  Widget build(BuildContext context) {
+    // للاحتفاظ بتأثيرات الـ hover، سنستخدم نفس النمط الذي اتبعناه مع CompanySuggestionCard
+    return _OfficeSuggestionCardContent(
+      office: office,
+      isFavorite: isFavorite,
+      onFavoriteToggle: onFavoriteToggle,
+      onTap: onTap,
+    );
+  }
 }
 
-class _OfficeSuggestionCardState extends State<OfficeSuggestionCard> {
-  bool _isFavorite = false;
-  bool _isHovered = false; // لتتبع حالة التمرير
+class _OfficeSuggestionCardContent extends StatefulWidget {
+  final OfficeModel office;
+  final bool isFavorite;
+  final VoidCallback? onFavoriteToggle;
+  final VoidCallback? onTap;
+
+  const _OfficeSuggestionCardContent({
+    required this.office,
+    required this.isFavorite,
+    this.onFavoriteToggle,
+    this.onTap,
+  });
+
+  @override
+  State<_OfficeSuggestionCardContent> createState() =>
+      _OfficeSuggestionCardContentState();
+}
+
+class _OfficeSuggestionCardContentState
+    extends State<_OfficeSuggestionCardContent> {
+  bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    // القيم التي ستتغير عند التمرير
     final double scale = _isHovered ? 1.03 : 1.0;
     final double elevation = _isHovered ? 8.0 : 2.0;
     final Offset offset = _isHovered ? const Offset(0, -5) : Offset.zero;
@@ -60,7 +88,7 @@ class _OfficeSuggestionCardState extends State<OfficeSuggestionCard> {
           onTap: widget.onTap,
           borderRadius: BorderRadius.circular(12.0),
           child: Card(
-            elevation: 0, // الظل يُدار بواسطة AnimatedContainer
+            elevation: 0,
             margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12.0),
@@ -82,24 +110,24 @@ class _OfficeSuggestionCardState extends State<OfficeSuggestionCard> {
                             widget.office.profileImage != null &&
                                     widget.office.profileImage!.isNotEmpty
                                 ? Image.network(
-                                  widget.office.profileImage!,
+                                  widget
+                                      .office
+                                      .profileImage!, // افترض أن هذا URL كامل
                                   height: 120,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      height: 120,
-                                      color: Colors.grey[300],
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons
-                                              .business, // أيقونة مناسبة للمكتب
-                                          size: 40,
-                                          color: Colors.grey,
+                                  errorBuilder:
+                                      (context, error, stackTrace) => Container(
+                                        height: 120,
+                                        color: Colors.grey[300],
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.business,
+                                            size: 40,
+                                            color: Colors.grey,
+                                          ),
                                         ),
                                       ),
-                                    );
-                                  },
                                   loadingBuilder: (
                                     BuildContext context,
                                     Widget child,
@@ -145,27 +173,23 @@ class _OfficeSuggestionCardState extends State<OfficeSuggestionCard> {
                             borderRadius: BorderRadius.circular(20),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(20),
-                              onTap: () {
-                                setState(() {
-                                  _isFavorite = !_isFavorite;
-                                });
-                                if (widget.onFavoriteToggle != null) {
-                                  widget.onFavoriteToggle!();
-                                }
-                              },
+                              onTap:
+                                  widget
+                                      .onFavoriteToggle, // استدعاء الدالة الممررة مباشرة
                               child: Padding(
                                 padding: const EdgeInsets.all(6.0),
                                 child: Icon(
-                                  _isFavorite
+                                  widget.isFavorite
                                       ? Icons.favorite
-                                      : Icons.favorite_border,
+                                      : Icons
+                                          .favorite_border, // استخدام widget.isFavorite
                                   color:
-                                      _isFavorite
+                                      widget.isFavorite
                                           ? Colors.redAccent
                                           : Colors.white,
                                   size: 26,
                                   shadows:
-                                      _isHovered || !_isFavorite
+                                      _isHovered || !widget.isFavorite
                                           ? [
                                             const Shadow(
                                               blurRadius: 3.0,
@@ -196,7 +220,6 @@ class _OfficeSuggestionCardState extends State<OfficeSuggestionCard> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4.0),
-                        // التعامل مع الموقع إذا كان null
                         if (widget.office.location != null &&
                             widget.office.location!.isNotEmpty)
                           Row(
@@ -209,7 +232,7 @@ class _OfficeSuggestionCardState extends State<OfficeSuggestionCard> {
                               const SizedBox(width: 4.0),
                               Expanded(
                                 child: Text(
-                                  widget.office.location!,
+                                  widget.office.location ?? '',
                                   style: TextStyle(
                                     fontSize: 12.0,
                                     color: Colors.grey[700],
@@ -224,7 +247,11 @@ class _OfficeSuggestionCardState extends State<OfficeSuggestionCard> {
                         if (widget.office.rating != null)
                           Row(
                             children: <Widget>[
-                              Icon(Icons.star, color: Colors.amber, size: 16.0),
+                              const Icon(
+                                Icons.star,
+                                color: Colors.amber,
+                                size: 16.0,
+                              ),
                               const SizedBox(width: 4.0),
                               Text(
                                 widget.office.rating!.toStringAsFixed(1),
