@@ -1,11 +1,11 @@
 import 'dart:convert';
 
 import '../services/favorite_service.dart'; // تمت الإضافة
-import '../models/fav/detailed_fav_model.dart';
-import '../models/fav/userfav_model.dart'; // تمت الإضافة (افترض أن هذا هو اسم ملف الموديل)
-import 'favorite.dart'; // افترض أن هذه هي شاشة المفضلة
+//import '../models/fav/detailed_fav_model.dart';
+//import '../models/fav/userfav_model.dart'; // تمت الإضافة (افترض أن هذا هو اسم ملف الموديل)
+import 'favorite.dart';
+import 'my_projects.dart';
 import 'profiles/company_profile.dart';
-// استيراد صفحات البروفايل للقراءة فقط (أو صفحات البروفايل العادية إذا كانت تتعامل مع isOwner بشكل جيد)
 import 'ReadonlyProfiles/office_readonly_profile.dart';
 import 'ReadonlyProfiles/company_readonly_profile.dart';
 // import 'ReadonlyProfiles/project_readonly_profile.dart'; // إذا كان لديك
@@ -378,16 +378,51 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     child: const Text("Favorites"),
                   ),
+
+                  // ... (الكود السابق للأزرار الأخرى) ...
                   OutlinedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Previous Projects page coming soon!"),
+                    onPressed: () async {
+                      //  <--  (1) جعل الدالة async
+                      //  (2) التحقق من التوكن قبل الانتقال
+                      final token = await Session.getToken();
+                      if (token == null || token.isEmpty) {
+                        if (mounted) {
+                          //  (3) التأكد أن الويدجت ما زال mounted
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please log in to view your projects.',
+                              ),
+                            ),
+                          );
+                          // يمكنكِ توجيه المستخدم لصفحة تسجيل الدخول إذا أردتِ
+                          // Get.to(() => SignInScreen());
+                        }
+                        return; // الخروج من الدالة إذا لم يكن هناك توكن
+                      }
+
+                      // (4) الانتقال إلى شاشة MyProjectsScreen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MyProjectsScreen(),
                         ),
                       );
                     },
-                    child: const Text("My Previous Projects"),
+                    style: OutlinedButton.styleFrom(
+                      // هذا الجزء يبقى كما هو إذا كان موجوداً
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text(
+                      "My Previous Projects",
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ),
+
+                  // ... (الكود اللاحق) ...,
                 ],
               ),
             ),

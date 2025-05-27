@@ -10,6 +10,7 @@ import '../services/session.dart'; // للتوكن
 
 import 'ReadonlyProfiles/office_readonly.dart'; // أو اسم السيرفس الصحيح
 import 'ReadonlyProfiles/company_readonly.dart';
+import 'my_project_list.dart';
 
 class FavoriteService {
   final String _baseUrl = 'http://localhost:5000/api';
@@ -122,8 +123,12 @@ class FavoriteService {
         // افترض أن لديك CompanyService.getCompany(id, token: token)
         return CompanyProfileService().getCompanyDetails(itemId);
       case 'project':
-      // افترض أن لديك ProjectService.getProject(id, token: token)
-      //   return await ProjectService().getProject(itemId, token: token);
+        // افترض أن لديك ProjectService.getProject(id, token: token)
+        //   return await ProjectService().getProject(itemId, token: token);
+        return await ProjectService().getProjectDetails(
+          itemId,
+        ); //  استدعاء الدالة التي أضفناها
+
       default:
         throw Exception('Unknown item type: $itemType');
     }
