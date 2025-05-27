@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import '../../../utils/constants.dart';
 
 class OfficeService {
-  static const String baseUrl = 'http://localhost:5000/api';
+  static const String baseUrl = Constants.baseUrl;
 
   static Future<Map<String, dynamic>> getOffice(int id, String? token) async {
     final response = await http.get(

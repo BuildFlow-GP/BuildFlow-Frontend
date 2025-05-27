@@ -8,10 +8,10 @@ import '../session.dart';
 import '../../utils/constants.dart'; // تأكدي من وجود هذا الملف في المسار الصحيح
 
 class OfficeProfileService {
-  static const String _baseUrl = '${Constants.baseUrl}/offices';
+  static const String _baseUrl = Constants.baseUrl;
 
   Future<OfficeModel> getOfficeDetails(int officeId) async {
-    final response = await http.get(Uri.parse('$_baseUrl/$officeId'));
+    final response = await http.get(Uri.parse('$_baseUrl/offices/$officeId'));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;

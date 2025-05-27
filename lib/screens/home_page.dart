@@ -10,6 +10,7 @@ import 'profiles/company_profile.dart';
 import 'ReadonlyProfiles/office_readonly_profile.dart';
 import 'ReadonlyProfiles/company_readonly_profile.dart';
 // import 'ReadonlyProfiles/project_readonly_profile.dart'; // إذا كان لديك
+import 'profiles/office_profile.dart';
 import 'profiles/user_profile.dart'; // لبروفايل المستخدم
 import '../services/session.dart';
 import 'package:flutter/material.dart';
@@ -604,7 +605,7 @@ class _HomeScreenState extends State<HomeScreen> {
           break;
         case 'office':
           // تأكدي أن OfficerProfileScreen (أو OfficeProfileScreen) تقبل isOwner و officeId
-          profilePage = OfficerProfileScreen(isOwner: true, officeId: id);
+          profilePage = OfficeProfileScreen(isOwner: true, officeId: id);
           break;
         default:
           debugPrint("Unknown userType: $userType");
