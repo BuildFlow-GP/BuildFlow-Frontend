@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'favorite.dart';
 import 'profiles/company_profile.dart';
 import 'ReadonlyProfiles/office_readonly_profile.dart';
 import 'ReadonlyProfiles/company_readonly_profile.dart';
@@ -231,6 +232,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     child: const Text("Search", style: TextStyle(fontSize: 16)),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Get.to(() => const FavoritesScreen());
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text(
+                      "Favorites",
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   OutlinedButton(
