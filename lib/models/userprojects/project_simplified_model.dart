@@ -2,7 +2,7 @@
 import 'office_simplified_model.dart';
 import 'company_simplified_model.dart';
 
-class ProjectModel {
+class ProjectsimplifiedModel {
   final int id;
   final String name;
   final String? description; // وصف كامل، قد لا يعرض كاملاً في الكرت
@@ -27,7 +27,7 @@ class ProjectModel {
   final SimplifiedOfficeModel? office; // مكتب مبسط
   final SimplifiedCompanyModel? company; // شركة مبسطة
 
-  ProjectModel({
+  ProjectsimplifiedModel({
     required this.id,
     required this.name,
     this.description,
@@ -52,8 +52,8 @@ class ProjectModel {
     this.company,
   });
 
-  factory ProjectModel.fromJson(Map<String, dynamic> json) {
-    return ProjectModel(
+  factory ProjectsimplifiedModel.fromJson(Map<String, dynamic> json) {
+    return ProjectsimplifiedModel(
       id: json['id'] as int,
       name: json['name'] as String,
       description: json['description'] as String?,

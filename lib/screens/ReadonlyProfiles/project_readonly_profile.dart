@@ -14,16 +14,17 @@ import '../../services/session.dart'; // للتحقق من التوكن
 // import 'company_readonly_profile.dart';
 // import 'ReadonlyProfiles/user_readonly_profile.dart'; // إذا كان لديك
 
-class ProjectDetailsScreen extends StatefulWidget {
+class ProjectreadDetailsScreen extends StatefulWidget {
   final int projectId;
 
-  const ProjectDetailsScreen({super.key, required this.projectId});
+  const ProjectreadDetailsScreen({super.key, required this.projectId});
 
   @override
-  State<ProjectDetailsScreen> createState() => _ProjectDetailsScreenState();
+  State<ProjectreadDetailsScreen> createState() =>
+      _ProjectreadDetailsScreenState();
 }
 
-class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
+class _ProjectreadDetailsScreenState extends State<ProjectreadDetailsScreen> {
   final ProjectService _projectService = ProjectService();
   final FavoriteService _favoriteService = FavoriteService();
   Future<ProjectreadonlyModel>? _projectDetailsFuture;

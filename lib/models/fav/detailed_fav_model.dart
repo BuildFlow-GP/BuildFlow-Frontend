@@ -1,33 +1,41 @@
-// view_models/detailed_favorite_item.dart (كمثال لاسم المجلد)
+import '../project_model.dart';
 import 'userfav_model.dart';
-// استيراد OfficeModel, CompanyModel, ProjectModel
+
 import '../office_model.dart';
 import '../company_model.dart';
-import '../project_model.dart';
+import '../project_readonly_model.dart';
 
 class DetailedFavoriteItem {
-  final FavoriteItemModel favoriteInfo; // المعلومات الأساسية للمفضلة
-  final dynamic itemDetail; // سيكون OfficeModel, CompanyModel, أو ProjectModel
+  final FavoriteItemModel favoriteInfo;
+  final dynamic itemDetail;
 
   DetailedFavoriteItem({required this.favoriteInfo, required this.itemDetail});
 
-  // يمكنك إضافة getters للوصول السهل للبيانات المشتركة
   String get itemName {
-    if (itemDetail is OfficeModel) return (itemDetail as OfficeModel).name;
-    if (itemDetail is CompanyModel) return (itemDetail as CompanyModel).name;
-    if (itemDetail is ProjectModel) return (itemDetail as ProjectModel).name;
+    if (itemDetail is OfficeModel) {
+      return (itemDetail as OfficeModel).name;
+    } else if (itemDetail is CompanyModel) {
+      return (itemDetail as CompanyModel).name;
+    } else if (itemDetail is ProjectreadonlyModel) {
+      return (itemDetail as ProjectreadonlyModel).name;
+    } else if (itemDetail is ProjectModel) {
+      return (itemDetail as ProjectModel).name;
+    }
     return 'Unknown Item';
   }
 
   String? get itemImage {
-    // افترض أن لديهم profileImage أو حقل مشابه
-    if (itemDetail is OfficeModel)
+    if (itemDetail is OfficeModel) {
       return (itemDetail as OfficeModel).profileImage;
-    if (itemDetail is CompanyModel)
+    }
+    if (itemDetail is CompanyModel) {
       return (itemDetail as CompanyModel).profileImage;
-    // ProjectModel قد لا يحتوي على صورة رئيسية بنفس الطريقة
+    }
+
     return null;
   }
 
-  // ... أي getters أخرى مشتركة أو خاصة بالنوع
+  String get itemType {
+    return favoriteInfo.itemType;
+  }
 }

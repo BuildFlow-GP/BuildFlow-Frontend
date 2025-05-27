@@ -11,7 +11,7 @@ import '../models/project_model.dart';
 //import 'profiles/project_details_screen.dart'; // أو اسم شاشة تفاصيل المشروع
 import '../screens/ReadonlyProfiles/office_readonly_profile.dart';
 import '../screens/ReadonlyProfiles/company_readonly_profile.dart';
-//import '../screens/ReadonlyProfiles/project_readonly_profile.dart';
+import '../screens/ReadonlyProfiles/project_readonly_profile.dart';
 // استيراد DetailedFavoriteItem ViewModel
 import '../models/fav/detailed_fav_model.dart';
 
@@ -144,11 +144,15 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         ),
       );
     } else if (detailedItem.itemDetail is ProjectModel) {
-      // افترض أن لديك شاشة لتفاصيل المشروع
-      // Navigator.push(
-      //   context,
-      //   MaterialPageRoute(builder: (context) => ProjectDetailsScreen(projectId: detailedItem.favoriteInfo.itemId)),
-      // );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => ProjectreadDetailsScreen(
+                projectId: detailedItem.favoriteInfo.itemId,
+              ),
+        ),
+      );
       print("Navigate to project details: ${detailedItem.favoriteInfo.itemId}");
     }
   }
@@ -196,8 +200,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       itemCount: _detailedFavorites.length,
       itemBuilder: (context, index) {
         final detailedItem = _detailedFavorites[index];
-        // هنا ستبنين الكرت لكل عنصر مفضل
-        // يمكنكِ إنشاء ويدجت كرت منفصلة (مثلاً FavoriteItemCard)
         return _buildFavoriteCard(detailedItem);
       },
     );
@@ -249,10 +251,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         leading: CircleAvatar(
           backgroundImage: imageProvider,
           radius: 25,
-          onBackgroundImageError: (_, __) {
-            // للتعامل مع أخطاء تحميل الصورة
-            // يمكنكِ هنا استخدام صورة placeholder مختلفة إذا فشل التحميل
-          },
+          onBackgroundImageError: (_, __) {},
           child:
               // ignore: unnecessary_null_comparison
               imageProvider == null

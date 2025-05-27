@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../services/favorite_service.dart'; // تمت الإضافة
 //import '../models/fav/detailed_fav_model.dart';
 //import '../models/fav/userfav_model.dart'; // تمت الإضافة (افترض أن هذا هو اسم ملف الموديل)
+import 'ReadonlyProfiles/project_readonly_profile.dart';
 import 'favorite.dart';
 import 'my_projects.dart';
 import 'profiles/company_profile.dart';
@@ -525,7 +526,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   project: project,
                   isFavorite: isCurrentlyFavorite, // تمرير الحالة
                   onTap: () {
-                    // TODO: Navigate to Project Details Page (Read-only or appropriate)
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                ProjectreadDetailsScreen(projectId: project.id),
+                      ),
+                    );
                     print(
                       'Tapped on Project: ${project.name} (ID: ${project.id})',
                     );

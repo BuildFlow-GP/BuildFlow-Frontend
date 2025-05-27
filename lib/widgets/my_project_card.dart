@@ -5,7 +5,7 @@ import '../models/userprojects/project_simplified_model.dart';
 import '../utils/constants.dart'; // لمسار الصور (إذا لزم الأمر)
 
 class MyProjectCard extends StatelessWidget {
-  final ProjectModel project;
+  final ProjectsimplifiedModel project;
   final VoidCallback? onTap;
 
   const MyProjectCard({super.key, required this.project, this.onTap});

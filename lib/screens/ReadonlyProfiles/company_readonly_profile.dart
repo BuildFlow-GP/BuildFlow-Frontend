@@ -7,6 +7,7 @@ import '../../models/project_model.dart';
 import '../../models/review_model.dart'; // استخدام ReviewModel الخاص بكِ (الذي اسمه Review)
 import '../../services/ReadonlyProfiles/company_readonly.dart';
 import '../../services/session.dart';
+import 'project_readonly_profile.dart';
 
 class CompanyrProfileScreen extends StatefulWidget {
   final int companyId;
@@ -259,7 +260,6 @@ class _CompanyrProfileScreenState extends State<CompanyrProfileScreen> {
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () {
-                // Navigator.push(context, MaterialPageRoute(builder: (context) => EditCompanyScreen(company: _company!)));
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Edit profile functionality coming soon!'),
@@ -488,6 +488,15 @@ class _CompanyrProfileScreenState extends State<CompanyrProfileScreen> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => ProjectreadDetailsScreen(
+                                  projectId: project.id,
+                                ),
+                          ),
+                        );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Tapped on ${project.name}')),
                         );

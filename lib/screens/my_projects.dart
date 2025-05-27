@@ -4,9 +4,7 @@ import '../services/project_service.dart';
 import '../models/userprojects/project_simplified_model.dart';
 
 import '../widgets/my_project_card.dart';
-import 'ReadonlyProfiles/project_readonly.dart';
 
-// import 'project_details_screen.dart';
 class MyProjectsScreen extends StatefulWidget {
   const MyProjectsScreen({super.key});
 
@@ -17,7 +15,7 @@ class MyProjectsScreen extends StatefulWidget {
 class _MyProjectsScreenState extends State<MyProjectsScreen> {
   final ProjectService _projectService = ProjectService();
 
-  late Future<List<ProjectModel>> _myProjectsFuture;
+  late Future<List<ProjectsimplifiedModel>> _myProjectsFuture;
 
   @override
   void initState() {
@@ -51,7 +49,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
         ],
       ),
       // (6) الـ FutureBuilder يجب أن يستخدم نفس تعريف ProjectModel
-      body: FutureBuilder<List<ProjectModel>>(
+      body: FutureBuilder<List<ProjectsimplifiedModel>>(
         future: _myProjectsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -67,24 +65,22 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
             return ListView.builder(
               itemCount: projects.length,
               itemBuilder: (context, index) {
-                final project =
-                    projects[index]; // project هنا سيكون من النوع الصحيح
+                final project = projects[index];
                 return MyProjectCard(
-                  project:
-                      project, //  MyProjectCard يجب أن يتوقع نفس نوع ProjectModel
+                  project: project,
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                ProjectDetailsScreen(projectId: project.id),
-                      ),
-                    ).then((value) {
-                      if (value == true) {
-                        _refreshProjects();
-                      }
-                    });
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //     builder:
+                    //         (context) =>
+                    //             ProjectreadDetailsScreen(projectId: project.id),
+                    //   ),
+                    // ).then((value) {
+                    //   if (value == true) {
+                    //     _refreshProjects();
+                    //   }
+                    // });
                     print("Tapped on project: ${project.name}");
                   },
                 );

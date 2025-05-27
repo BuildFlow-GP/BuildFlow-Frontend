@@ -9,7 +9,7 @@ class ProjectService {
   final String _baseUrl = Constants.baseUrl;
 
   // (1) دالة لجلب مشاريع المستخدم الحالي (تعتمد على وجود الـ endpoint في الـ backend)
-  Future<List<ProjectModel>> getMyProjects() async {
+  Future<List<ProjectsimplifiedModel>> getMyProjects() async {
     print("getMyProjects CALLED"); // <<<<<< DEBUG PRINT
     final token = await Session.getToken();
     print("Token for getMyProjects: $token"); // <<<<<< DEBUG PRINT
@@ -48,7 +48,7 @@ class ProjectService {
         return body
             .map(
               (dynamic item) =>
-                  ProjectModel.fromJson(item as Map<String, dynamic>),
+                  ProjectsimplifiedModel.fromJson(item as Map<String, dynamic>),
             )
             .toList();
       } else if (response.statusCode == 401) {

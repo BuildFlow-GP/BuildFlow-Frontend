@@ -7,6 +7,7 @@ import '../../models/project_model.dart';
 import '../../models/review_model.dart'; // استخدام ReviewModel الخاص بكِ
 import '../../services/ReadonlyProfiles/office_readonly.dart';
 import '../../services/session.dart';
+import 'project_readonly_profile.dart';
 // افترض أن UserModel موجود في المسار الصحيح
 // import '../../models/user_model.dart';
 
@@ -485,7 +486,15 @@ class _OfficerProfileScreenState extends State<OfficerProfileScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Tapped on ${project.name}')),
                         );
-                        // TODO: Navigate to project details screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => ProjectreadDetailsScreen(
+                                  projectId: project.id,
+                                ),
+                          ),
+                        );
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),
