@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import '../../utils/constants.dart'; // تأكدي من وجود هذا الملف في المسار الصحيح
 
 final logger = Logger();
 
@@ -31,13 +32,11 @@ class Office {
 }
 
 class OfficeService {
-  static const String baseUrl = 'http://localhost:5000/api';
+  static const String baseUrl = '${Constants.baseUrl}/offices';
 
   static Future<List<Office>> fetchSuggestedOffices() async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/offices/suggestions'),
-      );
+      final response = await http.get(Uri.parse('$baseUrl/suggestions'));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

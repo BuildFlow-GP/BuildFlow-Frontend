@@ -1,79 +1,107 @@
 import 'package:flutter/material.dart';
-import '../../models/company_model.dart'; // تأكدي من المسار الصحيح (أو CompanySuggestionModel إذا كنتِ تستخدمينه)
+import '../../models/Basic/company_model.dart'; // تأكدي من المسار الصحيح
 
-class CompanySuggestionCard extends StatefulWidget {
-  final CompanyModel company; // أو CompanySuggestionModel
+class CompanySuggestionCard extends StatelessWidget {
+  // تم تحويله إلى StatelessWidget
+  final CompanyModel company;
+  final bool isFavorite; // مطلوب
   final VoidCallback? onFavoriteToggle;
   final VoidCallback? onTap;
 
   const CompanySuggestionCard({
     super.key,
     required this.company,
+    required this.isFavorite, // أصبح مطلوباً
     this.onFavoriteToggle,
     this.onTap,
   });
 
   @override
-  State<CompanySuggestionCard> createState() => _CompanySuggestionCardState();
+  Widget build(BuildContext context) {
+    // بما أن _isHovered كانت تُستخدم فقط للـ UI، يمكننا إبقاؤها كـ StatefulWidget إذا أردتِ
+    // أو تبسيطها وإزالة تأثيرات الـ hover إذا لم تكن ضرورية جداً للـ MVP.
+    // للتبسيط الآن، سأفترض أننا لا نحتاج لـ _isHovered داخل الكرت نفسه،
+    // لكن يمكن إضافتها مرة أخرى إذا أردتِ.
+    // إذا أردتِ الاحتفاظ بتأثيرات الـ hover، يجب أن يبقى StatefulWidget.
+    // سأبقيه StatefulWidget للاحتفاظ بتأثيرات الـ hover كما كانت.
+
+    return _CompanySuggestionCardContent(
+      company: company,
+      isFavorite: isFavorite,
+      onFavoriteToggle: onFavoriteToggle,
+      onTap: onTap,
+    );
+  }
 }
 
-class _CompanySuggestionCardState extends State<CompanySuggestionCard> {
-  bool _isFavorite = false;
-  bool _isHovered = false; // لتتبع حالة التمرير
+// تم فصل المحتوى إلى StatefulWidget داخلي للحفاظ على تأثيرات الـ hover
+class _CompanySuggestionCardContent extends StatefulWidget {
+  final CompanyModel company;
+  final bool isFavorite;
+  final VoidCallback? onFavoriteToggle;
+  final VoidCallback? onTap;
+
+  const _CompanySuggestionCardContent({
+    required this.company,
+    required this.isFavorite,
+    this.onFavoriteToggle,
+    this.onTap,
+  });
+
+  @override
+  State<_CompanySuggestionCardContent> createState() =>
+      _CompanySuggestionCardContentState();
+}
+
+class _CompanySuggestionCardContentState
+    extends State<_CompanySuggestionCardContent> {
+  bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    // القيم التي ستتغير عند التمرير
-    final double scale = _isHovered ? 1.03 : 1.0; // تكبير 3% عند التمرير
-    final double elevation = _isHovered ? 8.0 : 2.0; // زيادة الظل
-    final Offset offset =
-        _isHovered ? const Offset(0, -5) : Offset.zero; // تحريك 5 بكسل للأعلى
-    final Duration animationDuration = const Duration(
-      milliseconds: 200,
-    ); // سرعة الأنيميشن
+    final double scale = _isHovered ? 1.03 : 1.0;
+    final double elevation = _isHovered ? 8.0 : 2.0;
+    final Offset offset = _isHovered ? const Offset(0, -5) : Offset.zero;
+    final Duration animationDuration = const Duration(milliseconds: 200);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      cursor: SystemMouseCursors.click, // تغيير شكل المؤشر عند التمرير
+      cursor: SystemMouseCursors.click,
       child: AnimatedContainer(
         duration: animationDuration,
-        transformAlignment: Alignment.center, // لتوسيط التحويل (scale)
+        transformAlignment: Alignment.center,
         transform:
             Matrix4.identity()
-              ..translate(offset.dx, offset.dy) // تطبيق الإزاحة
-              ..scale(scale), // تطبيق التكبير/التصغير
+              ..translate(offset.dx, offset.dy)
+              ..scale(scale),
         decoration: BoxDecoration(
-          // لإضافة ظل متحرك بشكل صحيح مع التحويلات
-          borderRadius: BorderRadius.circular(
-            12.0,
-          ), // نفس الـ borderRadius للـ Card
+          borderRadius: BorderRadius.circular(12.0),
           boxShadow: [
             BoxShadow(
-              color: const Color.fromARGB(255, 115, 115, 115).withOpacity(
-                _isHovered ? 0.15 : 0.08,
-              ), // ظل أغمق قليلاً عند التمرير
-              blurRadius: elevation * 2, // زيادة انتشار الظل مع الـ elevation
+              color: const Color.fromARGB(
+                255,
+                115,
+                115,
+                115,
+              ).withOpacity(_isHovered ? 0.15 : 0.08),
+              blurRadius: elevation * 2,
               spreadRadius: 0.5,
               offset: Offset(0, elevation / 2),
             ),
           ],
         ),
-        // نضع الـ InkWell هنا لضمان أن منطقة الضغط تتأثر بالتحويلات
         child: InkWell(
           onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(12.0), // مهم لتأثير الـ ripple
+          borderRadius: BorderRadius.circular(12.0),
           child: Card(
-            elevation:
-                0, // الـ Card الأصلي بدون ظل، الظل الآن يُدار بواسطة AnimatedContainer
-            // أو يمكنكِ الاحتفاظ بـ elevation طفيف هنا إذا أردتِ ظلاً أساسياً دائماً
-            // elevation: 1.0,
+            elevation: 0,
             margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12.0),
             ),
             child: SizedBox(
-              width: 220, // العرض الأصلي للكرت
+              width: 220,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -89,23 +117,24 @@ class _CompanySuggestionCardState extends State<CompanySuggestionCard> {
                             widget.company.profileImage != null &&
                                     widget.company.profileImage!.isNotEmpty
                                 ? Image.network(
-                                  widget.company.profileImage!,
+                                  widget
+                                      .company
+                                      .profileImage!, // افترض أن هذا URL كامل
                                   height: 120,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      height: 120,
-                                      color: Colors.grey[300],
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.domain_verification,
-                                          size: 40,
-                                          color: Colors.grey,
+                                  errorBuilder:
+                                      (context, error, stackTrace) => Container(
+                                        height: 120,
+                                        color: Colors.grey[300],
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.domain_verification,
+                                            size: 40,
+                                            color: Colors.grey,
+                                          ),
                                         ),
                                       ),
-                                    );
-                                  },
                                   loadingBuilder: (
                                     BuildContext context,
                                     Widget child,
@@ -144,40 +173,30 @@ class _CompanySuggestionCardState extends State<CompanySuggestionCard> {
                       ),
                       if (widget.onFavoriteToggle != null)
                         Positioned(
-                          // استخدام Positioned لتحكم أفضل في موقع أيقونة القلب
                           top: 4,
                           right: 4,
                           child: Material(
-                            // Material لإعطاء خلفية وظل إذا لزم الأمر
-                            color: Colors.transparent, // أو لون خفيف
+                            color: Colors.transparent,
                             borderRadius: BorderRadius.circular(20),
                             child: InkWell(
-                              // InkWell لتأثير الضغط على القلب
                               borderRadius: BorderRadius.circular(20),
-                              onTap: () {
-                                setState(() {
-                                  _isFavorite = !_isFavorite;
-                                });
-                                if (widget.onFavoriteToggle != null) {
-                                  widget.onFavoriteToggle!();
-                                }
-                              },
+                              onTap:
+                                  widget
+                                      .onFavoriteToggle, // استدعاء الدالة الممررة مباشرة
                               child: Padding(
-                                padding: const EdgeInsets.all(
-                                  6.0,
-                                ), // تقليل الـ padding قليلاً
+                                padding: const EdgeInsets.all(6.0),
                                 child: Icon(
-                                  _isFavorite
+                                  widget.isFavorite
                                       ? Icons.favorite
-                                      : Icons.favorite_border,
+                                      : Icons
+                                          .favorite_border, // استخدام widget.isFavorite
                                   color:
-                                      _isFavorite
+                                      widget.isFavorite
                                           ? Colors.redAccent
                                           : Colors.white,
-                                  size: 26, // تقليل حجم الأيقونة قليلاً
+                                  size: 26,
                                   shadows:
-                                      _isHovered ||
-                                              !_isFavorite // إضافة ظل خفيف للأيقونة لتبرز أكثر
+                                      _isHovered || !widget.isFavorite
                                           ? [
                                             const Shadow(
                                               blurRadius: 3.0,
@@ -211,13 +230,32 @@ class _CompanySuggestionCardState extends State<CompanySuggestionCard> {
                         if (widget.company.rating != null)
                           Row(
                             children: <Widget>[
-                              Icon(Icons.star, color: Colors.amber, size: 16.0),
+                              const Icon(
+                                Icons.star,
+                                color: Colors.amber,
+                                size: 16.0,
+                              ),
                               const SizedBox(width: 4.0),
                               Text(
                                 widget.company.rating!.toStringAsFixed(1),
                                 style: const TextStyle(fontSize: 12.0),
                               ),
                             ],
+                          ),
+                        // يمكنك إضافة company.companyType هنا إذا أردت
+                        if (widget.company.companyType != null &&
+                            widget.company.companyType!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2.0),
+                            child: Text(
+                              widget.company.companyType!,
+                              style: TextStyle(
+                                fontSize: 11.0,
+                                color: Colors.grey[700],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                       ],
                     ),
