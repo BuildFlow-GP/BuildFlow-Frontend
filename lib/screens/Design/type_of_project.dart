@@ -63,13 +63,19 @@ class TypeOfProjectPage extends StatelessWidget {
       appBar: null,
       body: Column(
         children: [
-          // == Navbar ==
-          const Navbar(),
-          const SizedBox(height: 20),
-
-          // == العنوان ==
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+          // == Navbar مخصص ==
+          Container(
+            padding: const EdgeInsets.fromLTRB(12, 20, 12, 16),
+            decoration: BoxDecoration(
+              color: AppColors.primary, // الخلفية باللون المطلوب
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
             child: Row(
               children: [
                 // زر الرجوع
@@ -77,35 +83,27 @@ class TypeOfProjectPage extends StatelessWidget {
                   icon: const Icon(Icons.arrow_back),
                   color: AppColors.accent, // لون متناسق مع التصميم
                   onPressed: () {
-                    Get.back(); // العودة إلى الشاشة السابقة
+                    Navigator.of(context).pop(); // العودة إلى الشاشة السابقة
                   },
                 ),
-                // العنوان مع الأيقونة (يأخذ المساحة المتبقية)
+
+                // العنوان
                 Expanded(
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.category, color: AppColors.accent),
-                        SizedBox(width: 10),
-                        Text(
-                          "Choose Project Type",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
+                  child: Text(
+                    "Choose Project Type",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.accent,
                     ),
                   ),
                 ),
-                // عنصر فارغ للحفاظ على التوازن (بنفس عرض زر الرجوع)
-                const SizedBox(width: 48), // نفس عرض IconButton تقريباً
               ],
             ),
           ),
+
+          const SizedBox(height: 16),
+
           // == القائمة ==
           Expanded(
             child: LayoutBuilder(
@@ -142,23 +140,23 @@ class TypeOfProjectPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: const [
+                      children: [
                         Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: _DesignCard(),
+                          child: _buildResponsiveCard(
+                            context,
+                            const _DesignCard(),
                           ),
                         ),
                         Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: _SupervisionCard(),
+                          child: _buildResponsiveCard(
+                            context,
+                            const _SupervisionCard(),
                           ),
                         ),
                         Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: _ConsultationCard(),
+                          child: _buildResponsiveCard(
+                            context,
+                            const _ConsultationCard(),
                           ),
                         ),
                       ],
@@ -169,6 +167,16 @@ class TypeOfProjectPage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildResponsiveCard(BuildContext context, Widget card) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.25, // 25% من عرض الشاشة
+        child: card,
       ),
     );
   }
@@ -194,25 +202,28 @@ class _DesignCard extends StatelessWidget {
           },
           child: Hero(
             tag: 'project_Design',
-            child: Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // الصورة المربعة التي تشغل المساحة بالكامل
-                  Expanded(
-                    child: Image(
-                      image: AssetImage('assets/design.jpg'),
-                      fit: BoxFit.cover,
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.5,
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // الصورة المربعة التي تشغل المساحة بالكامل
+                    Expanded(
+                      child: Image(
+                        image: AssetImage('assets/design.jpg'),
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ),
-                  // نص البطاقة
-                  _CardTitle(title: 'Design'),
-                ],
+                    // نص البطاقة
+                    _CardTitle(title: 'Design'),
+                  ],
+                ),
               ),
             ),
           ),
@@ -238,25 +249,28 @@ class _SupervisionCard extends StatelessWidget {
           },
           child: Hero(
             tag: 'project_Supervision',
-            child: Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // الصورة المربعة التي تشغل المساحة بالكامل
-                  Expanded(
-                    child: Image(
-                      image: AssetImage('assets/supervision.jpg'),
-                      fit: BoxFit.cover,
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.5,
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // الصورة المربعة التي تشغل المساحة بالكامل
+                    Expanded(
+                      child: Image(
+                        image: AssetImage('assets/supervision.jpg'),
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ),
-                  // نص البطاقة
-                  _CardTitle(title: 'Supervision'),
-                ],
+                    // نص البطاقة
+                    _CardTitle(title: 'Supervision'),
+                  ],
+                ),
               ),
             ),
           ),
@@ -282,25 +296,28 @@ class _ConsultationCard extends StatelessWidget {
           },
           child: Hero(
             tag: 'project_Consultation',
-            child: Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // الصورة المربعة التي تشغل المساحة بالكامل
-                  Expanded(
-                    child: Image(
-                      image: AssetImage('assets/consultation.jpg'),
-                      fit: BoxFit.cover,
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.5,
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // الصورة المربعة التي تشغل المساحة بالكامل
+                    Expanded(
+                      child: Image(
+                        image: AssetImage('assets/consultation.jpg'),
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ),
-                  // نص البطاقة
-                  _CardTitle(title: 'Consultation'),
-                ],
+                    // نص البطاقة
+                    _CardTitle(title: 'Consultation'),
+                  ],
+                ),
               ),
             ),
           ),
