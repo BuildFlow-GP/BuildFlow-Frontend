@@ -156,41 +156,42 @@ class _ChooseOfficeScreenState extends State<ChooseOfficeScreen> {
       appBar: null,
       body: Column(
         children: [
-          // == Navbar مخصص ==
           Container(
-            padding: const EdgeInsets.fromLTRB(12, 20, 12, 16),
+            padding: const EdgeInsets.fromLTRB(16, 28, 16, 20),
             decoration: BoxDecoration(
-              color: AppColors.primary, // الخلفية باللون المطلوب
+              color: AppColors.primary,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ],
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
+              ),
             ),
             child: Row(
               children: [
-                // زر الرجوع
                 IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  color: AppColors.accent, // لون متناسق مع التصميم
-                  onPressed: () {
-                    Navigator.of(context).pop(); // العودة إلى الشاشة السابقة
-                  },
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 28),
+                  color: AppColors.accent,
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
-
-                // العنوان
                 Expanded(
                   child: Text(
                     "Choose an Office",
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: AppColors.accent,
+                      letterSpacing: 0.8,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
+                const SizedBox(width: 48), // توازن المساحة بسبب زر الرجوع
               ],
             ),
           ),

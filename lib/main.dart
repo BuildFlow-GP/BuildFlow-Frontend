@@ -1,3 +1,4 @@
+import 'package:buildflow_frontend/screens/Design/no_permit_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'screens/sign/signin_screen.dart';
@@ -23,10 +24,10 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'BuildFlow',
       debugShowCheckedModeBanner: false,
-      //home: SignInScreen(),
 
-      //home: TypeOfProjectPage(),
-      home: DrawerWrapper(child: const TypeOfProjectPage()),
+      //home: SignInScreen(),
+      home: NoPermitScreen(),
+      //home: DrawerWrapper(child: const TypeOfProjectPage()),
       //home: DrawerWrapper(child: const NoPermitScreen()),
     );
   }

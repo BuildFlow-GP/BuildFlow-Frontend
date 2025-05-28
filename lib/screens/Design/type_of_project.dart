@@ -1,58 +1,7 @@
-/*import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'choose_office.dart'; // Import the choose office screen
-
-class TypeOfProjectPage extends StatelessWidget {
-  const TypeOfProjectPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final List<String> projectTypes = ["Design", "Supervision", "Consultation"];
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Get.back(); // Navigate back to previous screen (HomeScreen)
-          },
-        ),
-        title: const Row(
-          children: [
-            Icon(Icons.category),
-            SizedBox(width: 10),
-            Text("Choose Project"),
-          ],
-        ),
-      ),
-      body: ListView.builder(
-        itemCount: projectTypes.length,
-        itemBuilder: (context, index) {
-          return Card(
-            margin: const EdgeInsets.all(12),
-            child: ListTile(
-              leading: const Icon(Icons.build),
-              title: Text(projectTypes[index]),
-              onTap: () {
-                Get.to(() => const ChooseOfficeScreen());
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Selected: ${projectTypes[index]}")),
-                );
-              },
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-*/
-
 import 'package:buildflow_frontend/screens/Design/choose_office.dart';
 import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:buildflow_frontend/widgets/navbar.dart';
 
 class TypeOfProjectPage extends StatelessWidget {
   const TypeOfProjectPage({super.key});
@@ -63,83 +12,79 @@ class TypeOfProjectPage extends StatelessWidget {
       appBar: null,
       body: Column(
         children: [
-          // == Navbar مخصص ==
+          // شريط التنقل مع تأثير الظل واللون العصري
           Container(
-            padding: const EdgeInsets.fromLTRB(12, 20, 12, 16),
+            padding: const EdgeInsets.fromLTRB(16, 28, 16, 20),
             decoration: BoxDecoration(
-              color: AppColors.primary, // الخلفية باللون المطلوب
+              color: AppColors.primary,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ],
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
+              ),
             ),
             child: Row(
               children: [
-                // زر الرجوع
                 IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  color: AppColors.accent, // لون متناسق مع التصميم
-                  onPressed: () {
-                    Navigator.of(context).pop(); // العودة إلى الشاشة السابقة
-                  },
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 28),
+                  color: AppColors.accent,
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
-
-                // العنوان
                 Expanded(
                   child: Text(
                     "Choose Project Type",
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: AppColors.accent,
+                      letterSpacing: 0.8,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
+                const SizedBox(width: 48), // توازن المساحة بسبب زر الرجوع
               ],
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
 
-          // == القائمة ==
+          // القائمة الرئيسية ببطاقات تفاعلية بتأثير الظل والحركة
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                // عرض شاشة الموبايل (أقل من 600 بكسل)
                 if (constraints.maxWidth < 600) {
                   return ListView(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                      horizontal: 20,
+                      vertical: 12,
                     ),
                     children: const [
-                      // بطاقة Design
                       Padding(
-                        padding: EdgeInsets.only(bottom: 16),
+                        padding: EdgeInsets.only(bottom: 20),
                         child: _DesignCardMobile(),
                       ),
-                      // بطاقة Supervision
                       Padding(
-                        padding: EdgeInsets.only(bottom: 16),
+                        padding: EdgeInsets.only(bottom: 20),
                         child: _SupervisionCardMobile(),
                       ),
-                      // بطاقة Consultation
                       Padding(
-                        padding: EdgeInsets.only(bottom: 16),
+                        padding: EdgeInsets.only(bottom: 20),
                         child: _ConsultationCardMobile(),
                       ),
                     ],
                   );
-                }
-                // عرض شاشة الأجهزة الكبيرة (أكبر من 600 بكسل)
-                else {
+                } else {
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                           child: _buildResponsiveCard(
@@ -147,12 +92,14 @@ class TypeOfProjectPage extends StatelessWidget {
                             const _DesignCard(),
                           ),
                         ),
+                        const SizedBox(width: 24),
                         Expanded(
                           child: _buildResponsiveCard(
                             context,
                             const _SupervisionCard(),
                           ),
                         ),
+                        const SizedBox(width: 24),
                         Expanded(
                           child: _buildResponsiveCard(
                             context,
@@ -175,7 +122,7 @@ class TypeOfProjectPage extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.25, // 25% من عرض الشاشة
+        width: MediaQuery.of(context).size.width * 0.28,
         child: card,
       ),
     );
@@ -183,7 +130,7 @@ class TypeOfProjectPage extends StatelessWidget {
 }
 
 // =============================================
-// بطاقات الأجهزة الكبيرة
+// بطاقات الأجهزة الكبيرة مع تأثير الظل والانعكاس الحديث
 // =============================================
 
 class _DesignCard extends StatelessWidget {
@@ -192,38 +139,33 @@ class _DesignCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 350),
       opacity: 1.0,
       child: _HoverEffect(
         child: GestureDetector(
-          onTap: () {
-            // الانتقال إلى صفحة Design المخصصة
-            Get.to(() => const ChooseOfficeScreen());
-          },
+          onTap: () => Get.to(() => const ChooseOfficeScreen()),
           child: Hero(
             tag: 'project_Design',
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.5,
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // الصورة المربعة التي تشغل المساحة بالكامل
-                    Expanded(
-                      child: Image(
-                        image: AssetImage('assets/design.jpg'),
-                        fit: BoxFit.cover,
-                      ),
+            child: Card(
+              elevation: 10,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              clipBehavior: Clip.antiAlias,
+              shadowColor: AppColors.primary.withOpacity(0.3),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Image.asset(
+                      'assets/design.jpg',
+                      fit: BoxFit.cover,
+                      colorBlendMode: BlendMode.darken,
+                      color: Colors.black.withOpacity(0.15),
                     ),
-                    // نص البطاقة
-                    _CardTitle(title: 'Design'),
-                  ],
-                ),
+                  ),
+                  _CardTitle(title: 'Design'),
+                ],
               ),
             ),
           ),
@@ -239,38 +181,33 @@ class _SupervisionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 350),
       opacity: 1.0,
       child: _HoverEffect(
         child: GestureDetector(
-          onTap: () {
-            // الانتقال إلى صفحة Supervision المخصصة
-            Get.toNamed('/supervision-page');
-          },
+          onTap: () => Get.toNamed('/supervision-page'),
           child: Hero(
             tag: 'project_Supervision',
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.5,
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // الصورة المربعة التي تشغل المساحة بالكامل
-                    Expanded(
-                      child: Image(
-                        image: AssetImage('assets/supervision.jpg'),
-                        fit: BoxFit.cover,
-                      ),
+            child: Card(
+              elevation: 10,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              clipBehavior: Clip.antiAlias,
+              shadowColor: AppColors.primary.withOpacity(0.3),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Image.asset(
+                      'assets/supervision.jpg',
+                      fit: BoxFit.cover,
+                      colorBlendMode: BlendMode.darken,
+                      color: Colors.black.withOpacity(0.15),
                     ),
-                    // نص البطاقة
-                    _CardTitle(title: 'Supervision'),
-                  ],
-                ),
+                  ),
+                  _CardTitle(title: 'Supervision'),
+                ],
               ),
             ),
           ),
@@ -286,38 +223,33 @@ class _ConsultationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 350),
       opacity: 1.0,
       child: _HoverEffect(
         child: GestureDetector(
-          onTap: () {
-            // الانتقال إلى صفحة Consultation المخصصة
-            Get.toNamed('/consultation-page');
-          },
+          onTap: () => Get.toNamed('/consultation-page'),
           child: Hero(
             tag: 'project_Consultation',
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.5,
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // الصورة المربعة التي تشغل المساحة بالكامل
-                    Expanded(
-                      child: Image(
-                        image: AssetImage('assets/consultation.jpg'),
-                        fit: BoxFit.cover,
-                      ),
+            child: Card(
+              elevation: 10,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              clipBehavior: Clip.antiAlias,
+              shadowColor: AppColors.primary.withOpacity(0.3),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Image.asset(
+                      'assets/consultation.jpg',
+                      fit: BoxFit.cover,
+                      colorBlendMode: BlendMode.darken,
+                      color: Colors.black.withOpacity(0.15),
                     ),
-                    // نص البطاقة
-                    _CardTitle(title: 'Consultation'),
-                  ],
-                ),
+                  ),
+                  _CardTitle(title: 'Consultation'),
+                ],
               ),
             ),
           ),
@@ -328,7 +260,7 @@ class _ConsultationCard extends StatelessWidget {
 }
 
 // =============================================
-// بطاقات الموبايل
+// بطاقات الموبايل مع تدرجات لونية وتأثير ظل ناعم
 // =============================================
 
 class _DesignCardMobile extends StatelessWidget {
@@ -337,27 +269,22 @@ class _DesignCardMobile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 350),
       opacity: 1.0,
       child: _HoverEffect(
         child: GestureDetector(
-          onTap: () {
-            // الانتقال إلى صفحة Design المخصصة
-            Get.to(() => const ChooseOfficeScreen());
-          },
+          onTap: () => Get.to(() => const ChooseOfficeScreen()),
           child: Hero(
             tag: 'project_Design',
             child: Card(
-              elevation: 4,
+              elevation: 8,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
               clipBehavior: Clip.antiAlias,
-              child: const Row(
-                children: [
-                  // الصورة المربعة للموبايل
+              child: Row(
+                children: const [
                   _MobileCardImage(imagePath: 'assets/design.jpg'),
-                  // نص البطاقة
                   _MobileCardTitle(title: 'Design'),
                 ],
               ),
@@ -375,27 +302,22 @@ class _SupervisionCardMobile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 350),
       opacity: 1.0,
       child: _HoverEffect(
         child: GestureDetector(
-          onTap: () {
-            // الانتقال إلى صفحة Supervision المخصصة
-            Get.toNamed('/supervision-page');
-          },
+          onTap: () => Get.toNamed('/supervision-page'),
           child: Hero(
             tag: 'project_Supervision',
             child: Card(
-              elevation: 4,
+              elevation: 8,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
               clipBehavior: Clip.antiAlias,
-              child: const Row(
-                children: [
-                  // الصورة المربعة للموبايل
+              child: Row(
+                children: const [
                   _MobileCardImage(imagePath: 'assets/supervision.jpg'),
-                  // نص البطاقة
                   _MobileCardTitle(title: 'Supervision'),
                 ],
               ),
@@ -413,27 +335,22 @@ class _ConsultationCardMobile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 350),
       opacity: 1.0,
       child: _HoverEffect(
         child: GestureDetector(
-          onTap: () {
-            // الانتقال إلى صفحة Consultation المخصصة
-            Get.toNamed('/consultation-page');
-          },
+          onTap: () => Get.toNamed('/consultation-page'),
           child: Hero(
             tag: 'project_Consultation',
             child: Card(
-              elevation: 4,
+              elevation: 8,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
               clipBehavior: Clip.antiAlias,
-              child: const Row(
-                children: [
-                  // الصورة المربعة للموبايل
+              child: Row(
+                children: const [
                   _MobileCardImage(imagePath: 'assets/consultation.jpg'),
-                  // نص البطاقة
                   _MobileCardTitle(title: 'Consultation'),
                 ],
               ),
@@ -446,7 +363,7 @@ class _ConsultationCardMobile extends StatelessWidget {
 }
 
 // =============================================
-// مكونات مشتركة
+// المكونات المشتركة مع تحسينات في الخطوط والألوان
 // =============================================
 
 class _CardTitle extends StatelessWidget {
@@ -456,15 +373,16 @@ class _CardTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
       color: Colors.white,
       child: Text(
         title,
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary.withOpacity(0.85),
+          letterSpacing: 0.7,
         ),
       ),
     );
@@ -478,9 +396,15 @@ class _MobileCardImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 100,
-      height: 100,
-      child: Image(image: AssetImage(imagePath), fit: BoxFit.cover),
+      width: 110,
+      height: 110,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          bottomLeft: Radius.circular(16),
+        ),
+        child: Image.asset(imagePath, fit: BoxFit.cover),
+      ),
     );
   }
 }
@@ -493,13 +417,14 @@ class _MobileCardTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         child: Text(
           title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary.withOpacity(0.85),
+            letterSpacing: 0.6,
           ),
         ),
       ),
@@ -507,27 +432,32 @@ class _MobileCardTitle extends StatelessWidget {
   }
 }
 
-// == Hover Effect ==
+// == تأثير Hover حديث مع حركة رفع خفيفة ==
 class _HoverEffect extends StatefulWidget {
   final Widget child;
 
   const _HoverEffect({required this.child});
 
   @override
-  State<_HoverEffect> createState() => __HoverEffectState();
+  State<_HoverEffect> createState() => _HoverEffectState();
 }
 
-class __HoverEffectState extends State<_HoverEffect> {
-  double _elevation = 4.0;
+class _HoverEffectState extends State<_HoverEffect> {
+  bool _hovering = false;
 
   @override
   Widget build(BuildContext context) {
+    final transform =
+        _hovering
+            ? (Matrix4.identity()..translate(0, -6, 0))
+            : Matrix4.identity();
+
     return MouseRegion(
-      onEnter: (_) => setState(() => _elevation = 8.0),
-      onExit: (_) => setState(() => _elevation = 4.0),
-      child: Card(
-        elevation: _elevation,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        transform: transform,
         child: widget.child,
       ),
     );
