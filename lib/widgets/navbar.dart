@@ -167,7 +167,7 @@ void _navigateToProfile() async {
         IconButton(
           icon: const Icon(Icons.menu, color: Colors.white, size: 28),
           onPressed: () {
-            DrawerWrapper.openDrawer(context); // ✅ يعمل الآن!
+            DrawerWrapper.openDrawer(context);
           },
         ),
       ],

@@ -1,3 +1,4 @@
+import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import '../../services/chosen_office_service.dart';
@@ -77,21 +78,24 @@ class _ChooseOfficeScreenState extends State<ChooseOfficeScreen> {
         width: cardWidth,
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
         padding: const EdgeInsets.all(12),
+
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: isSelected ? Colors.blue.shade100 : Colors.white,
+          color:
+              isSelected ? AppColors.primary.withOpacity(0.2) : AppColors.card,
           border: Border.all(
-            color: isSelected ? Colors.blue : Colors.grey.shade300,
+            color: isSelected ? AppColors.accent : Colors.grey.shade300,
             width: isSelected ? 2 : 1,
           ),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: Offset(0, 3),
+              color: AppColors.shadow,
+              blurRadius: 8,
+              offset: Offset(0, 4),
             ),
           ],
         ),
+
         child: Row(
           children: [
             ClipRRect(
@@ -149,55 +153,206 @@ class _ChooseOfficeScreenState extends State<ChooseOfficeScreen> {
     double cardWidth = screenWidth > 600 ? 600 : screenWidth * 0.9;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Choose an Office")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child:
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Column(
-                  children: [
-                    TextField(
-                      onChanged: _onSearchChanged,
-                      decoration: const InputDecoration(
-                        labelText: 'Search Office',
-                        prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child:
-                          _filteredOffices.isEmpty
-                              ? const Center(
-                                child: Text('No matching offices found.'),
-                              )
-                              : ListView.builder(
-                                itemCount: _filteredOffices.length,
-                                itemBuilder: (context, index) {
-                                  final office = _filteredOffices[index];
-                                  return Center(
-                                    child: _buildOfficeCard(office, cardWidth),
-                                  );
-                                },
-                              ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed:
-                          _selectedOffice == null ? null : _onNextPressed,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size(cardWidth, 48),
-                      ),
-                      child: Text(
-                        _selectedOffice == null
-                            ? 'Select an office to continue'
-                            : 'Next',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ],
+      appBar: null,
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 28, 16, 20),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
+              ],
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
+              ),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 28),
+                  color: AppColors.accent,
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                Expanded(
+                  child: Text(
+                    "Choose an Office",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.accent,
+                      letterSpacing: 0.8,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(width: 48), // توازن المساحة بسبب زر الرجوع
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child:
+                  _isLoading
+                      ? _buildLoadingAnimation(context)
+                      : Column(
+                        children: [
+                          TextField(
+                            onChanged: _onSearchChanged,
+                            decoration: InputDecoration(
+                              labelText: 'Search Office',
+                              hintText: 'Search by name or location',
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color: AppColors.accent,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: AppColors.accent,
+                                  width: 2,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: AppColors.card,
+                              labelStyle: TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
+                              hintStyle: TextStyle(
+                                color: AppColors.textSecondary.withOpacity(0.6),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Expanded(
+                            child:
+                                _filteredOffices.isEmpty
+                                    ? Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.search_off,
+                                          size: 60,
+                                          color: AppColors.primary,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'No offices found',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Try different search terms',
+                                          style: TextStyle(
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        OutlinedButton(
+                                          onPressed: () => _onSearchChanged(''),
+                                          child: Text(
+                                            'Clear search',
+                                            style: TextStyle(
+                                              color: AppColors.accent,
+                                            ),
+                                          ),
+                                          style: OutlinedButton.styleFrom(
+                                            side: BorderSide(
+                                              color: AppColors.accent,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                    : ListView.builder(
+                                      itemCount: _filteredOffices.length,
+                                      itemBuilder: (context, index) {
+                                        final office = _filteredOffices[index];
+                                        return Center(
+                                          child: _buildOfficeCard(
+                                            office,
+                                            cardWidth,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed:
+                                _selectedOffice == null ? null : _onNextPressed,
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: Size(cardWidth, 50),
+                              backgroundColor:
+                                  _selectedOffice != null
+                                      ? AppColors.accent
+                                      : Colors.grey.shade400,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 4,
+                              shadowColor: AppColors.accent.withOpacity(0.3),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: Text(
+                              _selectedOffice == null
+                                  ? 'Select an office to continue'
+                                  : 'Next',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        ],
+                      ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingAnimation(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          RotationTransition(
+            turns: AlwaysStoppedAnimation(0.5), // نصف دورة ثابتة
+            child: FadeTransition(
+              opacity: Tween(begin: 0.5, end: 1.0).animate(
+                CurvedAnimation(
+                  parent: ModalRoute.of(context)!.animation!,
+                  curve: Curves.easeInOut,
+                ),
+              ),
+              child: Icon(Icons.autorenew, color: AppColors.accent, size: 50),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Loading offices...',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+          ),
+        ],
       ),
     );
   }
