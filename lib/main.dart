@@ -24,16 +24,10 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'BuildFlow',
       debugShowCheckedModeBanner: false,
-<<<<<<< HEAD
 
       //home: SignInScreen(),
       home: NoPermitScreen(),
       //home: DrawerWrapper(child: const TypeOfProjectPage()),
-=======
-      home: SignInScreen(),
-      //home: TypeOfProjectPage(),
-      // home: DrawerWrapper(child: const TypeOfProjectPage()),
->>>>>>> origin/main
       //home: DrawerWrapper(child: const NoPermitScreen()),
     );
   }

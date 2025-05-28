@@ -8,4 +8,5 @@ class AppColors {
   static const textPrimary = Colors.black87;
   static const textSecondary = Color(0xFF666666); // نص ثانوي واضح
   static const shadow = Colors.black26; // ظل أكثر وضوحًا
+  static const Color error = Color(0xFFDC3545);
 }
