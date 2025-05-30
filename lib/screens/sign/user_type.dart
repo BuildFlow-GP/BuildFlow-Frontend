@@ -200,7 +200,7 @@ class _CompanyCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Image.asset(
-                      'assets/company.png',
+                      'assets/companyy.png',
                       fit: BoxFit.cover,
                       colorBlendMode: BlendMode.darken,
                       color: Colors.black.withOpacity(0.15),
@@ -317,7 +317,7 @@ class _CompanyCardMobile extends StatelessWidget {
               clipBehavior: Clip.antiAlias,
               child: Row(
                 children: const [
-                  _MobileCardImage(imagePath: 'assets/company.png'),
+                  _MobileCardImage(imagePath: 'assets/companyy.png'),
                   _MobileCardTitle(title: 'Company'),
                 ],
               ),

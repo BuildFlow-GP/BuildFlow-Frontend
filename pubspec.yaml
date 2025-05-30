@@ -88,6 +88,8 @@ flutter:
     - assets/consultation.jpg
     - assets/officee.png
     - assets/individual.jpg
+    - assets/companyy.png
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
