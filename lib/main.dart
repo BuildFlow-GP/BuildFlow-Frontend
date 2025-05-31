@@ -41,9 +41,9 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      home: SignInScreen(),
+      // home: SignInScreen(),
       //home: ProjectDetailsScreen(),
-      //home: DrawerWrapper(child: const TypeOfProjectPage()),
+      home: DrawerWrapper(child: const SignInScreen()),
       //home: DrawerWrapper(child: const NoPermitScreen()),
     );
   }
