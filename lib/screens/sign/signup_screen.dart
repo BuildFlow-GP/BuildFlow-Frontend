@@ -35,7 +35,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           officeCapacityController.text.trim().isNotEmpty;
     }
 
-    // Default (e.g. regular user)
     return true;
   }
 
@@ -48,7 +47,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       officeNameController,
       officeCapacityController,
     ];
-
     for (var c in controllers) {
       c.addListener(() => setState(() {}));
     }
@@ -78,7 +76,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       appBar: null,
       body: Column(
         children: [
-          // شريط التنقل مع تأثير الظل واللون العصري
+          // AppBar
           Container(
             padding: const EdgeInsets.fromLTRB(16, 28, 16, 20),
             decoration: BoxDecoration(
@@ -114,128 +112,142 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(width: 48), // توازن المساحة بسبب زر الرجوع
+                const SizedBox(width: 48),
               ],
             ),
           ),
-
           const SizedBox(height: 24),
 
-          // القائمة الرئيسية ببطاقات تفاعلية بتأثير الظل والحركة
+          // Form
           Expanded(
             child: Center(
-              child: Card(
-                elevation: 8,
-                shadowColor: AppColors.shadow,
-                color: AppColors.card,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                margin: const EdgeInsets.symmetric(horizontal: 30),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: Image.asset('assets/logoo.png', height: 80),
-                      ),
-                      Text(
-                        'Create a ${widget.userType} Account',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      _buildTextField(
-                        label: 'Full Name',
-                        icon: Icons.person,
-                        controller: fullNameController,
-                      ),
-                      const SizedBox(height: 15),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 500),
+                        child: Card(
+                          elevation: 8,
+                          shadowColor: AppColors.shadow,
+                          color: AppColors.card,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 20),
+                                  child: Image.asset(
+                                    'assets/logoo.png',
+                                    height: 80,
+                                  ),
+                                ),
+                                Text(
+                                  'Create a ${widget.userType} Account',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                _buildTextField(
+                                  label: 'Full Name',
+                                  icon: Icons.person,
+                                  controller: fullNameController,
+                                ),
+                                const SizedBox(height: 15),
+                                _buildTextField(
+                                  label: 'Email',
+                                  icon: Icons.email,
+                                  controller: emailController,
+                                ),
+                                const SizedBox(height: 15),
+                                _buildTextField(
+                                  label: 'Password',
+                                  icon: Icons.lock,
+                                  controller: passwordController,
+                                  obscure: true,
+                                ),
+                                const SizedBox(height: 15),
 
-                      _buildTextField(
-                        label: 'Email',
-                        icon: Icons.email,
-                        controller: emailController,
-                      ),
-                      const SizedBox(height: 15),
+                                if (widget.userType == 'Company')
+                                  _buildTextField(
+                                    label: 'Company Name',
+                                    icon: Icons.business,
+                                    controller: companyNameController,
+                                  ),
 
-                      _buildTextField(
-                        label: 'Password',
-                        icon: Icons.lock,
-                        controller: passwordController,
-                        obscure: true,
-                      ),
-                      const SizedBox(height: 15),
+                                if (widget.userType == 'Office') ...[
+                                  _buildTextField(
+                                    label: 'Office Name',
+                                    icon: Icons.apartment,
+                                    controller: officeNameController,
+                                  ),
+                                  const SizedBox(height: 15),
+                                  _buildTextField(
+                                    label: 'Office Capacity',
+                                    icon: Icons.group,
+                                    controller: officeCapacityController,
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                ],
 
-                      if (widget.userType == 'Company')
-                        _buildTextField(
-                          label: 'Company Name',
-                          icon: Icons.business,
-                          controller: companyNameController,
-                        ),
-
-                      if (widget.userType == 'Office') ...[
-                        _buildTextField(
-                          label: 'Office Name',
-                          icon: Icons.apartment,
-                          controller: officeNameController,
-                        ),
-                        const SizedBox(height: 15),
-                        _buildTextField(
-                          label: 'Office Capacity',
-                          icon: Icons.group,
-                          controller: officeCapacityController,
-                          keyboardType: TextInputType.number,
-                        ),
-                      ],
-
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                areFieldsFilled
-                                    ? AppColors.accent
-                                    : AppColors.primary.withOpacity(0.5),
-                            foregroundColor:
-                                areFieldsFilled
-                                    ? Colors.white
-                                    : Colors.white.withOpacity(0.7),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                                const SizedBox(height: 20),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          areFieldsFilled
+                                              ? AppColors.accent
+                                              : AppColors.primary.withOpacity(
+                                                0.5,
+                                              ),
+                                      foregroundColor:
+                                          areFieldsFilled
+                                              ? Colors.white
+                                              : Colors.white.withOpacity(0.7),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    onPressed:
+                                        areFieldsFilled
+                                            ? () {
+                                              // Handle sign-up logic
+                                            }
+                                            : null,
+                                    child: const Text('Sign Up'),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => const SignInScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    'Already have an account? Sign In',
+                                    style: TextStyle(color: AppColors.accent),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          onPressed:
-                              areFieldsFilled
-                                  ? () {
-                                    // Handle sign-up logic
-                                  }
-                                  : null,
-                          child: const Text('Sign Up'),
                         ),
                       ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SignInScreen(),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          'Already have an account? Sign In',
-                          style: TextStyle(color: AppColors.accent),
-                        ),
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),

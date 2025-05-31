@@ -121,8 +121,10 @@ class TypeOfProjectPage extends StatelessWidget {
   Widget _buildResponsiveCard(BuildContext context, Widget card) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.28,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 400, // Set a maximum width for the cards
+        ),
         child: card,
       ),
     );
@@ -153,19 +155,22 @@ class _DesignCard extends StatelessWidget {
               ),
               clipBehavior: Clip.antiAlias,
               shadowColor: AppColors.primary.withOpacity(0.3),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: Image.asset(
-                      'assets/design.jpg',
-                      fit: BoxFit.cover,
-                      colorBlendMode: BlendMode.darken,
-                      color: Colors.black.withOpacity(0.15),
+              child: Container(
+                constraints: BoxConstraints(maxHeight: 500),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: Image.asset(
+                        'assets/design.jpg',
+                        fit: BoxFit.cover,
+                        colorBlendMode: BlendMode.darken,
+                        color: Colors.black.withOpacity(0.15),
+                      ),
                     ),
-                  ),
-                  _CardTitle(title: 'Design'),
-                ],
+                    _CardTitle(title: 'Design'),
+                  ],
+                ),
               ),
             ),
           ),
@@ -195,19 +200,22 @@ class _SupervisionCard extends StatelessWidget {
               ),
               clipBehavior: Clip.antiAlias,
               shadowColor: AppColors.primary.withOpacity(0.3),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: Image.asset(
-                      'assets/supervision.jpg',
-                      fit: BoxFit.cover,
-                      colorBlendMode: BlendMode.darken,
-                      color: Colors.black.withOpacity(0.15),
+              child: Container(
+                constraints: BoxConstraints(maxHeight: 500),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: Image.asset(
+                        'assets/supervision.jpg',
+                        fit: BoxFit.cover,
+                        colorBlendMode: BlendMode.darken,
+                        color: Colors.black.withOpacity(0.15),
+                      ),
                     ),
-                  ),
-                  _CardTitle(title: 'Supervision'),
-                ],
+                    _CardTitle(title: 'Supervision'),
+                  ],
+                ),
               ),
             ),
           ),
@@ -237,19 +245,22 @@ class _ConsultationCard extends StatelessWidget {
               ),
               clipBehavior: Clip.antiAlias,
               shadowColor: AppColors.primary.withOpacity(0.3),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: Image.asset(
-                      'assets/consultation.jpg',
-                      fit: BoxFit.cover,
-                      colorBlendMode: BlendMode.darken,
-                      color: Colors.black.withOpacity(0.15),
+              child: Container(
+                constraints: BoxConstraints(maxHeight: 500),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: Image.asset(
+                        'assets/consultation.jpg',
+                        fit: BoxFit.cover,
+                        colorBlendMode: BlendMode.darken,
+                        color: Colors.black.withOpacity(0.15),
+                      ),
                     ),
-                  ),
-                  _CardTitle(title: 'Consultation'),
-                ],
+                    _CardTitle(title: 'Consultation'),
+                  ],
+                ),
               ),
             ),
           ),

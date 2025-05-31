@@ -50,7 +50,7 @@ class _SignInScreenState extends State<SignInScreen> {
         child: SingleChildScrollView(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: isWeb ? 400 : screenWidth * 0.9,
+              maxWidth: isWeb ? 500 : screenWidth * 0.9,
             ),
             child: Card(
               color: AppColors.card,
