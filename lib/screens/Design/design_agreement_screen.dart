@@ -169,7 +169,9 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
 
   @override
   void dispose() {
-    _controllers.values.forEach((c) => c.dispose());
+    for (var c in _controllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 

@@ -7,6 +7,8 @@ import '../services/session.dart';
 import '../screens/home_page.dart';
 import 'package:logger/logger.dart';
 
+import '../widgets/drawer_wrapper.dart';
+
 class LoginController extends GetxController {
   final AuthService _authService = AuthService();
   final storage = FlutterSecureStorage(); // للموبايل
@@ -32,7 +34,7 @@ class LoginController extends GetxController {
         await Session.setSession(type: userType, id: user.id);
 
         logger.i('Login successful: ${user.toJson()}');
-        Get.offAll(() => const HomeScreen());
+        Get.offAll(() => DrawerWrapper(child: const HomeScreen()));
       } else {
         Get.snackbar('Error', 'Login failed. Invalid credentials.');
         logger.w('Login failed: token/user/userType is null');
