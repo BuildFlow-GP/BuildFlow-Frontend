@@ -1,4 +1,6 @@
 import 'package:buildflow_frontend/screens/Design/no_permit_screen.dart';
+import 'package:buildflow_frontend/screens/Design/project_description.dart';
+import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'screens/sign/signin_screen.dart';
@@ -24,10 +26,24 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'BuildFlow',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        inputDecorationTheme: InputDecorationTheme(
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: AppColors.accent, width: 2),
+          ),
+          labelStyle: TextStyle(color: Colors.grey), // لون عنوان الحقل
+        ),
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: AppColors.accent, // لون المؤشر
+        ),
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(color: Colors.black), // لون النص داخل الحقول
+        ),
+      ),
 
-      //home: SignInScreen(),
-      home: NoPermitScreen(),
-      //home: DrawerWrapper(child: const TypeOfProjectPage()),
+      // home: SignInScreen(),
+      //home: ProjectDetailsScreen(),
+      home: DrawerWrapper(child: const SignInScreen()),
       //home: DrawerWrapper(child: const NoPermitScreen()),
     );
   }
