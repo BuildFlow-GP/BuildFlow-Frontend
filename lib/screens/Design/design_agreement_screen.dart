@@ -26,6 +26,11 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
   void initState() {
     super.initState();
     _initControllers();
+    _controllers.values.forEach((controller) {
+      controller.addListener(() {
+        setState(() {}); // تحديث الحالة لتغيير لون الزر بناءً على الإدخال
+      });
+    });
   }
 
   void _initControllers() {
@@ -233,7 +238,7 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
   Widget _buildLandInfoSection() {
     return _buildSectionCard(
       title: AppStrings.landInfo,
-      color: AppColors.primary,
+      color: AppColors.accent,
       children: [
         _buildField(
           _controllers['area']!,
@@ -263,36 +268,117 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
   }
 
   Widget _buildSupportingDocsSection() {
-    return _buildSectionCard(
-      title: AppStrings.supportingDocs,
-      color: AppColors.accent,
-      children: [
-        ElevatedButton.icon(
-          onPressed: _isUploading || _isSubmitting ? null : _pickPDF,
-          icon:
-              _isUploading
-                  ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                  : const Icon(Icons.attach_file),
-          label: Text(_isUploading ? 'Uploading...' : AppStrings.uploadPdf),
-        ),
-        if (_pdfFilePath != null) ...[
-          const SizedBox(height: 10),
-          Text(
-            'Selected PDF: ${_pdfFilePath!.split('/').last}',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontStyle: FontStyle.italic,
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 6,
+      shadowColor: Colors.grey.withOpacity(0.3),
+      margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          //crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              AppStrings.supportingDocs,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.accent,
+              ),
             ),
-          ),
-        ],
-      ],
+            const SizedBox(height: 15),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent, // لون مخصص للزر
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 4,
+                  shadowColor: Colors.black45,
+                ),
+                onPressed: _isUploading || _isSubmitting ? null : _pickPDF,
+                icon:
+                    _isUploading
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                        : const Icon(
+                          Icons.attach_file,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                label: Text(
+                  _isUploading ? 'Uploading...' : AppStrings.uploadPdf,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 8.0,
+              ),
+              child: Text(
+                'Please upload a PDF file no larger than 5MB. Make sure the file is clear and legible.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade700,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+
+            if (_pdfFilePath != null) ...[
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Uploaded file: ${_pdfFilePath!.split('/').last}',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.delete_forever,
+                      color: Colors.redAccent,
+                    ),
+                    tooltip: 'Cancel',
+                    onPressed:
+                        _isSubmitting || _isUploading
+                            ? null
+                            : () {
+                              setState(() {
+                                _pdfFilePath = null;
+                              });
+                            },
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -339,7 +425,10 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor:
+                          (_isFormValid)
+                              ? AppColors.accent
+                              : AppColors.primary.withOpacity(0.5),
                       foregroundColor: Colors.white,
                       minimumSize: const Size(120, 48),
                       shape: RoundedRectangleBorder(
@@ -481,7 +570,7 @@ class _CustomAppBar extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(width: 48), // توازن المساحة بسبب زر الرجوع
+          const SizedBox(width: 48),
         ],
       ),
     );
