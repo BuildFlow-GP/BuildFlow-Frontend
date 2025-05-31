@@ -2,7 +2,7 @@ import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import '../../services/chosen_office_service.dart';
-import 'project_description.dart'; // Import the project description screen
+import 'no_permit_screen.dart';
 
 final logger = Logger();
 
@@ -63,7 +63,7 @@ class _ChooseOfficeScreenState extends State<ChooseOfficeScreen> {
       logger.i('Selected office confirmed: ${_selectedOffice!.name}');
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => ProjectDetailsScreen()),
+        MaterialPageRoute(builder: (context) => NoPermitScreen()),
       );
     }
   }
@@ -269,14 +269,14 @@ class _ChooseOfficeScreenState extends State<ChooseOfficeScreen> {
                                         const SizedBox(height: 16),
                                         OutlinedButton(
                                           onPressed: () => _onSearchChanged(''),
-                                          child: Text(
-                                            'Clear search',
-                                            style: TextStyle(
+                                          style: OutlinedButton.styleFrom(
+                                            side: BorderSide(
                                               color: AppColors.accent,
                                             ),
                                           ),
-                                          style: OutlinedButton.styleFrom(
-                                            side: BorderSide(
+                                          child: Text(
+                                            'Clear search',
+                                            style: TextStyle(
                                               color: AppColors.accent,
                                             ),
                                           ),
