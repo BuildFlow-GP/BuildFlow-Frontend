@@ -9,4 +9,5 @@ class AppColors {
   static const textSecondary = Color(0xFF666666); // نص ثانوي واضح
   static const shadow = Colors.black26; // ظل أكثر وضوحًا
   static const Color error = Color(0xFFDC3545);
+  static const Color success = Color(0xFF28A745); // لون للنجاح
 }
