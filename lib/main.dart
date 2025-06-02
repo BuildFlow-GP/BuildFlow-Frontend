@@ -1,3 +1,8 @@
+
+import 'package:buildflow_frontend/screens/Design/no_permit_screen.dart';
+import 'package:buildflow_frontend/screens/Design/project_description.dart';
+import 'package:buildflow_frontend/screens/payment_screen.dart';
+
 import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
@@ -39,7 +44,7 @@ class MyApp extends StatelessWidget {
       //home: DrawerWrapper(child: const TypeOfProjectPage()),
       // home: SignInScreen(),
       //home: ProjectDetailsScreen(),
-      home: DrawerWrapper(child: const SignInScreen()),
+      home: DrawerWrapper(child: const PaymentScreen()),
       //home: DrawerWrapper(child: const NoPermitScreen()),
     );
   }
