@@ -26,11 +26,11 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
   void initState() {
     super.initState();
     _initControllers();
-    _controllers.values.forEach((controller) {
+    for (var controller in _controllers.values) {
       controller.addListener(() {
         setState(() {}); // تحديث الحالة لتغيير لون الزر بناءً على الإدخال
       });
-    });
+    }
   }
 
   void _initControllers() {
