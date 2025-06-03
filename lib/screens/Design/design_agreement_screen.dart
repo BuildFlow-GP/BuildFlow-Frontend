@@ -2,7 +2,8 @@ import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:logger/logger.dart';
-import 'app_strings.dart'; // فرضًا لديك نصوص هنا
+import 'app_strings.dart';
+import 'project_description.dart'; // فرضًا لديك نصوص هنا
 
 final Logger logger = Logger();
 
@@ -111,6 +112,11 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
 
     setState(() {
       _isSubmitting = true;
+      logger.i("Submitting form...");
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ProjectDetailsScreen()),
+      );
     });
 
     try {
@@ -163,7 +169,9 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
 
   @override
   void dispose() {
-    _controllers.values.forEach((c) => c.dispose());
+    for (var c in _controllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
