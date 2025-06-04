@@ -164,38 +164,51 @@ class ProjectService {
     }
   }
 
-  Future<void> respondToProjectRequest(int projectId, String action) async {
-    final token =
-        await Session.getToken(); // افترض أن تطبيق المكتب له Session خاص به
+  Future<void> respondToProjectRequest(
+    int projectId,
+    String action, {
+    String? rejectionReason,
+  }) async {
+    final token = await Session.getToken(); // التوكن الخاص بالمكتب
     if (token == null || token.isEmpty) {
-      throw Exception('Authentication token not found.');
+      throw Exception('Office authentication token not found.');
+    }
+
+    final Map<String, String> body = {'action': action.toLowerCase()};
+    if (action.toLowerCase() == 'reject' &&
+        rejectionReason != null &&
+        rejectionReason.isNotEmpty) {
+      body['rejection_reason'] = rejectionReason;
     }
 
     final response = await http.put(
-      Uri.parse(
-        '${Constants.baseUrl}/projects/$projectId/respond',
-      ), // تأكدي من الـ baseUrl والمسار
+      Uri.parse('$_baseUrl/projects/$projectId/respond'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode(<String, String>{
-        'action': action, // "approve" أو "reject"
-      }),
+      body: jsonEncode(body),
     );
 
     if (response.statusCode == 200) {
-      // نجح
-      print('Project request $projectId action $action successful.');
-    } else {
-      // فشل
       print(
-        'Failed to $action project request $projectId (Status: ${response.statusCode}): ${response.body}',
+        'Project request $projectId action ${action.toLowerCase()} successful.',
       );
-      final responseBody = jsonDecode(response.body);
-      throw Exception(
-        'Failed to $action request: ${responseBody['message'] ?? "Unknown error"}',
+      // يمكنكِ تحليل الـ response.body إذا أردتِ استخدام المشروع المحدث
+      // final responseData = jsonDecode(response.body);
+      // final updatedProject = ProjectModel.fromJson(responseData['project']); // إذا أردتِ إرجاعه
+    } else {
+      print(
+        'Failed to ${action.toLowerCase()} project request $projectId (Status: ${response.statusCode}): ${response.body}',
       );
+      String errorMessage = 'Failed to ${action.toLowerCase()} request.';
+      try {
+        final responseBody = jsonDecode(response.body);
+        errorMessage = responseBody['message'] ?? errorMessage;
+      } catch (_) {
+        // فشل تحليل JSON، استخدم الرسالة الافتراضية
+      }
+      throw Exception(errorMessage);
     }
   }
 }

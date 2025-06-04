@@ -1,7 +1,7 @@
 // screens/notifications_screen.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../services/notifications_service.dart'; // تأكدي أن اسم الملف services/notification_service.dart
+import '../services/notifications_service.dart'; // تأكدي من أن اسم الملف services/notification_service.dart
 import '../models/notifications_model.dart'; // تأكدي أن اسم الملف models/notification_model.dart
 import '../utils/constants.dart'; // أو api_config.dart لـ Constants.baseUrl
 
@@ -9,6 +9,9 @@ import '../utils/constants.dart'; // أو api_config.dart لـ Constants.baseUrl
 import 'ReadonlyProfiles/office_readonly_profile.dart';
 import 'ReadonlyProfiles/company_readonly_profile.dart';
 import 'ReadonlyProfiles/project_readonly_profile.dart';
+// مثال لصفحات أخرى قد تحتاجيها
+// import 'Design/type_of_project.dart';
+// import 'projects/fill_project_details_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -65,11 +68,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
 
     try {
-      // الـ offset في API يبدأ من 0 للصفحة الأولى
       final response = await _notificationService.getMyNotifications(
-        offset:
-            (isRefresh ? 0 : (_currentPage - 1)) *
-            20, // إذا كان _currentPage يبدأ من 1 للـ UI
+        offset: (isRefresh ? 0 : (_currentPage - 1)) * 20,
         limit: 20,
       );
       if (mounted) {
@@ -80,16 +80,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             _notifications.addAll(response.notifications);
           }
           _totalPages = response.totalPages;
-          // تحديث الصفحة الحالية للـ UI
-          // إذا كان الـ API يرجع currentPage (يبدأ من 1)، استخدميه
-          // _currentPage = response.currentPage;
-          // أو إذا كنا نزيدها يدوياً:
           if (!isRefresh && response.notifications.isNotEmpty) {
             _currentPage++;
           } else if (isRefresh && response.notifications.isNotEmpty) {
-            _currentPage = 1; // أو response.currentPage
+            _currentPage = 1;
+            if (response.totalPages == 0 && response.totalItems > 0) {
+              // حالة خاصة إذا كان API يرجع totalPages=0 لصفحة واحدة
+              _totalPages = 1;
+            }
           } else if (isRefresh && response.notifications.isEmpty) {
-            _currentPage = 1; // لا تزال الصفحة الأولى حتى لو فارغة
+            _currentPage = 1;
+            _totalPages = 0; // أو 1 إذا كان الـ API يرجع ذلك
           }
 
           _isLoading = false;
@@ -109,21 +110,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  // ✅ تعديل: هذه الدالة الآن فقط تعلم كمقروء وتحدث الـ UI
-  Future<void> _toggleReadStatusOnly(NotificationModel notification) async {
+  // ✅ الدالة التي يتم استدعاؤها عند الضغط على أيقونة "Mark as Read"
+  Future<void> _handleMarkAsReadIconTap(NotificationModel notification) async {
     if (notification.isRead) {
-      print("Notification is already read. No UI change from this button.");
-      // إذا أردتِ السماح بـ "Mark as Unread" لاحقاً، ستحتاجين منطقاً هنا والـ backend
-      return;
+      print("Notification is already read. Icon tap does nothing further.");
+      return; // لا تفعل شيئاً إذا كانت مقروءة بالفعل
     }
 
     try {
-      // استدعاء السيرفس لتعليم الإشعار كمقروء
       final updatedNotification = await _notificationService
           .markNotificationAsRead(notification.id);
       if (updatedNotification != null && mounted) {
         setState(() {
-          // تحديث الإشعار في القائمة المحلية
           final index = _notifications.indexWhere(
             (n) => n.id == notification.id,
           );
@@ -131,7 +129,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             _notifications[index] = updatedNotification;
           }
         });
-        // لا يوجد انتقال هنا
+        // لا يوجد انتقال هنا، فقط تحديث الـ UI
       }
     } catch (e) {
       if (mounted) {
@@ -143,7 +141,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _markAllAsRead() async {
-    // ... (نفس الكود)
     try {
       final count = await _notificationService.markAllNotificationsAsRead();
       if (mounted) {
@@ -163,13 +160,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  // ✅ تعديل: هذه الدالة ستستخدم عند الضغط على الإجراء أو على الإشعار نفسه (إذا لم يكن مقروءاً)
   Future<void> _markAsReadAndThen(
     NotificationModel notification,
     VoidCallback onReadCompleteAction,
   ) async {
     if (notification.isRead) {
-      onReadCompleteAction(); // إذا كان مقروءاً بالفعل، نفذ الإجراء مباشرة
+      onReadCompleteAction();
       return;
     }
     try {
@@ -184,17 +180,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             _notifications[index] = updatedNotification;
           }
         });
-        onReadCompleteAction(); // نفذ الإجراء بعد التحديث الناجح
+        onReadCompleteAction();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to mark as read before action: ${e.toString()}',
-            ),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     }
   }
@@ -204,81 +196,73 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _proceedWithAction(NotificationModel notification) {
-    // ... (نفس كود _proceedWithAction من الرد السابق)
     if (notification.targetEntityId == null ||
         notification.targetEntityType == null) {
       print("Notification action: No target entity.");
       return;
     }
+    Widget? targetScreen;
     switch (notification.notificationType) {
       case 'NEW_PROJECT_REQUEST':
-        if (notification.targetEntityType == 'project' && mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (context) => ProjectreadDetailsScreen(
-                    projectId: notification.targetEntityId!,
-                  ),
-            ),
-          );
-        }
+        targetScreen = ProjectreadDetailsScreen(
+          projectId: notification.targetEntityId!,
+        );
         break;
       case 'PROJECT_APPROVED_BY_OFFICE':
-        if (notification.targetEntityType == 'project' && mounted) {
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => FillProjectDetailsScreen(projectId: notification.targetEntityId!)));
-          print(
-            "TODO: Navigate to FillProjectDetailsScreen for project ${notification.targetEntityId}",
-          );
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                "Navigate to complete project ID: ${notification.targetEntityId}",
-              ),
+        // targetScreen = FillProjectDetailsScreen(projectId: notification.targetEntityId!);
+        print(
+          "TODO: Navigate to FillProjectDetailsScreen for project ${notification.targetEntityId}",
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Navigate to complete project ID: ${notification.targetEntityId}",
             ),
-          );
-        }
-        break;
+          ),
+        );
+        return; // لا تنتقل إذا لم تكن الشاشة جاهزة
       case 'PROJECT_REJECTED_BY_OFFICE':
-        if (mounted) {
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => const TypeOfProjectPage()));
-          print(
-            "TODO: Navigate to choose another office or see rejection reason for project ${notification.targetEntityId}",
-          );
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                "Project ID: ${notification.targetEntityId} was rejected. Choose another office.",
-              ),
+        // targetScreen = const TypeOfProjectPage(); // أو شاشة تعرض سبب الرفض
+        print(
+          "TODO: Navigate to choose another office or see rejection reason for project ${notification.targetEntityId}",
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Project ID: ${notification.targetEntityId} was rejected. Choose another office.",
             ),
-          );
-        }
-        break;
+          ),
+        );
+        return; // لا تنتقل إذا لم تكن الشاشة جاهزة
       case 'OFFICE_UPLOADED_2D_DOCUMENT':
       case 'OFFICE_UPLOADED_3D_DOCUMENT':
-        if (notification.targetEntityType == 'project' && mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (context) => ProjectreadDetailsScreen(
-                    projectId: notification.targetEntityId!,
-                  ),
-            ),
-          );
-        }
+        targetScreen = ProjectreadDetailsScreen(
+          projectId: notification.targetEntityId!,
+        );
         break;
       default:
         print(
           "No specific action defined for notification type: ${notification.notificationType}",
         );
-        _navigateToTargetEntity(notification); // الانتقال الافتراضي
+        _navigateToTargetEntity(
+          notification,
+          skipMarkAsRead: true,
+        ); // تم تعليمه كمقروء بالفعل
+        return;
+    }
+    if (targetScreen != null && mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => targetScreen!),
+      );
     }
   }
 
-  void _navigateToTargetEntity(NotificationModel notification) {
-    _markAsReadAndThen(notification, () {
-      // ✅ تعليم كمقروء قبل الانتقال
+  void _navigateToTargetEntity(
+    NotificationModel notification, {
+    bool skipMarkAsRead = false,
+  }) {
+    VoidCallback navigateAction = () {
       if (notification.targetEntityId == null ||
           notification.targetEntityType == null)
         return;
@@ -312,14 +296,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           MaterialPageRoute(builder: (context) => targetScreen!),
         );
       }
-    });
+    };
+
+    if (skipMarkAsRead) {
+      navigateAction();
+    } else {
+      _markAsReadAndThen(notification, navigateAction);
+    }
   }
 
   String _formatTimeAgo(DateTime dateTime) {
-    // ... (نفس الكود)
     final now = DateTime.now();
     final difference = now.difference(dateTime.toLocal());
-
     if (difference.inSeconds < 5) return 'just now';
     if (difference.inSeconds < 60) return '${difference.inSeconds}s ago';
     if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
@@ -330,7 +318,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _buildNotificationItem(NotificationModel notification) {
     final timeAgo = _formatTimeAgo(notification.createdAt);
-
     ImageProvider? actorImageProvider;
     IconData actorDefaultIcon = Icons.person_outline;
 
@@ -339,7 +326,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       actorImageProvider = NetworkImage(
         notification.actor!.profileImage!.startsWith('http')
             ? notification.actor!.profileImage!
-            : '${Constants.baseUrl}/${notification.actor!.profileImage}', // استخدام Constants.baseUrl
+            : '${Constants.baseUrl}/${notification.actor!.profileImage}',
       );
     } else if (notification.actor != null) {
       switch (notification.actor!.type.toLowerCase()) {
@@ -358,37 +345,36 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     String? actionButtonText;
     IconData? actionButtonIcon;
+    bool isProjectRequestForOffice =
+        notification.notificationType == 'NEW_PROJECT_REQUEST'; // للمكتب
+    // يمكنك إضافة متغير مماثل إذا كان الإشعار للمستخدم وهو ينتظر الموافقة
 
-    switch (notification.notificationType) {
-      case 'PROJECT_APPROVED_BY_OFFICE':
-        actionButtonText = 'Complete Info'; // نص أقصر
-        actionButtonIcon = Icons.edit_note_outlined;
-        break;
-      case 'PROJECT_REJECTED_BY_OFFICE':
-        actionButtonText = 'Find Office'; // نص أقصر
-        actionButtonIcon = Icons.search_outlined;
-        break;
-      case 'OFFICE_UPLOADED_2D_DOCUMENT':
-      case 'OFFICE_UPLOADED_3D_DOCUMENT':
-      case 'NEW_PROJECT_REQUEST': // للمكتب، يمكن أن يكون الإجراء "View Request"
-        actionButtonText = 'View Details'; // نص عام
-        actionButtonIcon = Icons.visibility_outlined;
-        break;
+    if (!isProjectRequestForOffice) {
+      // إذا لم يكن طلب مشروع جديد للمكتب، أظهري زر الإجراء العام
+      switch (notification.notificationType) {
+        case 'PROJECT_APPROVED_BY_OFFICE':
+          actionButtonText = 'Complete Info';
+          actionButtonIcon = Icons.edit_note_outlined;
+          break;
+        case 'PROJECT_REJECTED_BY_OFFICE':
+          actionButtonText = 'Find Office';
+          actionButtonIcon = Icons.search_outlined;
+          break;
+        case 'OFFICE_UPLOADED_2D_DOCUMENT':
+        case 'OFFICE_UPLOADED_3D_DOCUMENT':
+          actionButtonText = 'View Project';
+          actionButtonIcon = Icons.visibility_outlined;
+          break;
+      }
     }
 
     return Material(
       color:
           notification.isRead
-              ? Theme.of(context)
-                  .cardColor // أو canvasColor إذا كان الكرت له لون مختلف
-              : Theme.of(context).primaryColor.withOpacity(
-                0.08,
-              ), // لون أغمق قليلاً للإشعار غير المقروء
+              ? Theme.of(context).cardColor
+              : Theme.of(context).highlightColor, // لون أفتح قليلاً للتمييز
       child: InkWell(
-        onTap:
-            () => _navigateToTargetEntity(
-              notification,
-            ), // الضغط على الإشعار كله ينقله ويعلمه كمقروء
+        onTap: () => _navigateToTargetEntity(notification),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
           child: Row(
@@ -417,14 +403,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     Text(
                       notification.actor?.name ?? 'System Notification',
                       style: TextStyle(
-                        fontWeight: FontWeight.w600, // خط أعرض قليلاً
+                        fontWeight: FontWeight.w600,
                         fontSize: 15,
                         color:
                             notification.isRead
-                                ? Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.color // لون أفتح للمقروء
+                                ? Theme.of(
+                                  context,
+                                ).textTheme.bodySmall?.color?.withOpacity(0.7)
                                 : Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
@@ -435,25 +420,113 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         fontSize: 14,
                         color:
                             notification.isRead
-                                ? Colors.grey[700] // لون أفتح للمقروء
+                                ? Colors.grey[700]
                                 : Theme.of(context).textTheme.bodyMedium?.color,
+                        fontWeight:
+                            notification.isRead
+                                ? FontWeight.normal
+                                : FontWeight.w500,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          timeAgo,
-                          style: TextStyle(
-                            fontSize: 12.0,
-                            color: Colors.grey[600],
+                    // عرض أزرار Approve/Reject أو زر الإجراء العام أو الوقت
+                    if (isProjectRequestForOffice)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          TextButton.icon(
+                            icon: const Icon(
+                              Icons.check_circle_outline,
+                              color: Colors.green,
+                              size: 18,
+                            ),
+                            label: const Text(
+                              'Approve',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            onPressed: () {
+                              _markAsReadAndThen(notification, () {
+                                // استدعاء API الموافقة هنا
+                                // مثال: ProjectService().respondToProjectRequest(notification.targetEntityId!, 'approve');
+                                // ثم _loadNotifications(isRefresh: true);
+                                print(
+                                  "TODO: Implement Approve action for project ${notification.targetEntityId}",
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Approve action pressed (not implemented)",
+                                    ),
+                                  ),
+                                );
+                              });
+                            },
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                            ),
                           ),
-                        ),
-                        if (actionButtonText != null)
+                          const SizedBox(width: 8),
+                          TextButton.icon(
+                            icon: const Icon(
+                              Icons.cancel_outlined,
+                              color: Colors.red,
+                              size: 18,
+                            ),
+                            label: const Text(
+                              'Reject',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            onPressed: () {
+                              _markAsReadAndThen(notification, () {
+                                // استدعاء API الرفض هنا
+                                // مثال: ProjectService().respondToProjectRequest(notification.targetEntityId!, 'reject');
+                                // ثم _loadNotifications(isRefresh: true);
+                                print(
+                                  "TODO: Implement Reject action for project ${notification.targetEntityId}",
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Reject action pressed (not implemented)",
+                                    ),
+                                  ),
+                                );
+                              });
+                            },
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    else if (actionButtonText !=
+                        null) // زر الإجراء العام لأنواع أخرى
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            timeAgo,
+                            style: TextStyle(
+                              fontSize: 12.0,
+                              color: Colors.grey[600],
+                            ),
+                          ),
                           TextButton.icon(
                             icon: Icon(
                               actionButtonIcon ?? Icons.arrow_forward_ios,
@@ -469,44 +542,47 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             onPressed:
                                 () => _performNotificationAction(notification),
                             style: TextButton.styleFrom(
-                              // primary: Theme.of(context).colorScheme.secondary, // لون مميز للزر
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
                                 vertical: 2,
                               ),
-                              minimumSize: const Size(0, 28), // حجم أصغر للزر
+                              minimumSize: const Size(0, 28),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              // shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
                             ),
                           ),
-                      ],
-                    ),
+                        ],
+                      )
+                    else // إذا لم يكن هناك إجراء خاص، اعرضي الوقت فقط
+                      Text(
+                        timeAgo,
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          color: Colors.grey[600],
+                        ),
+                      ),
                   ],
                 ),
               ),
               const SizedBox(width: 8.0),
-              // ✅ كبسة "تعليم كمقروء" فقط
               Column(
-                mainAxisAlignment: MainAxisAlignment.center, // لتوسيط الأيقونة
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
                     icon: Icon(
                       notification.isRead
-                          ? Icons.check_circle_outline
-                          : Icons.radio_button_unchecked_outlined,
+                          ? Icons.check_circle
+                          : Icons.circle_outlined, // أيقونات مختلفة
                       color:
                           notification.isRead
-                              ? Colors.green
-                              : Theme.of(context).colorScheme.secondary,
+                              ? Colors.green.shade600
+                              : Theme.of(context).colorScheme.primary,
                       size: 22,
                     ),
                     tooltip: notification.isRead ? 'Read' : 'Mark as Read',
-                    // إذا كان مقروءاً، لا يوجد فعل عند الضغط على هذه الأيقونة
-                    // أو يمكنكِ إضافة خيار "Mark as Unread" إذا كان الـ backend يدعمه
                     onPressed:
                         notification.isRead
                             ? null
-                            : () => _toggleReadStatusOnly(notification),
+                            : () => _handleMarkAsReadIconTap(notification),
                   ),
                 ],
               ),
@@ -519,7 +595,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ... (نفس الكود)
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
@@ -529,9 +604,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               !_isFetchingMore)
             TextButton(
               onPressed: _markAllAsRead,
-              child: const Text(
+              child: Text(
                 'Mark All Read',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(
+                  color:
+                      Theme.of(context).appBarTheme.foregroundColor ??
+                      Colors.white,
+                ),
               ),
             ),
           IconButton(
@@ -549,15 +628,55 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _buildBody() {
-    // ... (نفس الكود)
     if (_isLoading && _notifications.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null && _notifications.isEmpty) {
-      return Center(/* ... */);
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, color: Colors.red[700], size: 50),
+              const SizedBox(height: 16),
+              Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.red[700], fontSize: 16),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+                onPressed: () => _loadNotifications(isRefresh: true),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     if (_notifications.isEmpty && !_isLoading) {
-      return Center(/* ... */);
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.notifications_off_outlined,
+                color: Colors.grey[600],
+                size: 60,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'You have no notifications yet.',
+                style: TextStyle(fontSize: 18.0, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     return RefreshIndicator(
       onRefresh: () => _loadNotifications(isRefresh: true),
@@ -571,7 +690,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Center(child: CircularProgressIndicator(strokeWidth: 2.0)),
             );
           }
-          if (index >= _notifications.length) return const SizedBox.shrink();
+          if (index >= _notifications.length)
+            return const SizedBox.shrink(); // Safety check
 
           final notification = _notifications[index];
           return _buildNotificationItem(notification);
@@ -580,10 +700,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             (context, index) => const Divider(
               height: 0,
               thickness: 0.5,
-              indent: 16,
+              indent: 70,
               endIndent: 16,
-            ),
+            ), // تعديل الفاصل ليبدأ بعد الصورة
       ),
     );
   }
 }
+
+// الدالة _navigateToTarget التي كانت في نهاية الملف السابق ليست جزءاً من الكلاس
+// وتم دمج منطقها داخل _navigateToTargetEntity.
+// إذا كنتِ تستخدمينها في مكان آخر، يجب نقلها أو إعادة تعريفها.
