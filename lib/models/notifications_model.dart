@@ -57,7 +57,7 @@ class NotificationModel {
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     // دالة مساعدة لتحويل النصوص إلى DateTime بأمان
-    DateTime? _parseDate(String? dateString) {
+    DateTime? parseDate(String? dateString) {
       if (dateString == null || dateString.isEmpty) return null;
       try {
         return DateTime.parse(dateString);
@@ -78,9 +78,9 @@ class NotificationModel {
       targetEntityId: json['target_entity_id'] as int?,
       targetEntityType: json['target_entity_type'] as String?,
       isRead: json['is_read'] as bool? ?? false, // قيمة افتراضية
-      readAt: _parseDate(json['read_at'] as String?),
+      readAt: parseDate(json['read_at'] as String?),
       createdAt:
-          _parseDate(json['created_at'] as String?) ??
+          parseDate(json['created_at'] as String?) ??
           DateTime.now(), // قيمة افتراضية قوية
       actor:
           json['actor'] != null

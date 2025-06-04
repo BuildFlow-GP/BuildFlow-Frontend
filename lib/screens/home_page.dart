@@ -6,6 +6,7 @@ import '../services/favorite_service.dart'; // تمت الإضافة
 import 'ReadonlyProfiles/project_readonly_profile.dart';
 import 'favorite.dart';
 import 'my_projects.dart';
+import 'notifications_screen.dart';
 import 'profiles/company_profile.dart';
 import 'ReadonlyProfiles/office_readonly_profile.dart';
 import 'ReadonlyProfiles/company_readonly_profile.dart';
@@ -345,6 +346,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ElevatedButton(
                     onPressed: () => Get.to(() => const TypeOfProjectPage()),
                     child: const Text("Start New Project"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Get.to(() => const NotificationsScreen()),
+                    child: const Text("Notification"),
                   ),
                   ElevatedButton(
                     onPressed: _navigateToProfile,

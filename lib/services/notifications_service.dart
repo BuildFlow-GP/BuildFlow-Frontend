@@ -134,13 +134,13 @@ class NotificationService {
   Future<NotificationModel> createNotification(
     Map<String, dynamic> notificationData,
   ) async {
-    final token = await Session.getToken(); // قد يتطلب توكن
+    // final token = await Session.getToken(); // قد يتطلب توكن
     final response = await http.post(
       Uri.parse('$_baseUrl/notifications'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
-      },
+      // headers: {
+      //   'Content-Type': 'application/json',
+      //   if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      // },
       body: jsonEncode(notificationData),
     );
     if (response.statusCode == 201) {
