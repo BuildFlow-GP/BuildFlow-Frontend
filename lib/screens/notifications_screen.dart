@@ -250,7 +250,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ); // تم تعليمه كمقروء بالفعل
         return;
     }
-    if (targetScreen != null && mounted) {
+    if (mounted) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => targetScreen!),
@@ -262,10 +262,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     NotificationModel notification, {
     bool skipMarkAsRead = false,
   }) {
-    VoidCallback navigateAction = () {
+    navigateAction() {
       if (notification.targetEntityId == null ||
-          notification.targetEntityType == null)
+          notification.targetEntityType == null) {
         return;
+      }
       Widget? targetScreen;
       switch (notification.targetEntityType!.toLowerCase()) {
         case 'project':
@@ -296,7 +297,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           MaterialPageRoute(builder: (context) => targetScreen!),
         );
       }
-    };
+    }
 
     if (skipMarkAsRead) {
       navigateAction();
