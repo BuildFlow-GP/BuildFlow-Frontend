@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../models/Basic/project_model.dart';
 import '../models/userprojects/project_simplified_model.dart';
 import '../services/session.dart';
 import '../utils/Constants.dart';
@@ -108,6 +109,93 @@ class ProjectService {
         'Failed to load project details for ID $projectId (Status: ${response.statusCode}): ${response.body}',
       );
       throw Exception('Failed to load project details for ID $projectId');
+    }
+  }
+
+  Future<ProjectModel> requestInitialProject({
+    // تم تعديل اسم الدالة والبارامترات
+    required int officeId,
+    required String projectType, // يمكن أن يكون نوع التصميم أو اسم مبدئي
+    String? initialDescription,
+  }) async {
+    final token = await Session.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found. Please log in.');
+    }
+
+    final response = await http.post(
+      Uri.parse('$_baseUrl/projects/request-initial'), // المسار الجديد
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'office_id': officeId,
+        'project_type': projectType,
+        if (initialDescription != null && initialDescription.isNotEmpty)
+          'initial_description': initialDescription,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      // تم إنشاء الطلب بنجاح، الـ API يرجع المشروع المبدئي
+      return ProjectModel.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    } else if (response.statusCode == 400) {
+      final responseBody = jsonDecode(response.body) as Map<String, dynamic>;
+      throw Exception(
+        'Failed to send project request: ${responseBody['message'] ?? "Invalid data."}',
+      );
+    } else if (response.statusCode == 401 || response.statusCode == 403) {
+      throw Exception('Authentication failed. Please log in again.');
+    } else if (response.statusCode == 404) {
+      final responseBody = jsonDecode(response.body) as Map<String, dynamic>;
+      throw Exception(
+        'Failed to send project request: ${responseBody['message'] ?? "Office not found."}',
+      );
+    } else {
+      print(
+        'Error in requestInitialProject (Status: ${response.statusCode}): ${response.body}',
+      );
+      throw Exception(
+        'An unexpected error occurred while sending your project request.',
+      );
+    }
+  }
+
+  Future<void> respondToProjectRequest(int projectId, String action) async {
+    final token =
+        await Session.getToken(); // افترض أن تطبيق المكتب له Session خاص به
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found.');
+    }
+
+    final response = await http.put(
+      Uri.parse(
+        '${Constants.baseUrl}/projects/$projectId/respond',
+      ), // تأكدي من الـ baseUrl والمسار
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(<String, String>{
+        'action': action, // "approve" أو "reject"
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // نجح
+      print('Project request $projectId action $action successful.');
+    } else {
+      // فشل
+      print(
+        'Failed to $action project request $projectId (Status: ${response.statusCode}): ${response.body}',
+      );
+      final responseBody = jsonDecode(response.body);
+      throw Exception(
+        'Failed to $action request: ${responseBody['message'] ?? "Unknown error"}',
+      );
     }
   }
 }

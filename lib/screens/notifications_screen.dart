@@ -9,8 +9,6 @@ import '../utils/constants.dart'; // أو api_config.dart لـ Constants.baseUrl
 import 'ReadonlyProfiles/office_readonly_profile.dart';
 import 'ReadonlyProfiles/company_readonly_profile.dart';
 import 'ReadonlyProfiles/project_readonly_profile.dart';
-import 'Design/type_of_project.dart';
-// import 'projects/fill_project_details_screen.dart'; // ستحتاجين لهذه الشاشة
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
