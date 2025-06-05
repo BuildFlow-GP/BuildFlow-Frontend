@@ -3,7 +3,7 @@ import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:buildflow_frontend/screens/Design/design_agreement_screen.dart';
 
 class NoPermitScreen extends StatefulWidget {
-  const NoPermitScreen({super.key});
+  const NoPermitScreen({super.key, required int projectId});
 
   @override
   State<NoPermitScreen> createState() => _NoPermitScreenState();

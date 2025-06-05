@@ -9,7 +9,6 @@ import '../models/project_readonly_model.dart'; // تأكدي من أن المس
 class ProjectService {
   final String _baseUrl = Constants.baseUrl;
 
-  // (1) دالة لجلب مشاريع المستخدم الحالي (تعتمد على وجود الـ endpoint في الـ backend)
   Future<List<ProjectsimplifiedModel>> getMyProjects() async {
     print("getMyProjects CALLED"); // <<<<<< DEBUG PRINT
     final token = await Session.getToken();
@@ -83,7 +82,6 @@ class ProjectService {
     }
   }
 
-  // (2) دالة لجلب تفاصيل مشروع واحد (هذه التي كانت ناقصة)
   Future<ProjectreadonlyModel> getProjectDetails(int projectId) async {
     final token =
         await Session.getToken(); // التوكن قد يكون اختيارياً هنا إذا كانت تفاصيل المشروع عامة

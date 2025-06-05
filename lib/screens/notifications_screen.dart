@@ -1,17 +1,23 @@
 // screens/notifications_screen.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../services/notifications_service.dart'; // تأكدي من أن اسم الملف services/notification_service.dart
-import '../models/notifications_model.dart'; // تأكدي أن اسم الملف models/notification_model.dart
-import '../utils/constants.dart'; // أو api_config.dart لـ Constants.baseUrl
+// import 'package:get/get.dart'; // إذا كنتِ ستستخدمينه للانتقال
+
+import '../services/notifications_service.dart';
+import '../models/notifications_model.dart';
+import '../utils/constants.dart'; // أو api_config.dart
 
 // استيراد صفحات التفاصيل والانتقال إليها
 import 'ReadonlyProfiles/office_readonly_profile.dart';
 import 'ReadonlyProfiles/company_readonly_profile.dart';
 import 'ReadonlyProfiles/project_readonly_profile.dart';
-// مثال لصفحات أخرى قد تحتاجيها
-// import 'Design/type_of_project.dart';
-// import 'projects/fill_project_details_screen.dart';
+
+// إضافة سيرفس المشروع
+import '../services/project_service.dart';
+
+// شاشات سيتم الانتقال إليها بناءً على الإجراء (للمستخدم)
+import 'design/no_permit_screen.dart'; // شاشة استكمال البيانات بعد موافقة المكتب
+import 'design/choose_office.dart'; // شاشة اختيار مكتب آخر عند الرفض
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -22,13 +28,18 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final NotificationService _notificationService = NotificationService();
+  final ProjectService _projectService = ProjectService();
   List<NotificationModel> _notifications = [];
   bool _isLoading = true;
   String? _error;
   int _currentPage = 1;
   int _totalPages = 1;
   bool _isFetchingMore = false;
+  bool _isProcessingAction = false; // لمنع الضغط المتكرر
   final ScrollController _scrollController = ScrollController();
+
+  // مجموعة لتخزين IDs الإشعارات التي تم التعامل معها (Approve/Reject)
+  final Set<int> _processedNotificationIds = {};
 
   @override
   void initState() {
@@ -62,6 +73,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _notifications = [];
         _currentPage = 1;
         _totalPages = 1;
+        _processedNotificationIds.clear();
       } else {
         _isFetchingMore = true;
       }
@@ -85,12 +97,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           } else if (isRefresh && response.notifications.isNotEmpty) {
             _currentPage = 1;
             if (response.totalPages == 0 && response.totalItems > 0) {
-              // حالة خاصة إذا كان API يرجع totalPages=0 لصفحة واحدة
               _totalPages = 1;
             }
           } else if (isRefresh && response.notifications.isEmpty) {
             _currentPage = 1;
-            _totalPages = 0; // أو 1 إذا كان الـ API يرجع ذلك
+            _totalPages = 0;
           }
 
           _isLoading = false;
@@ -106,17 +117,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           _isFetchingMore = false;
         });
       }
-      print("Error loading notifications: $e");
+      debugPrint("Error loading notifications: $e");
     }
   }
 
-  // ✅ الدالة التي يتم استدعاؤها عند الضغط على أيقونة "Mark as Read"
   Future<void> _handleMarkAsReadIconTap(NotificationModel notification) async {
-    if (notification.isRead) {
-      print("Notification is already read. Icon tap does nothing further.");
-      return; // لا تفعل شيئاً إذا كانت مقروءة بالفعل
-    }
-
+    if (notification.isRead || _isProcessingAction) return;
+    setState(() => _isProcessingAction = true);
     try {
       final updatedNotification = await _notificationService
           .markNotificationAsRead(notification.id);
@@ -129,7 +136,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             _notifications[index] = updatedNotification;
           }
         });
-        // لا يوجد انتقال هنا، فقط تحديث الـ UI
       }
     } catch (e) {
       if (mounted) {
@@ -137,10 +143,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           SnackBar(content: Text('Failed to mark as read: ${e.toString()}')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isProcessingAction = false);
     }
   }
 
   Future<void> _markAllAsRead() async {
+    if (_isProcessingAction) return;
+    setState(() => _isProcessingAction = true);
     try {
       final count = await _notificationService.markAllNotificationsAsRead();
       if (mounted) {
@@ -157,15 +167,37 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isProcessingAction = false);
     }
   }
 
   Future<void> _markAsReadAndThen(
     NotificationModel notification,
-    VoidCallback onReadCompleteAction,
+    Future<void> Function() onReadCompleteActionAsync,
   ) async {
+    if (_isProcessingAction) return;
+    setState(() => _isProcessingAction = true);
+
+    Future<void> executeActionAfterReadLogic() async {
+      try {
+        await onReadCompleteActionAsync();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Action failed: ${e.toString()}')),
+          );
+        }
+        debugPrint("Error during onReadCompleteActionAsync: $e");
+      } finally {
+        if (mounted && _isProcessingAction) {
+          setState(() => _isProcessingAction = false);
+        }
+      }
+    }
+
     if (notification.isRead) {
-      onReadCompleteAction();
+      await executeActionAfterReadLogic();
       return;
     }
     try {
@@ -180,93 +212,134 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             _notifications[index] = updatedNotification;
           }
         });
-        onReadCompleteAction();
+        await executeActionAfterReadLogic();
+      } else {
+        if (mounted) setState(() => _isProcessingAction = false);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to mark as read before action: ${e.toString()}',
+            ),
+          ),
+        );
+        setState(() => _isProcessingAction = false);
       }
     }
   }
 
-  void _performNotificationAction(NotificationModel notification) {
-    _markAsReadAndThen(notification, () => _proceedWithAction(notification));
+  Future<void> _handleProjectRequestResponse(
+    NotificationModel notification,
+    String action,
+  ) async {
+    if (notification.targetEntityId == null ||
+        notification.targetEntityType != 'project' ||
+        _isProcessingAction) {
+      return;
+    }
+    await _markAsReadAndThen(notification, () async {
+      try {
+        await _projectService.respondToProjectRequest(
+          notification.targetEntityId!,
+          action,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Project request has been ${action}ed successfully.',
+              ),
+            ),
+          );
+          setState(() {
+            _processedNotificationIds.add(notification.id);
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Failed to ${action} project request: ${e.toString()}',
+              ),
+            ),
+          );
+        }
+        debugPrint("Error ${action}ing project request: $e");
+      }
+    });
   }
 
-  void _proceedWithAction(NotificationModel notification) {
+  Future<void> _performUserOrGeneralAction(
+    NotificationModel notification,
+  ) async {
+    //  الدالة موجودة بهذا الاسم
+    await _markAsReadAndThen(
+      notification,
+      () async => _proceedWithUserOrGeneralAction(notification),
+    );
+  }
+
+  Future<void> _proceedWithUserOrGeneralAction(
+    NotificationModel notification,
+  ) async {
+    // الدالة موجودة بهذا الاسم
+    if (!mounted) return;
     if (notification.targetEntityId == null ||
         notification.targetEntityType == null) {
-      print("Notification action: No target entity.");
+      debugPrint("Notification action: No target entity.");
       return;
     }
     Widget? targetScreen;
+    String? routeDescription;
+
     switch (notification.notificationType) {
-      case 'NEW_PROJECT_REQUEST':
-        targetScreen = ProjectreadDetailsScreen(
-          projectId: notification.targetEntityId!,
-        );
-        break;
       case 'PROJECT_APPROVED_BY_OFFICE':
-        // targetScreen = FillProjectDetailsScreen(projectId: notification.targetEntityId!);
-        print(
-          "TODO: Navigate to FillProjectDetailsScreen for project ${notification.targetEntityId}",
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Navigate to complete project ID: ${notification.targetEntityId}",
-            ),
-          ),
-        );
-        return; // لا تنتقل إذا لم تكن الشاشة جاهزة
+        // تأكدي أن NoPermitScreen تقبل projectId
+        targetScreen = NoPermitScreen(projectId: notification.targetEntityId!);
+        routeDescription =
+            "Complete project (ID: ${notification.targetEntityId}) details";
+        break;
       case 'PROJECT_REJECTED_BY_OFFICE':
-        // targetScreen = const TypeOfProjectPage(); // أو شاشة تعرض سبب الرفض
-        print(
-          "TODO: Navigate to choose another office or see rejection reason for project ${notification.targetEntityId}",
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Project ID: ${notification.targetEntityId} was rejected. Choose another office.",
-            ),
-          ),
-        );
-        return; // لا تنتقل إذا لم تكن الشاشة جاهزة
+        targetScreen = const ChooseOfficeScreen();
+        routeDescription =
+            "Choose another office for project (ID: ${notification.targetEntityId})";
+        break;
       case 'OFFICE_UPLOADED_2D_DOCUMENT':
       case 'OFFICE_UPLOADED_3D_DOCUMENT':
         targetScreen = ProjectreadDetailsScreen(
           projectId: notification.targetEntityId!,
         );
+        routeDescription =
+            "View project (ID: ${notification.targetEntityId}) documents";
         break;
       default:
-        print(
-          "No specific action defined for notification type: ${notification.notificationType}",
+        debugPrint(
+          "No specific general action defined for notification type: ${notification.notificationType}",
         );
-        _navigateToTargetEntity(
-          notification,
-          skipMarkAsRead: true,
-        ); // تم تعليمه كمقروء بالفعل
+        await _navigateToTargetEntity(notification, skipMarkAsRead: true);
         return;
     }
-    if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => targetScreen!),
-      );
-    }
+
+    debugPrint("Navigating user to: $routeDescription");
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => targetScreen!),
+    );
   }
 
-  void _navigateToTargetEntity(
+  Future<void> _navigateToTargetEntity(
     NotificationModel notification, {
     bool skipMarkAsRead = false,
-  }) {
-    navigateAction() {
+  }) async {
+    Future<void> navigateAction() async {
+      if (!mounted) return;
       if (notification.targetEntityId == null ||
-          notification.targetEntityType == null) {
+          notification.targetEntityType == null)
         return;
-      }
       Widget? targetScreen;
       switch (notification.targetEntityType!.toLowerCase()) {
         case 'project':
@@ -287,22 +360,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           );
           break;
         default:
-          print(
+          debugPrint(
             "Unknown target entity type for navigation: ${notification.targetEntityType}",
           );
       }
-      if (targetScreen != null && mounted) {
-        Navigator.push(
+      if (targetScreen != null) {
+        if (!mounted) return;
+        await Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => targetScreen!),
         );
       }
     }
 
-    if (skipMarkAsRead) {
-      navigateAction();
+    if (skipMarkAsRead || notification.isRead) {
+      await navigateAction();
     } else {
-      _markAsReadAndThen(notification, navigateAction);
+      await _markAsReadAndThen(notification, navigateAction);
     }
   }
 
@@ -344,27 +418,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
     }
 
-    String? actionButtonText;
-    IconData? actionButtonIcon;
-    bool isProjectRequestForOffice =
-        notification.notificationType == 'NEW_PROJECT_REQUEST'; // للمكتب
-    // يمكنك إضافة متغير مماثل إذا كان الإشعار للمستخدم وهو ينتظر الموافقة
+    bool isNewProjectRequestForOffice =
+        notification.notificationType == 'NEW_PROJECT_REQUEST' &&
+        !_processedNotificationIds.contains(notification.id) &&
+        notification.recipientType == 'office';
+    bool isProjectResponseForUser =
+        (notification.notificationType == 'PROJECT_APPROVED_BY_OFFICE' ||
+            notification.notificationType == 'PROJECT_REJECTED_BY_OFFICE') &&
+        notification.recipientType == 'individual';
 
-    if (!isProjectRequestForOffice) {
-      // إذا لم يكن طلب مشروع جديد للمكتب، أظهري زر الإجراء العام
+    String? generalActionButtonText;
+    IconData? generalActionButtonIcon;
+
+    if (!isNewProjectRequestForOffice && !isProjectResponseForUser) {
       switch (notification.notificationType) {
-        case 'PROJECT_APPROVED_BY_OFFICE':
-          actionButtonText = 'Complete Info';
-          actionButtonIcon = Icons.edit_note_outlined;
-          break;
-        case 'PROJECT_REJECTED_BY_OFFICE':
-          actionButtonText = 'Find Office';
-          actionButtonIcon = Icons.search_outlined;
-          break;
         case 'OFFICE_UPLOADED_2D_DOCUMENT':
         case 'OFFICE_UPLOADED_3D_DOCUMENT':
-          actionButtonText = 'View Project';
-          actionButtonIcon = Icons.visibility_outlined;
+          generalActionButtonText = 'View Project';
+          generalActionButtonIcon = Icons.visibility_outlined;
           break;
       }
     }
@@ -373,13 +444,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       color:
           notification.isRead
               ? Theme.of(context).cardColor
-              : Theme.of(context).highlightColor, // لون أفتح قليلاً للتمييز
+              : Theme.of(
+                context,
+              ).primaryColorLight.withAlpha((0.3 * 255).round()),
       child: InkWell(
         onTap: () => _navigateToTargetEntity(notification),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CircleAvatar(
                 radius: 22,
@@ -408,17 +481,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         fontSize: 15,
                         color:
                             notification.isRead
-                                ? Theme.of(
+                                ? Theme.of(context).textTheme.bodySmall?.color
+                                    ?.withAlpha((0.7 * 255).round())
+                                : Theme.of(
                                   context,
-                                ).textTheme.bodySmall?.color?.withOpacity(0.7)
-                                : Theme.of(context).textTheme.bodyLarge?.color,
+                                ).textTheme.titleMedium?.color,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       notification.message,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13.5,
                         color:
                             notification.isRead
                                 ? Colors.grey[700]
@@ -432,128 +506,135 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    // عرض أزرار Approve/Reject أو زر الإجراء العام أو الوقت
-                    if (isProjectRequestForOffice)
+                    if (isNewProjectRequestForOffice)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          TextButton.icon(
+                          ElevatedButton.icon(
                             icon: const Icon(
                               Icons.check_circle_outline,
-                              color: Colors.green,
-                              size: 18,
+                              size: 16,
                             ),
-                            label: const Text(
-                              'Approve',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontSize: 13,
+                            label: const Text('Approve'),
+                            onPressed:
+                                _isProcessingAction
+                                    ? null
+                                    : () => _handleProjectRequestResponse(
+                                      notification,
+                                      'approve',
+                                    ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green.shade600,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
-                            ),
-                            onPressed: () {
-                              _markAsReadAndThen(notification, () {
-                                // استدعاء API الموافقة هنا
-                                // مثال: ProjectService().respondToProjectRequest(notification.targetEntityId!, 'approve');
-                                // ثم _loadNotifications(isRefresh: true);
-                                print(
-                                  "TODO: Implement Approve action for project ${notification.targetEntityId}",
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Approve action pressed (not implemented)",
-                                    ),
-                                  ),
-                                );
-                              });
-                            },
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
                           ),
                           const SizedBox(width: 8),
-                          TextButton.icon(
-                            icon: const Icon(
-                              Icons.cancel_outlined,
-                              color: Colors.red,
-                              size: 18,
-                            ),
-                            label: const Text(
-                              'Reject',
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontSize: 13,
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.cancel_outlined, size: 16),
+                            label: const Text('Reject'),
+                            onPressed:
+                                _isProcessingAction
+                                    ? null
+                                    : () => _handleProjectRequestResponse(
+                                      notification,
+                                      'reject',
+                                    ),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: Colors.red.shade400),
+                              foregroundColor: Colors.red.shade700,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
-                            ),
-                            onPressed: () {
-                              _markAsReadAndThen(notification, () {
-                                // استدعاء API الرفض هنا
-                                // مثال: ProjectService().respondToProjectRequest(notification.targetEntityId!, 'reject');
-                                // ثم _loadNotifications(isRefresh: true);
-                                print(
-                                  "TODO: Implement Reject action for project ${notification.targetEntityId}",
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Reject action pressed (not implemented)",
-                                    ),
-                                  ),
-                                );
-                              });
-                            },
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
                           ),
                         ],
                       )
-                    else if (actionButtonText !=
-                        null) // زر الإجراء العام لأنواع أخرى
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            timeAgo,
-                            style: TextStyle(
-                              fontSize: 12.0,
-                              color: Colors.grey[600],
-                            ),
+                    else if (isProjectResponseForUser)
+                      TextButton.icon(
+                        icon: Icon(
+                          notification.notificationType ==
+                                  'PROJECT_APPROVED_BY_OFFICE'
+                              ? Icons.edit_note_outlined
+                              : Icons.find_replace_outlined,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        label: Text(
+                          notification.notificationType ==
+                                  'PROJECT_APPROVED_BY_OFFICE'
+                              ? 'Complete Project Info'
+                              : 'Choose Another Office',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
-                          TextButton.icon(
-                            icon: Icon(
-                              actionButtonIcon ?? Icons.arrow_forward_ios,
-                              size: 16,
-                            ),
-                            label: Text(
-                              actionButtonText,
-                              style: const TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            onPressed:
-                                () => _performNotificationAction(notification),
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              minimumSize: const Size(0, 28),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
+                        ),
+                        onPressed:
+                            _isProcessingAction
+                                ? null
+                                : () => _performUserOrGeneralAction(
+                                  notification,
+                                ), //  الاسم الصحيح
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
                           ),
-                        ],
+                          minimumSize: const Size(0, 28),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                       )
-                    else // إذا لم يكن هناك إجراء خاص، اعرضي الوقت فقط
+                    else if (generalActionButtonText != null)
+                      TextButton.icon(
+                        icon: Icon(
+                          generalActionButtonIcon ?? Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                        label: Text(
+                          generalActionButtonText,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
+                        ),
+                        onPressed:
+                            _isProcessingAction
+                                ? null
+                                : () => _performUserOrGeneralAction(
+                                  notification,
+                                ), //  الاسم الصحيح
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          minimumSize: const Size(0, 28),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      )
+                    else
                       Text(
                         timeAgo,
                         style: TextStyle(
@@ -564,28 +645,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ],
                 ),
               ),
-              const SizedBox(width: 8.0),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      notification.isRead
-                          ? Icons.check_circle
-                          : Icons.circle_outlined, // أيقونات مختلفة
-                      color:
-                          notification.isRead
-                              ? Colors.green.shade600
-                              : Theme.of(context).colorScheme.primary,
-                      size: 22,
-                    ),
-                    tooltip: notification.isRead ? 'Read' : 'Mark as Read',
-                    onPressed:
+              const SizedBox(width: 4.0),
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  icon: Icon(
+                    notification.isRead
+                        ? Icons.check_circle
+                        : Icons.circle_outlined,
+                    color:
                         notification.isRead
-                            ? null
-                            : () => _handleMarkAsReadIconTap(notification),
+                            ? Colors.green.shade600
+                            : Theme.of(context).colorScheme.primary,
+                    size: 20,
                   ),
-                ],
+                  tooltip: notification.isRead ? 'Read' : 'Mark as Read',
+                  onPressed:
+                      (notification.isRead || _isProcessingAction)
+                          ? null
+                          : () => _handleMarkAsReadIconTap(notification),
+                ),
               ),
             ],
           ),
@@ -604,7 +685,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               !_isLoading &&
               !_isFetchingMore)
             TextButton(
-              onPressed: _markAllAsRead,
+              onPressed: _isProcessingAction ? null : _markAllAsRead,
               child: Text(
                 'Mark All Read',
                 style: TextStyle(
@@ -618,7 +699,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
             onPressed:
-                _isLoading || _isFetchingMore
+                _isLoading || _isFetchingMore || _isProcessingAction
                     ? null
                     : () => _loadNotifications(isRefresh: true),
           ),
@@ -691,8 +772,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Center(child: CircularProgressIndicator(strokeWidth: 2.0)),
             );
           }
-          if (index >= _notifications.length)
-            return const SizedBox.shrink(); // Safety check
+          if (index >= _notifications.length) return const SizedBox.shrink();
 
           final notification = _notifications[index];
           return _buildNotificationItem(notification);
@@ -703,12 +783,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               thickness: 0.5,
               indent: 70,
               endIndent: 16,
-            ), // تعديل الفاصل ليبدأ بعد الصورة
+            ),
       ),
     );
   }
 }
-
-// الدالة _navigateToTarget التي كانت في نهاية الملف السابق ليست جزءاً من الكلاس
-// وتم دمج منطقها داخل _navigateToTargetEntity.
-// إذا كنتِ تستخدمينها في مكان آخر، يجب نقلها أو إعادة تعريفها.
