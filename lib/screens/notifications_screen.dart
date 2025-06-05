@@ -262,7 +262,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Failed to ${action} project request: ${e.toString()}',
+                'Failed to $action project request: ${e.toString()}',
               ),
             ),
           );
@@ -338,8 +338,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     Future<void> navigateAction() async {
       if (!mounted) return;
       if (notification.targetEntityId == null ||
-          notification.targetEntityType == null)
+          notification.targetEntityType == null) {
         return;
+      }
       Widget? targetScreen;
       switch (notification.targetEntityType!.toLowerCase()) {
         case 'project':
