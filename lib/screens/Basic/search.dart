@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import '../models/Basic/user_model.dart';
-import '../models/Basic/office_model.dart';
-import '../models/Basic/company_model.dart';
-import '../services/search_service.dart';
-import 'ReadonlyProfiles/company_readonly_profile.dart';
-import 'ReadonlyProfiles/office_readonly_profile.dart';
-import 'ReadonlyProfiles/user_readonly_profile.dart';
+import '../../models/Basic/user_model.dart';
+import '../../models/Basic/office_model.dart';
+import '../../models/Basic/company_model.dart';
+import '../../services/Basic/search_service.dart';
+import '../ReadonlyProfiles/company_readonly_profile.dart';
+import '../ReadonlyProfiles/office_readonly_profile.dart';
+import '../ReadonlyProfiles/user_readonly_profile.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});

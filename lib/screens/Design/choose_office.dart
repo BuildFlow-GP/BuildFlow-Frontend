@@ -2,8 +2,8 @@ import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import '../../models/Basic/project_model.dart';
-import '../../services/chosen_office_service.dart';
-import '../../services/project_service.dart';
+import '../../services/create/chosen_office_service.dart';
+import '../../services/create/project_service.dart';
 // import 'no_permit_screen.dart';
 
 final logger = Logger();

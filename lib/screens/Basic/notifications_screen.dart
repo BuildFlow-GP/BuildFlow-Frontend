@@ -3,21 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 // import 'package:get/get.dart'; // إذا كنتِ ستستخدمينه للانتقال
 
-import '../services/notifications_service.dart';
-import '../models/notifications_model.dart';
-import '../utils/constants.dart'; // أو api_config.dart
+import '../../services/notifications_service.dart';
+import '../../models/notifications_model.dart';
+import '../../utils/constants.dart'; // أو api_config.dart
 
 // استيراد صفحات التفاصيل والانتقال إليها
-import 'ReadonlyProfiles/office_readonly_profile.dart';
-import 'ReadonlyProfiles/company_readonly_profile.dart';
-import 'ReadonlyProfiles/project_readonly_profile.dart';
+import '../ReadonlyProfiles/office_readonly_profile.dart';
+import '../ReadonlyProfiles/company_readonly_profile.dart';
+import '../ReadonlyProfiles/project_readonly_profile.dart';
 
 // إضافة سيرفس المشروع
-import '../services/project_service.dart';
+import '../../services/create/project_service.dart';
 
 // شاشات سيتم الانتقال إليها بناءً على الإجراء (للمستخدم)
-import 'design/no_permit_screen.dart'; // شاشة استكمال البيانات بعد موافقة المكتب
-import 'design/choose_office.dart'; // شاشة اختيار مكتب آخر عند الرفض
+import '../design/no_permit_screen.dart'; // شاشة استكمال البيانات بعد موافقة المكتب
+import '../design/choose_office.dart'; // شاشة اختيار مكتب آخر عند الرفض
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
