@@ -4,7 +4,7 @@ import '../../models/Basic/project_model.dart';
 import '../../models/userprojects/project_simplified_model.dart';
 import '../session.dart';
 import '../../utils/Constants.dart';
-import '../../models/project_readonly_model.dart'; // تأكدي من أن المسار صحيح لملف ProjectModel
+import '../../models/userprojects/project_readonly_model.dart'; // تأكدي من أن المسار صحيح لملف ProjectModel
 
 class ProjectService {
   final String _baseUrl = Constants.baseUrl;

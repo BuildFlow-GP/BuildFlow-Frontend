@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 // import 'package:get/get.dart'; // إذا كنتِ ستستخدمينه للانتقال
 
-import '../../services/notifications_service.dart';
-import '../../models/notifications_model.dart';
+import '../../services/Basic/notifications_service.dart';
+import '../../models/Basic/notifications_model.dart';
 import '../../utils/constants.dart'; // أو api_config.dart
 
 // استيراد صفحات التفاصيل والانتقال إليها

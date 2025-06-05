@@ -1,9 +1,9 @@
 // services/notification_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/notifications_model.dart'; // تأكدي من المسار
-import '../services/session.dart';
-import '../utils/constants.dart'; // افترض أن لديك هذا لـ baseUrl
+import '../../models/Basic/notifications_model.dart'; // تأكدي من المسار
+import '../session.dart';
+import '../../utils/constants.dart'; // افترض أن لديك هذا لـ baseUrl
 
 class NotificationService {
   final String _baseUrl =

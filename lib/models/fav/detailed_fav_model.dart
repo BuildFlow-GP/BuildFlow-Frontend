@@ -3,7 +3,7 @@ import 'userfav_model.dart';
 
 import '../Basic/office_model.dart';
 import '../Basic/company_model.dart';
-import '../project_readonly_model.dart';
+import '../userprojects/project_readonly_model.dart';
 
 class DetailedFavoriteItem {
   final FavoriteItemModel favoriteInfo;

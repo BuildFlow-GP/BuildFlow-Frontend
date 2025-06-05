@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // لـ DateFormat
 import '../../services/create/project_service.dart'; // أو اسم السيرفس الصحيح
-import '../../models/project_readonly_model.dart';
+import '../../models/userprojects/project_readonly_model.dart';
 // import '../../models/office_model.dart';
 // import '../../models/company_model.dart';
 // import '../../models/user_model.dart';
