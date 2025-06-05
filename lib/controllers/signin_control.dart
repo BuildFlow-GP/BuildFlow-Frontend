@@ -7,7 +7,7 @@ import '../services/session.dart';
 import '../screens/Basic/home_page.dart';
 import 'package:logger/logger.dart';
 
-import '../widgets/drawer_wrapper.dart';
+import '../widgets/Basic/drawer_wrapper.dart';
 
 class LoginController extends GetxController {
   final AuthService _authService = AuthService();

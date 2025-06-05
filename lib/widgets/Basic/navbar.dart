@@ -4,9 +4,9 @@
 import 'package:buildflow_frontend/services/session.dart';
 import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:buildflow_frontend/widgets/drawer_wrapper.dart';
+import 'package:buildflow_frontend/widgets/Basic/drawer_wrapper.dart';
 import 'package:get/get.dart';
-import '../screens/sign/signin_screen.dart';
+import '../../screens/sign/signin_screen.dart';
 
 class Navbar extends StatelessWidget {
   const Navbar({super.key});

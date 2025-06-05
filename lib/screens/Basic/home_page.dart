@@ -16,10 +16,10 @@ import '../profiles/user_profile.dart'; // لبروفايل المستخدم
 import '../../services/session.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../widgets/about_section.dart';
-import '../../widgets/contact_us.dart';
+import '../../widgets/Basic/about_section.dart';
+import '../../widgets/Basic/contact_us.dart';
 import '../Design/type_of_project.dart';
-import '../../widgets/navbar.dart';
+import '../../widgets/Basic/navbar.dart';
 
 import '../../models/Basic/office_model.dart';
 import '../../models/Basic/company_model.dart';
