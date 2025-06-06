@@ -1,3 +1,4 @@
+import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -43,7 +44,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     if (isEditMode && _formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // أضف كلمة المرور إذا تم ملؤها
       if (_password != null && _password!.trim().isNotEmpty) {
         formData['password'] = _password;
       }
@@ -66,36 +66,69 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     });
   }
 
-  Widget _buildField(String label, String fieldName, {bool readOnly = false}) {
+  Widget _buildField(
+    String label,
+    String fieldName,
+    IconData icon, {
+    bool readOnly = false,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: AppColors.textPrimary,
+            ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           isEditMode && !readOnly
               ? TextFormField(
                 initialValue: formData[fieldName]?.toString(),
                 onSaved: (val) => formData[fieldName] = val,
-                decoration: const InputDecoration(border: OutlineInputBorder()),
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  prefixIcon: Icon(icon, color: AppColors.accent),
+                  filled: true,
+                  fillColor: Colors.grey.shade200,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
               )
               : Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
+                  horizontal: 16,
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(6),
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  formData[fieldName]?.toString() ?? "-",
-                  style: const TextStyle(fontSize: 15),
+                child: Row(
+                  children: [
+                    Icon(icon, size: 18, color: AppColors.accent),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        formData[fieldName]?.toString() ?? "-",
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
         ],
@@ -105,20 +138,34 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Widget _buildPasswordField() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             "Password",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: AppColors.textPrimary,
+            ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           TextFormField(
             obscureText: true,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
+            style: const TextStyle(color: AppColors.textPrimary),
+            decoration: InputDecoration(
               hintText: "Enter new password",
+              filled: true,
+              fillColor: Colors.grey.shade200,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
             ),
             onSaved: (val) => _password = val,
           ),
@@ -127,10 +174,104 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
+  Widget _buildNameWithLocation() {
+    return isEditMode
+        ? Column(
+          children: [
+            // اسم المستخدم
+            TextFormField(
+              initialValue: formData['name']?.toString(),
+              onSaved: (val) => formData['name'] = val,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
+                hintText: "Full Name",
+                filled: true,
+                fillColor: Colors.grey.shade200,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // موقع المستخدم
+            TextFormField(
+              initialValue: formData['location']?.toString(),
+              onSaved: (val) => formData['location'] = val,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15),
+              decoration: InputDecoration(
+                hintText: "Location",
+                prefixIcon: const Icon(
+                  Icons.location_on,
+                  color: AppColors.accent,
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade200,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
+        )
+        : Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // الاسم + رمز الفاصل + الموقع مع الأيقونة
+            RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                children: [
+                  TextSpan(text: formData['name'] ?? "User Name"),
+                  const TextSpan(
+                    text: " | ",
+                    style: TextStyle(color: AppColors.accent),
+                  ),
+                  TextSpan(
+                    text: formData['location'] ?? "Location",
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(
+              Icons.location_on,
+              size: 16,
+              color: AppColors.accent.withOpacity(0.8),
+            ),
+          ],
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('User Profile')),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('User Profile'),
+        backgroundColor: AppColors.primary,
+      ),
       body:
           formData.isEmpty
               ? const Center(child: CircularProgressIndicator())
@@ -138,53 +279,103 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 600),
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(24),
                     child: Form(
                       key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          GestureDetector(
-                            onTap: isEditMode ? _pickImage : null,
-                            child: CircleAvatar(
-                              radius: 50,
-                              backgroundImage:
-                                  _profileImage != null
-                                      ? FileImage(_profileImage!)
-                                      : const AssetImage('assets/user.png')
-                                          as ImageProvider,
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: AppColors.card,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.shadow.withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          _buildField("Name", "name"),
-                          _buildField("Email", "email", readOnly: true),
-                          _buildField("Phone", "phone"),
-                          _buildField("ID Number", "id_number"),
-                          _buildField("Bank Account", "bank_account"),
-                          _buildField("Location", "location"),
-
-                          if (isEditMode) _buildPasswordField(),
-
-                          const SizedBox(height: 20),
-                          if (widget.isOwner)
-                            ElevatedButton.icon(
-                              onPressed: _toggleEdit,
-                              icon: Icon(isEditMode ? Icons.save : Icons.edit),
-                              label: Text(
-                                isEditMode ? "Save Changes" : "Edit Profile",
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            GestureDetector(
+                              onTap: isEditMode ? _pickImage : null,
+                              child: Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 60,
+                                    backgroundImage:
+                                        _profileImage != null
+                                            ? FileImage(_profileImage!)
+                                            : const AssetImage(
+                                                  'assets/user.png',
+                                                )
+                                                as ImageProvider,
+                                    backgroundColor: AppColors.background,
+                                  ),
+                                  if (isEditMode)
+                                    CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor: AppColors.accent,
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
-                        ],
+                            const SizedBox(height: 20),
+
+                            // ✅ عرض الاسم والموقع جنبًا إلى جنب مع رمز |
+                            _buildNameWithLocation(),
+
+                            const SizedBox(height: 20),
+
+                            // ✅ باقي الحقول بدون "Name" و"Location"
+                            _buildField(
+                              "Email",
+                              "email",
+                              Icons.email,
+                              readOnly: true,
+                            ),
+                            _buildField("Phone", "phone", Icons.phone),
+                            _buildField("ID Number", "id_number", Icons.badge),
+                            _buildField(
+                              "Bank Account",
+                              "bank_account",
+                              Icons.account_balance,
+                            ),
+
+                            if (isEditMode) _buildPasswordField(),
+
+                            const SizedBox(height: 20),
+                            if (widget.isOwner)
+                              ElevatedButton.icon(
+                                onPressed: _toggleEdit,
+                                icon: Icon(
+                                  isEditMode ? Icons.save : Icons.edit,
+                                ),
+                                label: Text(
+                                  isEditMode ? "Save Changes" : "Edit Profile",
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.accent,
+                                  foregroundColor: Colors.white,
+                                  elevation: 2,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 28,
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
