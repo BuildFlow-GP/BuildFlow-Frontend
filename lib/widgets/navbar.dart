@@ -57,14 +57,6 @@ class Navbar extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    const Text(
-                      'BuildFlow',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -117,14 +109,6 @@ class Navbar extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
-                'BuildFlow',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
             ],
           ),
         ),

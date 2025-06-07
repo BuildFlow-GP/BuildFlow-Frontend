@@ -1,17 +1,23 @@
-/*import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class ChatScreen extends StatefulWidget {
-  final String receiverId;
-  final String receiverName;
+  // final String receiverId;
+  //final String receiverName;
 
-  const ChatScreen({required this.receiverId, required this.receiverName});
-
+  const ChatScreen();
+  //{required this.receiverId, required this.receiverName}
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _messageController = TextEditingController();
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    throw UnimplementedError();
+  }
+
+  /* final TextEditingController _messageController = TextEditingController();
   
   void _sendMessage() {
     final text = _messageController.text.trim();
@@ -90,5 +96,5 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
     );
-  }
-}*/
+  }*/
+}
