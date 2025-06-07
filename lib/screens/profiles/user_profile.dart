@@ -269,13 +269,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
 
-      /*  bottomNavigationBar: CustomBottomNav(
+      bottomNavigationBar: CustomBottomNav(
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() => _selectedIndex = index);
           // التنقل بين الصفحات حسب index إن أردت
         },
-      ),*/
+      ),
       body:
           formData.isEmpty
               ? const Center(child: CircularProgressIndicator())
