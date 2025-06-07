@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/Basic/user_model.dart';
-import '../models/Basic/office_model.dart';
-import '../models/Basic/company_model.dart';
-import '../../utils/constants.dart'; // تأكدي من وجود هذا الملف في المسار الصحيح
+import '../../models/Basic/user_model.dart';
+import '../../models/Basic/office_model.dart';
+import '../../models/Basic/company_model.dart';
+import '../../../utils/constants.dart'; // تأكدي من وجود هذا الملف في المسار الصحيح
 
 class SearchService {
   static const String baseUrl = '${Constants.baseUrl}/search';

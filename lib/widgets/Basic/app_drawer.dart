@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:buildflow_frontend/screens/payment_screen.dart';
+import 'package:buildflow_frontend/screens/Design/payment_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});

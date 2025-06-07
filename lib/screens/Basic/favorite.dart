@@ -2,20 +2,20 @@
 
 // screens/favorites_screen.dart
 import 'package:flutter/material.dart';
-import '../services/favorite_service.dart';
-import '../models/fav/userfav_model.dart';
+import '../../services/Basic/favorite_service.dart';
+import '../../models/fav/userfav_model.dart';
 
 // استيراد المودلز الفعلية OfficeModel, CompanyModel, ProjectModel
-import '../models/Basic/office_model.dart';
-import '../models/Basic/company_model.dart';
-import '../models/Basic/project_model.dart';
+import '../../models/Basic/office_model.dart';
+import '../../models/Basic/company_model.dart';
+import '../../models/Basic/project_model.dart';
 
 //import 'profiles/project_details_screen.dart'; // أو اسم شاشة تفاصيل المشروع
-import '../screens/ReadonlyProfiles/office_readonly_profile.dart';
-import '../screens/ReadonlyProfiles/company_readonly_profile.dart';
-import '../screens/ReadonlyProfiles/project_readonly_profile.dart';
+import '../ReadonlyProfiles/office_readonly_profile.dart';
+import '../ReadonlyProfiles/company_readonly_profile.dart';
+import '../ReadonlyProfiles/project_readonly_profile.dart';
 // استيراد DetailedFavoriteItem ViewModel
-import '../models/fav/detailed_fav_model.dart';
+import '../../models/fav/detailed_fav_model.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});

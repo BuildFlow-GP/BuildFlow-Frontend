@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:buildflow_frontend/themes/app_colors.dart';
-import 'package:buildflow_frontend/screens/Design/design_agreement_screen.dart';
+import 'design_agreement_screen.dart';
 
 class NoPermitScreen extends StatefulWidget {
-  const NoPermitScreen({super.key});
+  const NoPermitScreen({super.key, required int projectId})
+    : _projectId = projectId;
+
+  final int _projectId;
 
   @override
   State<NoPermitScreen> createState() => _NoPermitScreenState();
@@ -19,7 +22,10 @@ class _NoPermitScreenState extends State<NoPermitScreen> {
     if (step1 && step2 && step3 && step4) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const DesignAgreementScreen()),
+        MaterialPageRoute(
+          builder:
+              (context) => DesignAgreementScreen(projectId: widget._projectId),
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

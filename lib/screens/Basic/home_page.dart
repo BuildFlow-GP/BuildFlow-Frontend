@@ -1,32 +1,33 @@
 import 'dart:convert';
 
-import '../services/favorite_service.dart'; // تمت الإضافة
+import '../../services/Basic/favorite_service.dart'; // تمت الإضافة
 //import '../models/fav/detailed_fav_model.dart';
 //import '../models/fav/userfav_model.dart'; // تمت الإضافة (افترض أن هذا هو اسم ملف الموديل)
-import 'ReadonlyProfiles/project_readonly_profile.dart';
+import '../ReadonlyProfiles/project_readonly_profile.dart';
 import 'favorite.dart';
 import 'my_projects.dart';
-import 'profiles/company_profile.dart';
-import 'ReadonlyProfiles/office_readonly_profile.dart';
-import 'ReadonlyProfiles/company_readonly_profile.dart';
+import 'notifications_screen.dart';
+import '../profiles/company_profile.dart';
+import '../ReadonlyProfiles/office_readonly_profile.dart';
+import '../ReadonlyProfiles/company_readonly_profile.dart';
 // import 'ReadonlyProfiles/project_readonly_profile.dart'; // إذا كان لديك
-import 'profiles/office_profile.dart';
-import 'profiles/user_profile.dart'; // لبروفايل المستخدم
-import '../services/session.dart';
+import '../profiles/office_profile.dart';
+import '../profiles/user_profile.dart'; // لبروفايل المستخدم
+import '../../services/session.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../widgets/about_section.dart';
-import '../widgets/contact_us.dart';
-import 'Design/type_of_project.dart';
-import '../widgets/navbar.dart';
+import '../../widgets/Basic/about_section.dart';
+import '../../widgets/Basic/contact_us.dart';
+import '../Design/type_of_project.dart';
+import '../../widgets/navbar.dart';
 
-import '../models/Basic/office_model.dart';
-import '../models/Basic/company_model.dart';
-import '../models/Basic/project_model.dart';
-import '../services/suggestion_service.dart';
-import '../widgets/suggestions/office_suggestion_card.dart';
-import '../widgets/suggestions/company_suggestion_card.dart';
-import '../widgets/suggestions/project_suggestion_card.dart';
+import '../../models/Basic/office_model.dart';
+import '../../models/Basic/company_model.dart';
+import '../../models/Basic/project_model.dart';
+import '../../services/Basic/suggestion_service.dart';
+import '../../widgets/suggestions/office_suggestion_card.dart';
+import '../../widgets/suggestions/company_suggestion_card.dart';
+import '../../widgets/suggestions/project_suggestion_card.dart';
 import 'search.dart';
 // افترض أن لديك هذه الشاشات لبروفايلات القراءة فقط أو العادية
 // تأكدي من المسارات الصحيحة
@@ -345,6 +346,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ElevatedButton(
                     onPressed: () => Get.to(() => const TypeOfProjectPage()),
                     child: const Text("Start New Project"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Get.to(() => const NotificationsScreen()),
+                    child: const Text("Notification"),
                   ),
                   ElevatedButton(
                     onPressed: _navigateToProfile,

@@ -1,13 +1,13 @@
 import 'package:get/get.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_storage/get_storage.dart'; // ✅ لتخزين التوكن على الويب
-import '../services/signin_service.dart';
+import '../services/sign/signin_service.dart';
 import '../models/Basic/user_model.dart';
 import '../services/session.dart';
-import '../screens/home_page.dart';
+import '../screens/Basic/home_page.dart';
 import 'package:logger/logger.dart';
 
-import '../widgets/drawer_wrapper.dart';
+import '../widgets/Basic/drawer_wrapper.dart';
 
 class LoginController extends GetxController {
   final AuthService _authService = AuthService();
