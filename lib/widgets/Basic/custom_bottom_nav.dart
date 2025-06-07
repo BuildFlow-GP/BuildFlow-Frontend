@@ -1,9 +1,10 @@
 // lib/widgets/custom_bottom_nav.dart
 
 // ... Imports
+import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import '../themes/app_colors.dart';
+//import '../themes/app_colors.dart';
 import 'bottom_nav_item.dart';
 
 class CustomBottomNav extends StatelessWidget {
