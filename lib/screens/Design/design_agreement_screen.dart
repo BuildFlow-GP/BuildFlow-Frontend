@@ -8,7 +8,9 @@ import 'project_description.dart'; // فرضًا لديك نصوص هنا
 final Logger logger = Logger();
 
 class DesignAgreementScreen extends StatefulWidget {
-  const DesignAgreementScreen({super.key});
+  const DesignAgreementScreen({super.key, required this.projectId});
+
+  final int projectId;
 
   @override
   State<DesignAgreementScreen> createState() => _DesignAgreementScreenState();
