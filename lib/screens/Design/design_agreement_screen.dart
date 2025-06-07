@@ -8,7 +8,9 @@ import 'project_description.dart'; // فرضًا لديك نصوص هنا
 final Logger logger = Logger();
 
 class DesignAgreementScreen extends StatefulWidget {
-  const DesignAgreementScreen({super.key});
+  const DesignAgreementScreen({super.key, required this.projectId});
+
+  final int projectId;
 
   @override
   State<DesignAgreementScreen> createState() => _DesignAgreementScreenState();
@@ -26,11 +28,11 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
   void initState() {
     super.initState();
     _initControllers();
-    _controllers.values.forEach((controller) {
+    for (var controller in _controllers.values) {
       controller.addListener(() {
         setState(() {}); // تحديث الحالة لتغيير لون الزر بناءً على الإدخال
       });
-    });
+    }
   }
 
   void _initControllers() {

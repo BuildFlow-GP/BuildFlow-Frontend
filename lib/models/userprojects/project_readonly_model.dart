@@ -1,7 +1,7 @@
 // models/project_model.dart
-import 'Basic/user_model.dart'; // لاستخدام UserModel الكامل
-import 'Basic/office_model.dart'; // لاستخدام OfficeModel الكامل
-import 'Basic/company_model.dart'; // لاستخدام CompanyModel الكامل
+import '../Basic/user_model.dart'; // لاستخدام UserModel الكامل
+import '../Basic/office_model.dart'; // لاستخدام OfficeModel الكامل
+import '../Basic/company_model.dart'; // لاستخدام CompanyModel الكامل
 
 class ProjectreadonlyModel {
   final int id;

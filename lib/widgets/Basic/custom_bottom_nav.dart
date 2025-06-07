@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import '../themes/app_colors.dart';
+import '../../themes/app_colors.dart';
 import 'bottom_nav_item.dart'; // هذا ملفك اللي يدعم hover والضغط الطويل
 
 class CustomBottomNav extends StatelessWidget {

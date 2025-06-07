@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/Basic/office_model.dart'; // تأكدي من المسار الصحيح
-import '../models/Basic/company_model.dart'; // تأكدي من المسار الصحيح
-import '../models/Basic/project_model.dart'; // تأكدي من المسار الصحيح
-import '../../utils/constants.dart'; // تأكدي من وجود هذا الملف في المسار الصحيح
+import '../../models/Basic/office_model.dart'; // تأكدي من المسار الصحيح
+import '../../models/Basic/company_model.dart'; // تأكدي من المسار الصحيح
+import '../../models/Basic/project_model.dart'; // تأكدي من المسار الصحيح
+import '../../../utils/constants.dart'; // تأكدي من وجود هذا الملف في المسار الصحيح
 
 class SuggestionService {
   static const String _baseUrl = Constants.baseUrl;

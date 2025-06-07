@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../services/project_service.dart';
+import '../../services/create/project_service.dart';
 
-import '../models/userprojects/project_simplified_model.dart';
+import '../../models/userprojects/project_simplified_model.dart';
 
-import '../widgets/my_project_card.dart';
+import '../../widgets/Suggestions/my_project_card.dart';
 
 class MyProjectsScreen extends StatefulWidget {
   const MyProjectsScreen({super.key});

@@ -1,8 +1,10 @@
 import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import '../../services/chosen_office_service.dart';
-import 'no_permit_screen.dart';
+import '../../models/Basic/project_model.dart';
+import '../../services/create/chosen_office_service.dart';
+import '../../services/create/project_service.dart';
+// import 'no_permit_screen.dart';
 
 final logger = Logger();
 
@@ -58,15 +60,80 @@ class _ChooseOfficeScreenState extends State<ChooseOfficeScreen> {
     logger.i('Tapped office: ${office.name}');
   }
 
-  void _onNextPressed() {
-    if (_selectedOffice != null) {
-      logger.i('Selected office confirmed: ${_selectedOffice!.name}');
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => NoPermitScreen()),
-      );
+  bool _isSubmittingRequest = false;
+  bool get isSubmittingRequest => _isSubmittingRequest;
+  void _onNextPressed() async {
+    if (_selectedOffice == null) return;
+
+    setState(() {
+      _isSubmittingRequest = true; // إظهار التحميل
+    });
+
+    try {
+      // يمكنكِ جمع projectType و initialDescription من المستخدم هنا إذا لزم الأمر
+      // أو استخدام قيم افتراضية مؤقتاً للاختبار
+      String projectType = "Initial Design Request"; // مثال، يجب تغييره
+      String? initialDescription =
+          "User is requesting an initial design from ${_selectedOffice!.name}."; // مثال
+
+      // استدعاء السيرفس لإرسال الطلب
+      final ProjectService projectService = ProjectService();
+      final ProjectModel initialProject = await projectService
+          .requestInitialProject(
+            officeId: _selectedOffice!.id,
+            projectType: projectType,
+            initialDescription: initialDescription,
+          );
+
+      // نجاح
+      if (mounted) {
+        logger.i(
+          'Initial project request sent successfully for office: ${_selectedOffice!.name}, Project ID: ${initialProject.id}',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Project request sent to ${_selectedOffice!.name}. Waiting for approval.',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // يمكنكِ الانتقال إلى شاشة الهوم أو شاشة "مشاريعي"
+        // Get.offAll(() => HomeScreen()); // مثال باستخدام GetX للانتقال للهوم
+        Navigator.of(context).popUntil(
+          (route) => route.isFirst,
+        ); // العودة للشاشة الأولى (الهوم عادة)
+      }
+    } catch (e) {
+      // فشل
+      if (mounted) {
+        logger.e('Failed to send project request: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send request: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmittingRequest = false; // إخفاء التحميل
+        });
+      }
     }
   }
+
+  // void _onNextPressed() {
+  //   // if (_selectedOffice != null) {
+  //   //   logger.i('Selected office confirmed: ${_selectedOffice!.name}');
+  //   //   Navigator.push(
+  //   //     context,
+  //   //     MaterialPageRoute(builder: (context) => NoPermitScreen()),
+  //   //   );
+  //   // }
+
+  // }
 
   Widget _buildOfficeCard(Office office, double cardWidth) {
     final bool isSelected = _selectedOffice == office;

@@ -1,16 +1,16 @@
 // services/favorite_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/fav/userfav_model.dart';
-import '../services/session.dart'; // للتوكن
-import '../utils/constants.dart';
+import '../../models/fav/userfav_model.dart';
+import '../session.dart'; // للتوكن
+import '../../utils/constants.dart';
 
 // استيراد المودلز الخاصة بالعناصر المفصلة (OfficeModel, CompanyModel, ProjectModel)
 // واستيراد السيرفسز الخاصة بها (OfficeService, CompanyService, ProjectService)
 
-import 'ReadonlyProfiles/office_readonly.dart'; // أو اسم السيرفس الصحيح
-import 'ReadonlyProfiles/company_readonly.dart';
-import 'project_service.dart';
+import '../ReadonlyProfiles/office_readonly.dart'; // أو اسم السيرفس الصحيح
+import '../ReadonlyProfiles/company_readonly.dart';
+import '../create/project_service.dart';
 
 class FavoriteService {
   final String _baseUrl = Constants.baseUrl;
