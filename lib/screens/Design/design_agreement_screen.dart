@@ -1,15 +1,26 @@
+// screens/DesignAgreementScreen.dart (أو اسم ملفك)
+import 'dart:io';
+
+import 'package:buildflow_frontend/models/Basic/project_model.dart';
+import 'package:buildflow_frontend/models/Basic/user_model.dart'; // تأكدي من المسار الصحيح
+import '/services/create/project_service.dart';
+import '/services/create/user_update_service.dart'; // تأكدي من المسار الصحيح
 import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:logger/logger.dart';
-import 'app_strings.dart';
-import 'project_description.dart';
+import 'package:flutter/foundation.dart' show kIsWeb; // للتحقق من المنصة
+import 'dart:typed_data'; // لـ Uint8List
+
+import 'app_strings.dart'; // تأكدي من وجود هذا أو استبدلي النصوص مباشرة
+// import 'project_description.dart'; //  شاشة الوصف و Submit النهائي (أو ما يعادلها)
+// تأكدي من استيراد شاشة تفاصيل المشروع إذا كانت مختلفة
+// import 'project_details_screen.dart'; // افترضت أن ProjectDetailsScreen هي شاشة العرض النهائية
 
 final Logger logger = Logger();
 
 class DesignAgreementScreen extends StatefulWidget {
   const DesignAgreementScreen({super.key, required this.projectId});
-
   final int projectId;
 
   @override
@@ -18,154 +29,407 @@ class DesignAgreementScreen extends StatefulWidget {
 
 class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
   final Map<String, TextEditingController> _controllers = {};
-  String? _pdfFilePath;
-  bool _isSubmitting = false;
-  bool _isUploading = false;
 
-  int _currentStep = 0; // لتعقب الخطوة الحالية
+  // للملفات
+  String? _uploadedAgreementFilePath; // يخزن المسار/الاسم من السيرفر بعد الرفع
+  Uint8List? _pickedFileBytes;
+  String? _pickedFileName;
+
+  bool _isLoadingInitialData = true; // لتحميل البيانات الأولية
+  bool _isSavingStepData = false; // لحفظ بيانات الخطوة الحالية
+  bool _isSubmittingFinal = false; // للـ Submit النهائي
+  // bool _isUploadingFile = false; //  تم استبداله بـ _isSavingStepData لعملية الرفع
+
+  int _currentStep = 0;
+
+  ProjectModel? _currentProjectData;
+  UserModel? _currentUserData;
+
+  final ProjectService _projectService = ProjectService();
+  final UserService _userService = UserService();
 
   @override
   void initState() {
     super.initState();
     _initControllers();
+    _loadInitialData();
     for (var controller in _controllers.values) {
-      controller.addListener(() {
-        setState(() {}); // تحديث الحالة لتغيير لون الزر بناءً على الإدخال
-      });
+      controller.addListener(() => setState(() {}));
     }
   }
 
   void _initControllers() {
-    _controllers['name'] = TextEditingController();
-    _controllers['idNumber'] = TextEditingController();
-    _controllers['address'] = TextEditingController();
-    _controllers['phone'] = TextEditingController();
-    _controllers['bankAccount'] = TextEditingController();
-    _controllers['area'] = TextEditingController();
+    // خطوة 0: معلومات المستخدم
+    _controllers['userName'] = TextEditingController();
+    _controllers['userIdNumber'] = TextEditingController();
+    _controllers['userAddress'] = TextEditingController();
+    _controllers['userPhone'] = TextEditingController();
+    _controllers['userBankAccount'] = TextEditingController();
+    // خطوة 1: معلومات الأرض
+    _controllers['landArea'] = TextEditingController();
     _controllers['plotNumber'] = TextEditingController();
     _controllers['basinNumber'] = TextEditingController();
-    _controllers['areaName'] = TextEditingController();
+    _controllers['landLocation'] = TextEditingController();
   }
 
-  bool get _isFormValid {
-    // تحقق من صلاحية الحقول بحسب الخطوة
+  Future<void> _loadInitialData() async {
+    if (!mounted) return;
+    setState(() => _isLoadingInitialData = true);
+    try {
+      // جلب بيانات المستخدم والمشروع بالتوازي
+      final results = await Future.wait([
+        _userService.getCurrentUserDetails(),
+        _projectService.getProjectDetailscreate(widget.projectId),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          _currentUserData = results[0] as UserModel;
+          _currentProjectData =
+              results[1]
+                  as ProjectModel; // تأكدي أن getProjectDetails ترجع ProjectModel
+          _populateControllersForCurrentStep();
+          _isLoadingInitialData = false;
+        });
+      }
+    } catch (e) {
+      logger.e("Error loading initial data: $e");
+      if (mounted) {
+        setState(() => _isLoadingInitialData = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load initial data: ${e.toString()}'),
+          ),
+        );
+        // يمكنكِ هنا توجيه المستخدم للخارج إذا فشل تحميل البيانات الأساسية
+        // Navigator.of(context).pop();
+      }
+    }
+  }
+
+  void _populateControllersForCurrentStep() {
+    if (!mounted) return;
+    // مسح أي بيانات سابقة من الكونترولرز قبل التعبئة (مهم عند التنقل بين الخطوات)
+    // _controllers.forEach((key, controller) { controller.clear(); }); // أو عند _initControllers
+
+    // تعبئة حقول المستخدم (لجميع الخطوات، لكنها تظهر في الخطوة 0)
+    if (_currentUserData != null) {
+      _controllers['userName']!.text =
+          _currentUserData!.name; // UserModel.name ليس nullable
+      _controllers['userIdNumber']!.text = _currentUserData!.idNumber ?? '';
+      _controllers['userAddress']!.text =
+          _currentUserData!.location ??
+          ''; // UserModel.location هو عنوان المستخدم
+      _controllers['userPhone']!.text =
+          _currentUserData!.phone; // UserModel.phone ليس nullable
+      _controllers['userBankAccount']!.text =
+          _currentUserData!.bankAccount ?? '';
+    }
+
+    // تعبئة حقول المشروع (لجميع الخطوات، لكنها تظهر في الخطوة 1 و 2)
+    if (_currentProjectData != null) {
+      _controllers['landArea']!.text =
+          _currentProjectData!.landArea?.toString() ?? '';
+      _controllers['plotNumber']!.text =
+          _currentProjectData!
+              .plotNumber!; // ProjectModel.plotNumber ليس nullable (حسب تعديلنا الأخير)
+      _controllers['basinNumber']!.text = _currentProjectData!.basinNumber!;
+      _controllers['landLocation']!.text = _currentProjectData!.landLocation!;
+
+      if (_currentStep == 2) {
+        setState(() {
+          _uploadedAgreementFilePath =
+              _currentProjectData!.agreementFile; // من موديل المشروع
+          _pickedFileBytes = null;
+          _pickedFileName = null;
+        });
+      }
+    }
+  }
+
+  bool get _isCurrentStepFormValid {
     switch (_currentStep) {
-      case 0:
-        return _controllers['name']!.text.isNotEmpty &&
-            _controllers['idNumber']!.text.isNotEmpty &&
-            _controllers['address']!.text.isNotEmpty &&
-            _controllers['phone']!.text.isNotEmpty &&
-            _controllers['bankAccount']!.text.isNotEmpty;
-      case 1:
-        return _controllers['area']!.text.isNotEmpty &&
+      case 0: // User Info
+        return _controllers['userName']!.text.isNotEmpty &&
+            _controllers['userIdNumber']!.text.isNotEmpty &&
+            _controllers['userAddress']!.text.isNotEmpty &&
+            _controllers['userPhone']!.text.isNotEmpty &&
+            _controllers['userBankAccount']!.text.isNotEmpty;
+      case 1: // Land Info
+        return _controllers['landArea']!.text.isNotEmpty &&
             _controllers['plotNumber']!.text.isNotEmpty &&
             _controllers['basinNumber']!.text.isNotEmpty &&
-            _controllers['areaName']!.text.isNotEmpty;
-      case 2:
-        return _pdfFilePath != null;
+            _controllers['landLocation']!.text.isNotEmpty;
+      case 2: // Supporting Docs
+        // إذا كان هناك ملف مرفوع سابقاً أو ملف جديد تم اختياره
+        return _pickedFileName != null ||
+            (_uploadedAgreementFilePath != null &&
+                _uploadedAgreementFilePath!.isNotEmpty);
       default:
         return false;
     }
   }
 
-  Future<void> _pickPDF() async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-      );
-
-      if (result != null) {
-        if (result.files.single.size > 5 * 1024 * 1024) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('File size should be less than 5MB')),
-          );
-          return;
-        }
-
-        setState(() {
-          _isUploading = true;
-        });
-        await Future.delayed(const Duration(seconds: 1));
-        setState(() {
-          _isUploading = false;
-          _pdfFilePath = result.files.single.path;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('PDF Uploaded: ${result.files.single.name}')),
-        );
-      }
-    } catch (e) {
-      logger.e("Error picking file: $e");
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to pick file')));
-    }
-  }
-
-  Future<void> _submitForm() async {
-    if (!_isFormValid) {
+  // دالة لحفظ بيانات الخطوة الحالية والانتقال للخطوة التالية أو الـ Submit
+  Future<void> _handleNextStepOrSubmit() async {
+    if (!_isCurrentStepFormValid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields and upload PDF')),
+        const SnackBar(
+          content: Text('Please fill all required fields for the current step'),
+        ),
       );
       return;
     }
 
-    setState(() {
-      _isSubmitting = true;
-      logger.i("Submitting form...");
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ProjectDetailsScreen()),
-      );
-    });
+    if (_isSavingStepData || _isSubmittingFinal) return; // منع الضغط المتكرر
+
+    setState(() => _isSavingStepData = true);
+
+    bool stepSaveSuccess = false;
+    Map<String, dynamic> dataToSave = {};
 
     try {
-      // محاكاة طلب الشبكة
-      await Future.delayed(const Duration(seconds: 2));
-
-      logger.i(
-        "Form submitted: ${_controllers.map((key, value) => MapEntry(key, value.text))}",
-      );
-      logger.i("PDF File Path: $_pdfFilePath");
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Information Submitted!')));
-    } catch (e) {
-      logger.e("Submission error: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Submission failed, please try again')),
-      );
-    } finally {
-      setState(() {
-        _isSubmitting = false;
-      });
-    }
-  }
-
-  void _nextStep() {
-    if (_isFormValid) {
-      if (_currentStep < 2) {
-        setState(() {
-          _currentStep++;
-        });
-      } else {
-        _submitForm();
+      if (_currentStep == 0) {
+        // حفظ معلومات المستخدم
+        dataToSave = {
+          'name': _controllers['userName']!.text,
+          'id_number': _controllers['userIdNumber']!.text,
+          'location':
+              _controllers['userAddress']!
+                  .text, // يطابق 'location' في UserModel
+          'phone': _controllers['userPhone']!.text,
+          'bank_account': _controllers['userBankAccount']!.text,
+        };
+        final updatedUser = await _userService.updateMyProfile(dataToSave);
+        if (mounted) setState(() => _currentUserData = updatedUser);
+        logger.i("User profile data updated for step 0.");
+        stepSaveSuccess = true;
+      } else if (_currentStep == 1) {
+        // حفظ معلومات الأرض في المشروع
+        dataToSave = {
+          'land_area': double.tryParse(_controllers['landArea']!.text),
+          'plot_number': _controllers['plotNumber']!.text,
+          'basin_number': _controllers['basinNumber']!.text,
+          'land_location': _controllers['landLocation']!.text,
+        };
+        final updatedProject = await _projectService.updateProjectDetails(
+          widget.projectId,
+          dataToSave,
+        );
+        if (mounted) setState(() => _currentProjectData = updatedProject);
+        logger.i(
+          "Land info data saved for project ${widget.projectId} for step 1.",
+        );
+        stepSaveSuccess = true;
+      } else if (_currentStep == 2) {
+        // خطوة رفع الملفات، فقط نتحقق من وجود ملف
+        stepSaveSuccess = true; // سنقوم بالرفع الفعلي عند الـ Submit النهائي
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all required fields')),
-      );
+
+      if (stepSaveSuccess && mounted) {
+        if (_currentStep < 2) {
+          setState(() {
+            _currentStep++;
+            _populateControllersForCurrentStep(); // تعبئة بيانات الخطوة الجديدة
+          });
+        } else {
+          // وصلنا للخطوة الأخيرة، وتم التحقق من صلاحية النموذج (وجود ملف)
+          await _submitFinalForm(); // تغيير إلى await
+        }
+      }
+    } catch (e) {
+      logger.e("Error saving data for step $_currentStep: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not save data: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingStepData = false);
     }
   }
 
   void _previousStep() {
+    // لا تحتاج لـ async إذا لم يكن هناك حفظ عند الرجوع
+    if (_isSavingStepData || _isSubmittingFinal) return;
     if (_currentStep > 0) {
       setState(() {
         _currentStep--;
+        _populateControllersForCurrentStep();
       });
+    }
+  }
+
+  Future<void> _pickPDF() async {
+    if (_isSavingStepData || _isSubmittingFinal)
+      return; // منع اختيار ملف أثناء عملية أخرى
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+        withData: kIsWeb,
+      );
+
+      if (result != null) {
+        PlatformFile file = result.files.single;
+        if (file.size > 5 * 1024 * 1024) {
+          // 5MB
+          if (mounted)
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('File size must be less than 5MB')),
+            );
+          return;
+        }
+
+        Uint8List? fileBytes;
+        if (kIsWeb) {
+          fileBytes = file.bytes;
+        } else {
+          final mobileFile = File(file.path!);
+          fileBytes = await mobileFile.readAsBytes();
+        }
+
+        if (fileBytes != null) {
+          setState(() {
+            _pickedFileBytes = fileBytes;
+            _pickedFileName = file.name;
+            _uploadedAgreementFilePath = null;
+          });
+          if (mounted)
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('PDF Selected: ${_pickedFileName}')),
+            );
+        } else {
+          throw Exception("Could not read file bytes.");
+        }
+      }
+    } catch (e) {
+      logger.e("Error picking file: $e");
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to pick file.')));
+    }
+  }
+
+  //  دالة الـ Submit النهائية
+  Future<void> _submitFinalForm() async {
+    if (!_isCurrentStepFormValid && _currentStep == 2) {
+      // تحقق إضافي للخطوة الأخيرة
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload the agreement PDF.')),
+      );
+      return;
+    }
+    if (_isSubmittingFinal || _isSavingStepData) return;
+    setState(() => _isSubmittingFinal = true);
+
+    logger.i("Attempting final submission for project ${widget.projectId}...");
+
+    String? finalAgreementFilePathOnServer = _uploadedAgreementFilePath;
+
+    // 1. رفع الملف إذا تم اختيار ملف جديد ولم يتم رفعه بعد
+    if (_pickedFileBytes != null && _pickedFileName != null) {
+      logger.i("Uploading new agreement file: $_pickedFileName");
+      // setState(() => _isUploadingFile = true); // يمكن استخدام _isSubmittingFinal
+      try {
+        //  افترض أن لديك دالة في ProjectService لرفع الملف وإرجاع مساره/اسمه من السيرفر
+        //  `uploadProjectDocument(projectId, fileBytes, fileName, documentType)`
+        //  `documentType` يمكن أن يكون 'agreement_file'
+        // finalAgreementFilePathOnServer = await _projectService
+        //     // .uploadProjectDocument(
+        //     //   widget.projectId,
+        //     //   _pickedFileBytes!,
+        //     //   _pickedFileName!,
+        //     //   'agreement_file',
+        //     // );
+        logger.i(
+          "File uploaded successfully, path on server: $finalAgreementFilePathOnServer",
+        );
+        setState(() {
+          // تحديث UI ليعكس أن الملف تم رفعه
+          _uploadedAgreementFilePath = finalAgreementFilePathOnServer;
+          _pickedFileBytes = null;
+          _pickedFileName = null;
+        });
+      } catch (e) {
+        logger.e("Error uploading agreement file: $e");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to upload agreement PDF: ${e.toString()}'),
+            ),
+          );
+          setState(() => _isSubmittingFinal = false);
+        }
+        return;
+      }
+      // finally {
+      //   if (mounted) setState(() => _isUploadingFile = false);
+      // }
+    } else if (_uploadedAgreementFilePath == null ||
+        _uploadedAgreementFilePath!.isEmpty) {
+      // إذا لم يكن هناك ملف مرفوع سابقاً ولم يتم اختيار جديد
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Agreement PDF is required for submission.'),
+          ),
+        );
+        setState(() => _isSubmittingFinal = false);
+      }
+      return;
+    }
+
+    // 2. (اختياري) إرسال كل البيانات مرة أخرى للتأكيد، أو فقط تحديث الحالة وإرسال إشعار
+    // بما أننا نحفظ تدريجياً، قد لا نحتاج لإرسال كل شيء مرة أخرى.
+    // يمكننا فقط إرسال طلب لتغيير حالة المشروع إلى "Details Submitted"
+    // أو إذا كان الـ API `PUT /projects/:id` يغير الحالة إذا تم إرسال كل الحقول المطلوبة.
+    // للتبسيط الآن، سنفترض أن الـ backend يتعامل مع تغيير الحالة عند استدعاء API معين
+    // أو أن تحديث `agreement_file` كافٍ.
+
+    // حالياً، `PUT /projects/:id` لا يغير الحالة.
+    // ستحتاجين لـ API endpoint جديد أو تعديل `PUT /projects/:id/respond`
+    // ليتم استدعاؤه من المستخدم بعد تعبئة كل شيء لتغيير الحالة وإعلام المكتب.
+    // مثال: `PUT /api/projects/:projectId/submit-details`
+
+    //  ===========================================================================
+    //  هنا يجب أن تقرري:
+    //  1. هل مجرد تحديث `agreement_file` (بعد رفعه) كافٍ لينتقل المشروع للمرحلة التالية؟
+    //  2. أم تحتاجين لاستدعاء API خاص (مثلاً `submitFinalDetails`) يقوم بتغيير حالة المشروع
+    //     وإرسال إشعار للمكتب بأن المستخدم أكمل إدخال البيانات؟
+    //  الخيار (2) أفضل. سأفترض أنكِ ستنشئين API `PUT /projects/:projectId/submit-details`
+    //  في الـ backend، ودالة مقابلة في `ProjectService`.
+    //  ===========================================================================
+
+    try {
+      //  نفترض أن هذه الدالة موجودة في ProjectService وتستدعي API لتغيير الحالة وإرسال إشعار
+      //  await _projectService.submitFinalProjectDetails(widget.projectId);
+
+      logger.i(
+        "Final project details marked as submitted for project ${widget.projectId}",
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Project details submitted successfully! Waiting for office review.',
+            ),
+          ),
+        );
+        Navigator.of(
+          context,
+        ).popUntil((route) => route.isFirst); // العودة للهوم
+      }
+    } catch (e) {
+      logger.e("Error in final submission: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Final submission failed: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmittingFinal = false);
     }
   }
 
@@ -193,7 +457,9 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
                       ? AppColors.accent
                       : isActive
                       ? AppColors.primary
-                      : AppColors.card,
+                      : AppColors.card.withAlpha(
+                        (0.5 * 255).round(),
+                      ), // لون باهت للخطوات غير النشطة
               borderRadius: BorderRadius.circular(10),
             ),
           ),
@@ -203,6 +469,9 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
   }
 
   Widget _buildStepContent() {
+    if (_isLoadingInitialData) {
+      return const Center(child: CircularProgressIndicator());
+    }
     switch (_currentStep) {
       case 0:
         return _buildUserInfoSection();
@@ -217,21 +486,44 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
 
   Widget _buildUserInfoSection() {
     return _buildSectionCard(
-      title: AppStrings.userInfo,
+      title: AppStrings.userInfo, // تأكدي من تعريف هذه النصوص
       color: AppColors.accent,
       children: [
         _buildResponsiveRow([
-          _buildField(_controllers['name']!, AppStrings.name),
-          _buildField(_controllers['idNumber']!, AppStrings.idNumber),
+          _buildField(
+            _controllers['userName']!,
+            AppStrings.name,
+            readOnly: _isSavingStepData,
+          ),
+          _buildField(
+            _controllers['userIdNumber']!,
+            AppStrings.idNumber,
+            readOnly: _isSavingStepData,
+          ),
         ]),
         const SizedBox(height: 12),
         _buildResponsiveRow([
-          _buildField(_controllers['address']!, AppStrings.address),
-          _buildField(_controllers['phone']!, AppStrings.phone),
+          _buildField(
+            _controllers['userAddress']!,
+            AppStrings.address,
+            readOnly: _isSavingStepData,
+          ),
+          _buildField(
+            _controllers['userPhone']!,
+            AppStrings.phone,
+            keyboardType: TextInputType.phone,
+            readOnly: _isSavingStepData,
+          ),
         ]),
         const SizedBox(height: 12),
         _buildResponsiveRow([
-          _buildField(_controllers['bankAccount']!, AppStrings.bankAccount),
+          _buildField(
+            _controllers['userBankAccount']!,
+            AppStrings.bankAccount,
+            readOnly: _isSavingStepData,
+          ),
+          //  يمكن إضافة حقل فارغ هنا إذا أردتِ الحفاظ على التنسيق إذا كان هناك حقل واحد فقط
+          // Expanded(child: SizedBox()),
         ]),
       ],
     );
@@ -243,9 +535,10 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
       color: AppColors.accent,
       children: [
         _buildField(
-          _controllers['area']!,
+          _controllers['landArea']!,
           AppStrings.area,
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.numberWithOptions(decimal: true),
+          readOnly: _isSavingStepData,
         ),
         Row(
           children: [
@@ -253,6 +546,7 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
               child: _buildField(
                 _controllers['plotNumber']!,
                 AppStrings.plotNumber,
+                readOnly: _isSavingStepData,
               ),
             ),
             const SizedBox(width: 12),
@@ -260,29 +554,35 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
               child: _buildField(
                 _controllers['basinNumber']!,
                 AppStrings.basinNumber,
+                readOnly: _isSavingStepData,
               ),
             ),
           ],
         ),
-        _buildField(_controllers['areaName']!, AppStrings.areaName),
+        _buildField(
+          _controllers['landLocation']!,
+          AppStrings.areaName,
+          readOnly: _isSavingStepData,
+        ), //  كان areaName
       ],
     );
   }
 
   Widget _buildSupportingDocsSection() {
+    // ... (الكود من ردك السابق، مع تعديل بسيط لعرض اسم الملف المختار)
+    // ... وتعديل onPressed لزر الحذف
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 6,
-      shadowColor: Colors.grey.withOpacity(0.3),
+      shadowColor: Colors.grey.withAlpha((0.3 * 255).round()),
       margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
-          //crossAxisAlignment: CrossAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              AppStrings.supportingDocs,
+              AppStrings.supportingDocs, // "Agreement Document"
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -294,7 +594,7 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent, // لون مخصص للزر
+                  backgroundColor: AppColors.accent,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -302,9 +602,12 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
                   elevation: 4,
                   shadowColor: Colors.black45,
                 ),
-                onPressed: _isUploading || _isSubmitting ? null : _pickPDF,
+                onPressed:
+                    _isSavingStepData || _isSubmittingFinal ? null : _pickPDF,
                 icon:
-                    _isUploading
+                    _isSavingStepData &&
+                            _pickedFileBytes !=
+                                null //  إذا كنا نرفع الملف حالياً (لم نضف حالة isUploadingFile بعد)
                         ? const SizedBox(
                           width: 20,
                           height: 20,
@@ -319,7 +622,9 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
                           size: 22,
                         ),
                 label: Text(
-                  _isUploading ? 'Uploading...' : AppStrings.uploadPdf,
+                  (_isSavingStepData && _pickedFileBytes != null)
+                      ? 'Uploading...'
+                      : AppStrings.uploadPdf, // "Upload Agreement PDF"
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -335,7 +640,7 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
                 vertical: 8.0,
               ),
               child: Text(
-                'Please upload a PDF file no larger than 5MB. Make sure the file is clear and legible.',
+                'Please upload the design agreement PDF (max 5MB).',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
@@ -344,40 +649,102 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
                 ),
               ),
             ),
-
-            if (_pdfFilePath != null) ...[
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Uploaded file: ${_pdfFilePath!.split('/').last}',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontStyle: FontStyle.italic,
-                        fontWeight: FontWeight.w500,
+            if (_pickedFileName != null) //  إذا تم اختيار ملف جديد
+              Padding(
+                padding: const EdgeInsets.only(top: 12.0),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Selected: $_pickedFileName',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.delete_forever,
-                      color: Colors.redAccent,
+                    IconButton(
+                      icon: const Icon(
+                        Icons.clear,
+                        color: Colors.redAccent,
+                        size: 20,
+                      ),
+                      tooltip: 'Clear Selection',
+                      onPressed:
+                          _isSavingStepData || _isSubmittingFinal
+                              ? null
+                              : () {
+                                setState(() {
+                                  _pickedFileBytes = null;
+                                  _pickedFileName = null;
+                                  // لا نغير _uploadedAgreementFilePath هنا إلا إذا أردنا حذف الملف المرفوع سابقاً
+                                });
+                              },
                     ),
-                    tooltip: 'Cancel',
-                    onPressed:
-                        _isSubmitting || _isUploading
-                            ? null
-                            : () {
-                              setState(() {
-                                _pdfFilePath = null;
-                              });
-                            },
-                  ),
-                ],
+                  ],
+                ),
+              )
+            else if (_uploadedAgreementFilePath != null &&
+                _uploadedAgreementFilePath!
+                    .isNotEmpty) //  إذا كان هناك ملف مرفوع سابقاً
+              Padding(
+                padding: const EdgeInsets.only(top: 12.0),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.file_present_rounded,
+                      color: AppColors.accent,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Uploaded: ${_uploadedAgreementFilePath!.split('/').last}', // عرض اسم الملف فقط
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      //  زر لحذف الملف المرفوع سابقاً (يحتاج لدعم من الـ backend)
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.orange,
+                        size: 20,
+                      ),
+                      tooltip: 'Remove Uploaded File (Will require re-upload)',
+                      onPressed:
+                          _isSavingStepData || _isSubmittingFinal
+                              ? null
+                              : () {
+                                // هنا يمكنكِ استدعاء API لحذف الملف من السيرفر وتحديث UI
+                                // حالياً، فقط سنمسحه من الـ state المحلي ليتمكن المستخدم من رفع ملف جديد
+                                setState(() {
+                                  _uploadedAgreementFilePath = null;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Previous file cleared. Please upload a new one if needed.',
+                                    ),
+                                  ),
+                                );
+                              },
+                    ),
+                  ],
+                ),
               ),
-            ],
           ],
         ),
       ),
@@ -387,7 +754,7 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: null,
+      appBar: null, // الـ AppBar المخصص موجود بالأسفل
       body: SafeArea(
         child: Column(
           children: [
@@ -413,14 +780,16 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey.shade300,
-                      foregroundColor: Colors.black,
+                      foregroundColor: Colors.black87,
                       minimumSize: const Size(120, 48),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     onPressed:
-                        _currentStep > 0 && !_isSubmitting
+                        (_currentStep > 0 &&
+                                !_isSavingStepData &&
+                                !_isSubmittingFinal)
                             ? _previousStep
                             : null,
                     child: const Text('Back'),
@@ -428,21 +797,32 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                          (_isFormValid)
+                          (_isCurrentStepFormValid)
                               ? AppColors.accent
-                              : AppColors.primary.withOpacity(0.5),
+                              : AppColors.primary.withAlpha(
+                                (0.5 * 255).round(),
+                              ),
                       foregroundColor: Colors.white,
                       minimumSize: const Size(120, 48),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: _isSubmitting ? null : _nextStep,
+                    onPressed:
+                        (_isCurrentStepFormValid &&
+                                !_isSavingStepData &&
+                                !_isSubmittingFinal)
+                            ? _handleNextStepOrSubmit
+                            : null,
                     child:
-                        _isSubmitting
-                            ? const CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                        (_isSavingStepData || _isSubmittingFinal)
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
                             )
                             : Text(_currentStep == 2 ? 'Submit' : 'Next'),
                   ),
@@ -462,10 +842,12 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
   }) {
     return Card(
       color: AppColors.card,
-      elevation: 4,
-      margin: const EdgeInsets.only(bottom: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      shadowColor: AppColors.shadow,
+      elevation: 3, // تقليل الـ elevation قليلاً
+      margin: const EdgeInsets.only(bottom: 20), // تقليل الهامش السفلي
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ), // تقليل الـ radius قليلاً
+      shadowColor: AppColors.shadow.withAlpha((0.2 * 255).round()),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -474,12 +856,12 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
             Text(
               title,
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: color,
-              ),
+              ), // تقليل حجم الخط
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12), // تقليل المسافة
             ...children,
           ],
         ),
@@ -491,17 +873,44 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
     TextEditingController controller,
     String label, {
     TextInputType keyboardType = TextInputType.text,
+    bool readOnly = false, //  معامل جديد
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        vertical: 8,
+      ), // زيادة الـ padding العمودي قليلاً
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        readOnly: readOnly, // تطبيق خاصية القراءة فقط
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          labelStyle: TextStyle(
+            color: AppColors.textSecondary.withAlpha((0.8 * 255).round()),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10), // تقليل الـ radius
+            borderSide: BorderSide(color: Colors.grey.shade400),
+          ),
+          enabledBorder: OutlineInputBorder(
+            //  تحديد شكل الحدود عندما يكون الحقل مفعلاً
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.grey.shade400, width: 1.0),
+          ),
+          focusedBorder: OutlineInputBorder(
+            // تحديد شكل الحدود عند التركيز
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: AppColors.accent, width: 1.5),
+          ),
           filled: true,
-          fillColor: AppColors.background,
+          fillColor:
+              readOnly
+                  ? Colors.grey.shade200
+                  : AppColors.background, // لون مختلف للقراءة فقط
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 14,
+          ), // تعديل الـ padding الداخلي
         ),
       ),
     );
@@ -511,13 +920,18 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 600) {
+          //  تعديل الـ breakpoint
           return Row(
+            crossAxisAlignment:
+                CrossAxisAlignment.start, // محاذاة العناصر للأعلى
             children:
                 children
                     .map(
                       (child) => Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6.0,
+                          ), // تقليل الـ padding الأفقي
                           child: child,
                         ),
                       ),
@@ -534,16 +948,16 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
 
 class _CustomAppBar extends StatelessWidget {
   const _CustomAppBar();
-
   @override
   Widget build(BuildContext context) {
+    // ... (نفس الكود بدون تغيير)
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 28, 16, 20),
       decoration: BoxDecoration(
         color: AppColors.primary,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withAlpha((0.15 * 255).round()),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -562,7 +976,7 @@ class _CustomAppBar extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              "Pre-Submission Requirements",
+              "Pre-Submission Requirements", // يمكنكِ تغيير هذا العنوان ليكون أكثر عمومية
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -572,8 +986,37 @@ class _CustomAppBar extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(width: 48),
+          const SizedBox(width: 48), // للموازنة مع زر الرجوع
         ],
+      ),
+    );
+  }
+}
+
+//  شاشة لتفاصيل المشروع النهائية (للانتقال إليها بعد الـ submit)
+//  هذه مجرد شاشة placeholder، يجب استبدالها بشاشة عرض تفاصيل المشروع الفعلية
+class ProjectDetailsScreen extends StatelessWidget {
+  final int? projectId; // قد تحتاجين لتمرير projectId هنا
+  const ProjectDetailsScreen({super.key, this.projectId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          projectId != null
+              ? 'Project ID: $projectId Details'
+              : 'Project Submitted',
+        ),
+      ),
+      body: Center(
+        child: Text(
+          projectId != null
+              ? 'Details for project ID $projectId will be shown here.'
+              : 'Project information submitted successfully and is under review!',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
       ),
     );
   }

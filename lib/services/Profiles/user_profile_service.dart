@@ -38,4 +38,7 @@ class UserService {
 
     return res.statusCode == 200;
   }
+
+  // يمكنكِ إضافة دالة لرفع صورة بروفايل المستخدم هنا لاحقاً
+  // Future<String?> uploadUserProfileImage(Uint8List imageBytes, String fileName) async { ... }
 }

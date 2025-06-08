@@ -4,6 +4,7 @@ import '../../models/Basic/project_model.dart';
 import '../../models/userprojects/project_simplified_model.dart';
 import '../session.dart';
 import '../../utils/Constants.dart';
+
 import '../../models/userprojects/project_readonly_model.dart'; // تأكدي من أن المسار صحيح لملف ProjectModel
 
 class ProjectService {
@@ -253,6 +254,34 @@ class ProjectService {
         'Error updating project $projectId (Status: ${response.statusCode}): ${response.body}',
       );
       throw Exception(errorMessage);
+    }
+  }
+
+  Future<ProjectModel> getProjectDetailscreate(int projectId) async {
+    final token =
+        await Session.getToken(); // التوكن قد يكون اختيارياً هنا إذا كانت تفاصيل المشروع عامة
+    final response = await http.get(
+      Uri.parse(
+        '$_baseUrl/projects/$projectId',
+      ), // هذا الـ endpoint موجود لديكِ
+      headers: {
+        'Content-Type': 'application/json',
+        // أرسلي التوكن إذا كان الـ backend يتوقعه لعرض تفاصيل معينة أو للتحقق
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return ProjectModel.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    } else if (response.statusCode == 404) {
+      throw Exception('Project with ID $projectId not found.');
+    } else {
+      print(
+        'Failed to load project details for ID $projectId (Status: ${response.statusCode}): ${response.body}',
+      );
+      throw Exception('Failed to load project details for ID $projectId');
     }
   }
 }
