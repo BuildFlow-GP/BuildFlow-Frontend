@@ -302,7 +302,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   bool _isLoading = true;
   String? _error;
   static const String baseUrl =
-      "http://localhost:5000"; // غيرها حسب سيرفرك الفعلي
+      "http://localhost:5000/api"; // غيرها حسب سيرفرك الفعلي
 
   @override
   void initState() {
@@ -572,8 +572,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     String title;
     String subtitle;
     // لم نعد بحاجة لـ imageProvider أو defaultIcon بما أننا لن نعرض CircleAvatar
-    // ImageProvider? imageProvider;
-    // IconData defaultIcon = Icons.folder_open;
+    ImageProvider? imageProvider;
+    IconData defaultIcon = Icons.folder_open;
 
     dynamic actualItem = detailedItem.itemDetail;
 
@@ -582,29 +582,39 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       title = 'Unavailable Item';
       subtitle =
           'ID: ${detailedItem.favoriteInfo.itemId} (Type: ${detailedItem.favoriteInfo.itemType})';
-      // defaultIcon = Icons.broken_image;
+      defaultIcon = Icons.broken_image;
     } else if (actualItem is OfficeModel) {
-      title = actualItem.name ?? 'Office';
+      title = actualItem.name;
       subtitle = 'Office Location: ${actualItem.location ?? 'N/A'}';
-      // if (actualItem.profileImage != null && actualItem.profileImage!.isNotEmpty) {
-      //   imageProvider = NetworkImage(actualItem.profileImage!.startsWith('http') ? actualItem.profileImage! : '$baseUrl/${actualItem.profileImage}');
-      // }
-      // defaultIcon = Icons.location_city;
+      if (actualItem.profileImage != null &&
+          actualItem.profileImage!.isNotEmpty) {
+        imageProvider = NetworkImage(
+          actualItem.profileImage!.startsWith('http')
+              ? actualItem.profileImage!
+              : '$baseUrl/${actualItem.profileImage}',
+        );
+      }
+      defaultIcon = Icons.location_city;
     } else if (actualItem is CompanyModel) {
-      title = actualItem.name ?? 'Company';
+      title = actualItem.name;
       subtitle = 'Company Type: ${actualItem.companyType ?? 'N/A'}';
-      // if (actualItem.profileImage != null && actualItem.profileImage!.isNotEmpty) {
-      //   imageProvider = NetworkImage(actualItem.profileImage!.startsWith('http') ? actualItem.profileImage! : '$baseUrl/${actualItem.profileImage}');
-      // }
-      // defaultIcon = Icons.corporate_fare;
+      if (actualItem.profileImage != null &&
+          actualItem.profileImage!.isNotEmpty) {
+        imageProvider = NetworkImage(
+          actualItem.profileImage!.startsWith('http')
+              ? actualItem.profileImage!
+              : '$baseUrl/${actualItem.profileImage}',
+        );
+      }
+      defaultIcon = Icons.corporate_fare;
     } else if (actualItem is ProjectModel) {
-      title = actualItem.name ?? 'Project';
+      title = actualItem.name;
       subtitle = 'Status: ${actualItem.status ?? 'N/A'}';
-      // defaultIcon = Icons.construction;
+      defaultIcon = Icons.construction;
     } else {
-      title = 'Unknown Item Type';
+      title = 'Project';
       subtitle = 'Type: ${detailedItem.favoriteInfo.itemType}';
-      // defaultIcon = Icons.help_outline;
+      defaultIcon = Icons.help_outline;
     }
 
     return GestureDetector(

@@ -42,9 +42,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      home: ChatListScreen(),
-
-      //home: ChatScreen(),
+      home: SignInScreen(),
       //home: DrawerWrapper(child: const TypeOfProjectPage()),
       //home: ProjectDetailsScreen(),
       //home: DrawerWrapper(child: const SignInScreen()),
