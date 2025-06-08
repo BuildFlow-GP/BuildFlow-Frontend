@@ -2,7 +2,10 @@
 // import 'package:buildflow_frontend/screens/Design/project_description.dart';
 // import 'package:buildflow_frontend/screens/payment_screen.dart';
 
+import 'package:buildflow_frontend/screens/chat_list_screen.dart';
+import 'package:buildflow_frontend/screens/chat_screen.dart';
 import 'package:buildflow_frontend/themes/app_colors.dart';
+import 'package:buildflow_frontend/widgets/Basic/drawer_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'screens/sign/signin_screen.dart';
@@ -39,10 +42,12 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      home: SignInScreen(),
+      home: ChatListScreen(),
+
+      //home: ChatScreen(),
       //home: DrawerWrapper(child: const TypeOfProjectPage()),
       //home: ProjectDetailsScreen(),
-      // home: DrawerWrapper(child: const PaymentScreen()),
+      //home: DrawerWrapper(child: const SignInScreen()),
       //home: DrawerWrapper(child: const NoPermitScreen()),
     );
   }

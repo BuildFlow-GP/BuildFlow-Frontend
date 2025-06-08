@@ -1,7 +1,11 @@
+// lib/widgets/custom_bottom_nav.dart
+
+// ... Imports
+import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import '../../themes/app_colors.dart';
-import 'bottom_nav_item.dart'; // هذا ملفك اللي يدعم hover والضغط الطويل
+//import '../themes/app_colors.dart';
+import 'bottom_nav_item.dart';
 
 class CustomBottomNav extends StatelessWidget {
   final int currentIndex;
@@ -39,8 +43,8 @@ class CustomBottomNav extends StatelessWidget {
           onTap: onTap,
         ),
         BottomNavItem(
-          icon: Icons.apartment,
-          label: 'Project',
+          icon: Icons.favorite, // <-- الأيقونة الجديدة للقلب
+          label: 'Favorites', // <-- الاسم الجديد
           index: 2,
           selectedIndex: currentIndex,
           onTap: onTap,

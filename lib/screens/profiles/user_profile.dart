@@ -1,4 +1,6 @@
 import 'package:buildflow_frontend/themes/app_colors.dart';
+import 'package:buildflow_frontend/widgets/Basic/custom_bottom_nav.dart';
+import 'package:buildflow_frontend/widgets/navbar.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -19,6 +21,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> formData = {};
   String? _password;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -178,7 +181,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return isEditMode
         ? Column(
           children: [
-            // اسم المستخدم
             TextFormField(
               initialValue: formData['name']?.toString(),
               onSaved: (val) => formData['name'] = val,
@@ -199,7 +201,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            // موقع المستخدم
             TextFormField(
               initialValue: formData['location']?.toString(),
               onSaved: (val) => formData['location'] = val,
@@ -228,7 +229,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         : Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // الاسم + رمز الفاصل + الموقع مع الأيقونة
             RichText(
               textAlign: TextAlign.center,
               text: TextSpan(
@@ -268,117 +268,133 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('User Profile'),
-        backgroundColor: AppColors.primary,
+
+      bottomNavigationBar: CustomBottomNav(
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() => _selectedIndex = index);
+          // التنقل بين الصفحات حسب index إن أردت
+        },
       ),
       body:
           formData.isEmpty
               ? const Center(child: CircularProgressIndicator())
-              : Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 600),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Form(
-                      key: _formKey,
-                      child: Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: AppColors.card,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.shadow.withOpacity(0.3),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+              : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Navbar(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 20.0,
+                        horizontal: 16.0,
+                      ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 600),
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: AppColors.card,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.shadow.withOpacity(0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            GestureDetector(
-                              onTap: isEditMode ? _pickImage : null,
-                              child: Stack(
-                                alignment: Alignment.bottomRight,
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  CircleAvatar(
-                                    radius: 60,
-                                    backgroundImage:
-                                        _profileImage != null
-                                            ? FileImage(_profileImage!)
-                                            : const AssetImage(
-                                                  'assets/user.png',
-                                                )
-                                                as ImageProvider,
-                                    backgroundColor: AppColors.background,
+                                  GestureDetector(
+                                    onTap: isEditMode ? _pickImage : null,
+                                    child: Stack(
+                                      alignment: Alignment.bottomRight,
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 60,
+                                          backgroundImage:
+                                              _profileImage != null
+                                                  ? FileImage(_profileImage!)
+                                                  : const AssetImage(
+                                                        'assets/user.png',
+                                                      )
+                                                      as ImageProvider,
+                                          backgroundColor: AppColors.background,
+                                        ),
+                                        if (isEditMode)
+                                          CircleAvatar(
+                                            radius: 16,
+                                            backgroundColor: AppColors.accent,
+                                            child: const Icon(
+                                              Icons.camera_alt,
+                                              size: 14,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                                   ),
-                                  if (isEditMode)
-                                    CircleAvatar(
-                                      radius: 16,
-                                      backgroundColor: AppColors.accent,
-                                      child: const Icon(
-                                        Icons.camera_alt,
-                                        size: 14,
-                                        color: Colors.white,
+                                  const SizedBox(height: 20),
+                                  _buildNameWithLocation(),
+                                  const SizedBox(height: 20),
+                                  _buildField(
+                                    "Email",
+                                    "email",
+                                    Icons.email,
+                                    readOnly: true,
+                                  ),
+                                  _buildField("Phone", "phone", Icons.phone),
+                                  _buildField(
+                                    "ID Number",
+                                    "id_number",
+                                    Icons.badge,
+                                  ),
+                                  _buildField(
+                                    "Bank Account",
+                                    "bank_account",
+                                    Icons.account_balance,
+                                  ),
+                                  if (isEditMode) _buildPasswordField(),
+                                  const SizedBox(height: 20),
+                                  if (widget.isOwner)
+                                    ElevatedButton.icon(
+                                      onPressed: _toggleEdit,
+                                      icon: Icon(
+                                        isEditMode ? Icons.save : Icons.edit,
+                                      ),
+                                      label: Text(
+                                        isEditMode
+                                            ? "Save Changes"
+                                            : "Edit Profile",
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.accent,
+                                        foregroundColor: Colors.white,
+                                        elevation: 2,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 28,
+                                          vertical: 14,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 20),
-
-                            // ✅ عرض الاسم والموقع جنبًا إلى جنب مع رمز |
-                            _buildNameWithLocation(),
-
-                            const SizedBox(height: 20),
-
-                            // ✅ باقي الحقول بدون "Name" و"Location"
-                            _buildField(
-                              "Email",
-                              "email",
-                              Icons.email,
-                              readOnly: true,
-                            ),
-                            _buildField("Phone", "phone", Icons.phone),
-                            _buildField("ID Number", "id_number", Icons.badge),
-                            _buildField(
-                              "Bank Account",
-                              "bank_account",
-                              Icons.account_balance,
-                            ),
-
-                            if (isEditMode) _buildPasswordField(),
-
-                            const SizedBox(height: 20),
-                            if (widget.isOwner)
-                              ElevatedButton.icon(
-                                onPressed: _toggleEdit,
-                                icon: Icon(
-                                  isEditMode ? Icons.save : Icons.edit,
-                                ),
-                                label: Text(
-                                  isEditMode ? "Save Changes" : "Edit Profile",
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.accent,
-                                  foregroundColor: Colors.white,
-                                  elevation: 2,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 28,
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
     );
