@@ -7,9 +7,10 @@ import 'chat_list_screen.dart';
 class ChatScreen extends StatefulWidget {
   final Contact contact;
 
-  const ChatScreen({Key? key, required this.contact}) : super(key: key);
+  const ChatScreen({super.key, required this.contact});
 
   @override
+  // ignore: library_private_types_in_public_api
   _ChatScreenState createState() => _ChatScreenState();
 }
 
@@ -213,6 +214,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
+                // ignore: deprecated_member_use
                 color: Colors.black.withOpacity(0.1),
                 blurRadius: 12,
                 offset: Offset(0, 6),

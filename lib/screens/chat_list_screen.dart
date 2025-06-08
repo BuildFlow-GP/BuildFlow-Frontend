@@ -22,7 +22,10 @@ class Contact {
 }
 
 class ChatListScreen extends StatefulWidget {
+  const ChatListScreen({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _ChatListScreenState createState() => _ChatListScreenState();
 }
 
@@ -109,7 +112,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         ),
       ),
       body: Center(
-        child: Container(
+        child: SizedBox(
           width:
               MediaQuery.of(context).size.width > 800
                   ? MediaQuery.of(context).size.width * 0.75

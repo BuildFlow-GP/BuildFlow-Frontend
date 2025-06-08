@@ -302,7 +302,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   bool _isLoading = true;
   String? _error;
   static const String baseUrl =
-      "http://localhost:5000/api"; // غيرها حسب سيرفرك الفعلي
+      "http://localhost:5000"; // غيرها حسب سيرفرك الفعلي
 
   @override
   void initState() {
@@ -572,9 +572,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     String title;
     String subtitle;
     // لم نعد بحاجة لـ imageProvider أو defaultIcon بما أننا لن نعرض CircleAvatar
+    // ignore: unused_local_variable
     ImageProvider? imageProvider;
-    IconData defaultIcon = Icons.folder_open;
-
     dynamic actualItem = detailedItem.itemDetail;
 
     // معالجة حالة itemDetail == null
@@ -582,7 +581,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       title = 'Unavailable Item';
       subtitle =
           'ID: ${detailedItem.favoriteInfo.itemId} (Type: ${detailedItem.favoriteInfo.itemType})';
-      defaultIcon = Icons.broken_image;
     } else if (actualItem is OfficeModel) {
       title = actualItem.name;
       subtitle = 'Office Location: ${actualItem.location ?? 'N/A'}';
@@ -594,7 +592,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               : '$baseUrl/${actualItem.profileImage}',
         );
       }
-      defaultIcon = Icons.location_city;
     } else if (actualItem is CompanyModel) {
       title = actualItem.name;
       subtitle = 'Company Type: ${actualItem.companyType ?? 'N/A'}';
@@ -606,15 +603,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               : '$baseUrl/${actualItem.profileImage}',
         );
       }
-      defaultIcon = Icons.corporate_fare;
     } else if (actualItem is ProjectModel) {
       title = actualItem.name;
       subtitle = 'Status: ${actualItem.status ?? 'N/A'}';
-      defaultIcon = Icons.construction;
     } else {
-      title = 'Project';
+      title = 'Favorite Project';
       subtitle = 'Type: ${detailedItem.favoriteInfo.itemType}';
-      defaultIcon = Icons.help_outline;
     }
 
     return GestureDetector(
