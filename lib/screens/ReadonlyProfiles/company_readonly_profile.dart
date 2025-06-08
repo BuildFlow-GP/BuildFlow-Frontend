@@ -810,7 +810,7 @@ class _CompanyrProfileScreenState extends State<CompanyrProfileScreen> {
                     ),
                   ),
                   if (project.endDate != null &&
-                      DateTime.tryParse(project.endDate!) != null)
+                      DateTime.tryParse(project.endDate! as String) != null)
                     Row(
                       children: [
                         Icon(
@@ -823,7 +823,7 @@ class _CompanyrProfileScreenState extends State<CompanyrProfileScreen> {
                         const SizedBox(width: 4),
                         Text(
                           DateFormat.yMd().format(
-                            DateTime.parse(project.endDate!),
+                            DateTime.parse(project.endDate! as String),
                           ),
                           style: TextStyle(
                             fontSize: 11,

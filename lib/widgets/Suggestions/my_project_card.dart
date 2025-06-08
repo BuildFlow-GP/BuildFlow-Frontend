@@ -58,7 +58,7 @@ class MyProjectCard extends StatelessWidget {
           project.company!.profileImage!.startsWith('http')
               ? project.company!.profileImage!
               : '${Constants.baseUrl}/${project.company!.profileImage}',
-        ); // تأكدي من ApiConfig
+        );
       }
       entityIcon = Icons.apartment_outlined; // أيقونة الشركة
     }

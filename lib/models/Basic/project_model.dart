@@ -1,42 +1,38 @@
-// models/project_model.dart
-import 'office_model.dart';
+// models/project_model.dart (أو المسار الصحيح لديكِ models/Basic/project_model.dart)
+import 'office_model.dart'; // تأكدي من المسارات الصحيحة
 import 'company_model.dart';
 import 'user_model.dart';
 
 class ProjectModel {
   final int id;
-  String name;
-  String? description;
-  String? status;
+  String name; // اسم المشروع، لا يجب أن يكون null
+  String? description; // الوصف، سنجعله نص فارغ إذا كان null
+  String? status; // الحالة، سنجعلها قيمة افتراضية إذا كانت null
   double? budget;
-  String? startDate; //  يفضل استخدام DateTime هنا
-  String? endDate; //  يفضل استخدام DateTime هنا
-  String? location; //  الموقع العام للمشروع
+  DateTime? startDate; //  تم تحويله لـ DateTime
+  DateTime? endDate; //  تم تحويله لـ DateTime
+  String? location; //  سنجعله نص فارغ إذا كان null
 
   // حقول معلومات الأرض
   double? landArea;
-  String? plotNumber;
-  String? basinNumber;
-  String? landLocation; //  موقع الأرض التفصيلي
+  String? plotNumber; //  سنجعله نص فارغ إذا كان null
+  String? basinNumber; //  سنجعله نص فارغ إذا كان null
+  String? landLocation; //  سنجعله نص فارغ إذا كان null
 
-  // حقول المستندات
+  // حقول المستندات (تبقى String? لأنها قد لا تكون موجودة دائماً)
   String? licenseFile;
   String? agreementFile;
   String? document2D;
   String? document3D;
 
-  // === حقول معلومات الاتصال الخاصة بالمشروع (جديدة) ===
-  String? contactName;
-  String? contactIdNumber;
-  String? contactAddress; // قد يكون مختلفاً عن location
-  String? contactPhone;
-  String? contactBankAccount;
+  String? rejectionReason; //  إذا أضفتيه في الـ backend model
 
-  String? rejectionReason; // سبب الرفض
+  final DateTime createdAt; //  تم تحويله لـ DateTime
 
-  final String createdAt; //  يفضل استخدام DateTime هنا
-  final int? userId; //  ID المستخدم (من جدول المشاريع)
-  final int? officeId; //  ID المكتب (من جدول المشاريع)
+  // IDs للربط (مهمة جداً)
+  final int? userId;
+  final int? officeId;
+  // final int? companyId; // إذا كنتِ ستضيفينه
 
   // الكائنات المتداخلة (إذا أرجعها الـ API)
   OfficeModel? office;
@@ -46,36 +42,36 @@ class ProjectModel {
   ProjectModel({
     required this.id,
     required this.name,
-    this.description,
-    this.status,
+    this.description = '', // قيمة افتراضية
+    this.status = 'Unknown', // قيمة افتراضية
     this.budget,
     this.startDate,
     this.endDate,
-    this.location,
+    this.location = '', // قيمة افتراضية
     this.licenseFile,
     this.agreementFile,
     this.document2D,
     this.document3D,
     this.landArea,
-    this.plotNumber,
-    this.basinNumber,
-    this.landLocation,
-    this.contactName,
-    this.contactIdNumber,
-    this.contactAddress,
-    this.contactPhone,
-    this.contactBankAccount,
+    this.plotNumber = '', // قيمة افتراضية
+    this.basinNumber = '', // قيمة افتراضية
+    this.landLocation = '', // قيمة افتراضية
     this.rejectionReason,
     required this.createdAt,
-    this.userId, // تمت الإضافة
-    this.officeId, // تمت الإضافة
+    this.userId, //  تمت الإضافة
+    this.officeId, //  تمت الإضافة
+    // this.companyId,
     this.office,
     this.company,
     this.user,
   });
 
   factory ProjectModel.fromJson(Map<String, dynamic> json) {
-    // دالة مساعدة لتحويل النصوص إلى double بأمان
+    DateTime? parseDate(String? dateString) {
+      if (dateString == null || dateString.isEmpty) return null;
+      return DateTime.tryParse(dateString);
+    }
+
     double? parseDouble(dynamic value) {
       if (value == null) return null;
       if (value is num) return value.toDouble();
@@ -85,80 +81,80 @@ class ProjectModel {
 
     return ProjectModel(
       id: json['id'] as int,
-      name: json['name'] as String? ?? 'Unnamed Project',
-      description: json['description'] as String?,
-      status: json['status'] as String?,
+      name:
+          json['name'] as String? ??
+          'Unnamed Project', // قيمة افتراضية قوية للاسم
+      description: json['description'] as String? ?? '',
+      status: json['status'] as String? ?? 'Unknown',
       budget: parseDouble(json['budget']),
-      startDate:
-          json['start_date'] as String?, // الأفضل تحويل لـ DateTime.tryParse
-      endDate: json['end_date'] as String?, // الأفضل تحويل لـ DateTime.tryParse
-      location: json['location'] as String?,
-
-      landArea: parseDouble(json['land_area']),
-      plotNumber: json['plot_number'] as String?,
-      basinNumber: json['basin_number'] as String?,
-      landLocation: json['land_location'] as String?,
+      startDate: parseDate(json['start_date'] as String?),
+      endDate: parseDate(json['end_date'] as String?),
+      location: json['location'] as String? ?? '',
 
       licenseFile: json['license_file'] as String?,
       agreementFile: json['agreement_file'] as String?,
       document2D: json['document_2d'] as String?,
       document3D: json['document_3d'] as String?,
 
-      contactName: json['contact_name'] as String?,
-      contactIdNumber: json['contact_id_number'] as String?,
-      contactAddress: json['contact_address'] as String?,
-      contactPhone: json['contact_phone'] as String?,
-      contactBankAccount: json['contact_bank_account'] as String?,
+      landArea: parseDouble(json['land_area']),
+      plotNumber: json['plot_number'] as String? ?? '',
+      basinNumber: json['basin_number'] as String? ?? '',
+      landLocation: json['land_location'] as String? ?? '',
 
       rejectionReason: json['rejection_reason'] as String?,
 
       createdAt:
-          json['created_at'] as String? ??
-          DateTime.now().toIso8601String(), // الأفضل تحويل لـ DateTime.parse
-      userId: json['user_id'] as int?,
-      officeId: json['office_id'] as int?,
+          parseDate(json['created_at'] as String?) ??
+          DateTime.now(), // قيمة افتراضية قوية
+
+      userId: json['user_id'] as int?, //  قراءة الـ ID
+      officeId: json['office_id'] as int?, //  قراءة الـ ID
 
       office:
-          json['office'] != null ? OfficeModel.fromJson(json['office']) : null,
-      user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
+          json['office'] != null
+              ? OfficeModel.fromJson(json['office'] as Map<String, dynamic>)
+              : null,
+      user:
+          json['user'] != null
+              ? UserModel.fromJson(json['user'] as Map<String, dynamic>)
+              : null,
       company:
           json['company'] != null
-              ? CompanyModel.fromJson(json['company'])
+              ? CompanyModel.fromJson(json['company'] as Map<String, dynamic>)
               : null,
     );
   }
 
   Map<String, dynamic> toJson() {
+    // هذا الـ toJson يستخدم لإرسال البيانات للـ backend
+    // يجب أن يعكس الحقول التي يتوقعها الـ API عند الإنشاء أو التحديث
     final Map<String, dynamic> data = <String, dynamic>{};
     data['name'] = name;
-    if (description != null) data['description'] = description;
-    if (status != null) data['status'] = status; // عادة لا يرسل المستخدم الحالة
+    if (description!.isNotEmpty) data['description'] = description;
+    // status عادة لا يتم إرساله من المستخدم عند التحديث الجزئي، الـ backend يديره
+    // if (status.isNotEmpty && status != 'Unknown') data['status'] = status;
     if (budget != null) data['budget'] = budget;
-    if (startDate != null) {
-      data['start_date'] = startDate; // أرسلي كـ ISOString إذا كان DateTime
-    }
-    if (endDate != null) data['end_date'] = endDate;
-    if (location != null) data['location'] = location;
+    if (startDate != null) data['start_date'] = startDate!.toIso8601String();
+    if (endDate != null) data['end_date'] = endDate!.toIso8601String();
+    if (location!.isNotEmpty) data['location'] = location;
+
+    // لا نرسل عادة مسارات الملفات هنا، الرفع وتحديث المسار يتم بعملية منفصلة
+    // if (licenseFile != null) data['license_file'] = licenseFile;
+    // if (agreementFile != null) data['agreement_file'] = agreementFile;
+    // if (document2D != null) data['document_2d'] = document2D;
+    // if (document3D != null) data['document_3d'] = document3D;
 
     if (landArea != null) data['land_area'] = landArea;
-    if (plotNumber != null) data['plot_number'] = plotNumber;
-    if (basinNumber != null) data['basin_number'] = basinNumber;
-    if (landLocation != null) data['land_location'] = landLocation;
+    if (plotNumber!.isNotEmpty) data['plot_number'] = plotNumber;
+    if (basinNumber!.isNotEmpty) data['basin_number'] = basinNumber;
+    if (landLocation!.isNotEmpty) data['land_location'] = landLocation;
 
-    //  لا نرسل الملفات هنا عادة، الرفع يتم بشكل منفصل
-    // if (agreementFile != null) data['agreement_file'] = agreementFile;
-
-    if (contactName != null) data['contact_name'] = contactName;
-    if (contactIdNumber != null) data['contact_id_number'] = contactIdNumber;
-    if (contactAddress != null) data['contact_address'] = contactAddress;
-    if (contactPhone != null) data['contact_phone'] = contactPhone;
-    if (contactBankAccount != null) {
-      data['contact_bank_account'] = contactBankAccount;
-    }
-
-    // لا نرسل user_id أو office_id عند التحديث من المستخدم عادة، إلا إذا كان الـ API يتطلب ذلك
+    // لا نرسل user_id أو office_id عند تحديث المستخدم للتفاصيل، هذه يتم تعيينها عند الإنشاء
+    // if (userId != null) data['user_id'] = userId;
     // if (officeId != null) data['office_id'] = officeId;
 
+    // إذا كان API الإنشاء المبدئي يتوقع office_id، يجب أن يكون في toJson آخر أو يتم تمريره بشكل منفصل
+    // في حالتنا، `requestInitialProject` في السيرفس يبني الـ body بشكل مخصص.
     return data;
   }
 }
