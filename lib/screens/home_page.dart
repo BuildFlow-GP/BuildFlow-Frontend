@@ -19,7 +19,7 @@ import 'package:get/get.dart';
 import '../widgets/Basic/about_section.dart';
 import '../widgets/Basic/contact_us.dart';
 import 'Design/type_of_project.dart';
-import '../widgets/navbar.dart';
+import '../widgets/Navbar/navbar.dart';
 
 import '../models/Basic/office_model.dart';
 import '../models/Basic/company_model.dart';

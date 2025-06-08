@@ -1,6 +1,6 @@
 import 'package:buildflow_frontend/themes/app_colors.dart';
-import 'package:buildflow_frontend/widgets/Basic/custom_bottom_nav.dart';
-import 'package:buildflow_frontend/widgets/navbar.dart';
+import 'package:buildflow_frontend/widgets/Navbar/custom_bottom_nav.dart';
+import 'package:buildflow_frontend/widgets/Navbar/navbar.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';

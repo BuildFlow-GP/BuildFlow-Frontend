@@ -1,7 +1,7 @@
 // lib/widgets/base_screen_layout.dart
 
 import 'package:flutter/material.dart';
-import 'package:buildflow_frontend/widgets/navbar.dart'; // استورد Navbar هنا
+import 'package:buildflow_frontend/widgets/Navbar/navbar.dart'; // استورد Navbar هنا
 
 class BaseScreenLayout extends StatelessWidget {
   final Widget child; // محتوى الشاشة الفعلي
