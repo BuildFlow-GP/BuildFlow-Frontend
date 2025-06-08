@@ -10,22 +10,19 @@ class ProjectService {
   final String _baseUrl = Constants.baseUrl;
 
   Future<List<ProjectsimplifiedModel>> getMyProjects() async {
-    print("getMyProjects CALLED"); // <<<<<< DEBUG PRINT
+    print("getMyProjects CALLED");
     final token = await Session.getToken();
-    print("Token for getMyProjects: $token"); // <<<<<< DEBUG PRINT
+    print("Token for getMyProjects: $token");
 
     if (token == null || token.isEmpty) {
-      print(
-        "getMyProjects: No token found, throwing exception.",
-      ); // <<<<<< DEBUG PRINT
+      print("getMyProjects: No token found, throwing exception.");
       throw Exception('Authentication token not found. Please log in.');
     }
 
     final String url = '$_baseUrl/users/me/projects';
-    print("getMyProjects: Requesting URL: $url"); // <<<<<< DEBUG PRINT
+    print("getMyProjects: Requesting URL: $url");
 
     try {
-      //  <<<<< إضافة try-catch حول طلب الـ HTTP
       final response = await http.get(
         Uri.parse(url),
         headers: {
@@ -34,13 +31,9 @@ class ProjectService {
         },
       );
 
-      print(
-        "getMyProjects: Response status: ${response.statusCode}",
-      ); // <<<<<< DEBUG PRINT
+      print("getMyProjects: Response status: ${response.statusCode}");
       if (response.statusCode != 200) {
-        print(
-          "getMyProjects: Response body: ${response.body}",
-        ); // <<<<<< DEBUG PRINT
+        print("getMyProjects: Response body: ${response.body}");
       }
 
       if (response.statusCode == 200) {
@@ -54,9 +47,7 @@ class ProjectService {
       } else if (response.statusCode == 401) {
         throw Exception('Unauthorized. Please log in again.');
       } else if (response.statusCode == 404) {
-        print(
-          'My Projects endpoint not found (404): $url',
-        ); //  تم تعديل هذه للطباعة دائماً
+        print('My Projects endpoint not found (404): $url');
         throw Exception(
           'Could not find your projects. The service might be unavailable (404). URL: $url',
         );
@@ -71,7 +62,7 @@ class ProjectService {
     } catch (e) {
       print(
         "getMyProjects: HTTP request FAILED or error during processing: $e",
-      ); // <<<<<< DEBUG PRINT
+      );
       // أعد رمي الخطأ الأصلي أو خطأ مخصص
       if (e is Exception) {
         rethrow; // أعد رمي الخطأ الأصلي إذا كان Exception
@@ -206,6 +197,62 @@ class ProjectService {
       } catch (_) {
         // فشل تحليل JSON، استخدم الرسالة الافتراضية
       }
+      throw Exception(errorMessage);
+    }
+  }
+
+  Future<ProjectModel> updateProjectDetails(
+    int projectId,
+    Map<String, dynamic> dataToUpdate,
+  ) async {
+    final token = await Session.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found. Please log in.');
+    }
+
+    // إزالة المفاتيح ذات القيم null لتجنب إرسالها إذا كان الـ backend لا يتوقعها
+    // أو إذا كانت ستسبب خطأ (مثلاً، تحويل null إلى نص فارغ أو ما شابه)
+    dataToUpdate.removeWhere(
+      (key, value) => value == null || (value is String && value.isEmpty),
+    );
+
+    // التأكد من أن القيم الرقمية يتم إرسالها كأرقام إذا كانت كذلك في الـ backend
+    // (jsonEncode يتعامل مع هذا بشكل جيد عادة)
+
+    print("Updating project $projectId with data: ${jsonEncode(dataToUpdate)}");
+
+    final response = await http.put(
+      Uri.parse('$_baseUrl/projects/$projectId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(dataToUpdate),
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      if (responseData.containsKey('project')) {
+        return ProjectModel.fromJson(
+          responseData['project'] as Map<String, dynamic>,
+        );
+      } else {
+        // إذا لم يرجع الـ API كائن المشروع، قد تحتاج لإعادة جلبه
+        // return getProjectDetails(projectId); // أو رمي خطأ
+        throw Exception('Project data not returned in update response.');
+      }
+    } else {
+      String errorMessage = 'Failed to update project details.';
+      try {
+        final responseBody = jsonDecode(response.body) as Map<String, dynamic>;
+        errorMessage = responseBody['message'] ?? errorMessage;
+        if (responseBody['errors'] != null) {
+          errorMessage += "\nDetails: ${responseBody['errors'].join(', ')}";
+        }
+      } catch (_) {}
+      print(
+        'Error updating project $projectId (Status: ${response.statusCode}): ${response.body}',
+      );
       throw Exception(errorMessage);
     }
   }
