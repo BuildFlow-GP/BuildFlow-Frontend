@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:logger/logger.dart';
 import 'app_strings.dart';
-import 'project_description.dart'; // فرضًا لديك نصوص هنا
+import 'project_description.dart';
 
 final Logger logger = Logger();
 
