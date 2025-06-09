@@ -2,6 +2,7 @@
 // import 'package:buildflow_frontend/screens/Design/project_description.dart';
 // import 'package:buildflow_frontend/screens/payment_screen.dart';
 
+import 'package:buildflow_frontend/screens/Basic/notifications_screen.dart';
 import 'package:buildflow_frontend/screens/chat_list_screen.dart';
 import 'package:buildflow_frontend/screens/chat_screen.dart';
 import 'package:buildflow_frontend/themes/app_colors.dart';
@@ -42,7 +43,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      home: ChatListScreen(),
+      home: SignInScreen(),
 
       //home: ChatScreen(),
       //home: DrawerWrapper(child: const TypeOfProjectPage()),
