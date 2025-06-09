@@ -723,9 +723,7 @@ class _OfficerProfileScreenState extends State<OfficerProfileScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          DateFormat.yMd().format(
-                            DateTime.parse(project.endDate!),
-                          ),
+                          DateFormat.yMd().format(project.endDate!),
                           style: TextStyle(
                             fontSize: 11,
                             color: AppColors.textSecondary,

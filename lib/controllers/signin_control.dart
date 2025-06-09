@@ -1,13 +1,11 @@
 import 'package:get/get.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_storage/get_storage.dart'; // ✅ لتخزين التوكن على الويب
+import '../screens/main_shell_screen.dart';
 import '../services/sign/signin_service.dart';
 import '../models/Basic/user_model.dart';
 import '../services/session.dart';
-import '../screens/Basic/home_page.dart';
 import 'package:logger/logger.dart';
-
-import '../widgets/Basic/drawer_wrapper.dart';
 
 class LoginController extends GetxController {
   final AuthService _authService = AuthService();
@@ -34,7 +32,7 @@ class LoginController extends GetxController {
         await Session.setSession(type: userType, id: user.id);
 
         logger.i('Login successful: ${user.toJson()}');
-        Get.offAll(() => DrawerWrapper(child: const HomeScreen()));
+        Get.offAll(() => const MainShellScreen());
       } else {
         Get.snackbar('Error', 'Login failed. Invalid credentials.');
         logger.w('Login failed: token/user/userType is null');

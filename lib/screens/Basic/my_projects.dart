@@ -1,9 +1,12 @@
+import 'package:buildflow_frontend/services/session.dart' show Session;
 import 'package:flutter/material.dart';
+// import '../../models/Basic/project_model.dart';
 import '../../services/create/project_service.dart';
 
-import '../../models/userprojects/project_simplified_model.dart';
+// import '../../models/userprojects/project_simplified_model.dart';
 
 import '../../widgets/Suggestions/my_project_card.dart';
+import '../Design/my_project_details.dart';
 
 class MyProjectsScreen extends StatefulWidget {
   const MyProjectsScreen({super.key});
@@ -15,22 +18,69 @@ class MyProjectsScreen extends StatefulWidget {
 class _MyProjectsScreenState extends State<MyProjectsScreen> {
   final ProjectService _projectService = ProjectService();
 
-  late Future<List<ProjectsimplifiedModel>> _myProjectsFuture;
+  late Future<List<dynamic>> _myProjectsFuture;
+  String? _sessionUserType;
+
+  // ignore: unused_field
+  final bool _isLoadingUserType = true; //  لتتبع تحميل نوع المستخدم
+
+  // ignore: unused_field
+  bool _isInitializing = true;
 
   @override
   void initState() {
     super.initState();
-    _loadMyProjects();
+    // ✅ الآن التعيين صحيح لأن _loadDataBasedOnUserType ترجع Future<List<dynamic>>
+    _myProjectsFuture = _loadDataBasedOnUserType();
   }
 
-  void _loadMyProjects() {
-    _myProjectsFuture = _projectService.getMyProjects(); //  الآن يجب أن يتطابقا
-  }
-
-  void _refreshProjects() {
+  // ✅  دالة _loadDataBasedOnUserType ترجع Future<List<dynamic>>
+  Future<List<dynamic>> _loadDataBasedOnUserType() async {
     if (mounted) {
       setState(() {
-        _myProjectsFuture = _projectService.getMyProjects();
+        _isInitializing = true;
+      });
+    }
+
+    try {
+      _sessionUserType = await Session.getUserType();
+      if (!mounted) return [];
+
+      if (_sessionUserType == null) {
+        throw Exception("User type not found in session.");
+      }
+
+      if (_sessionUserType!.toLowerCase() == 'office') {
+        logger.i("Loading projects for OFFICE");
+        // getAssignedOfficeProjects ترجع Future<List<ProjectModel>>
+        // ProjectModel هو جزء من dynamic، لذا هذا التعيين صحيح
+        return await _projectService.getAssignedOfficeProjects();
+      } else if (_sessionUserType!.toLowerCase() == 'individual') {
+        logger.i("Loading projects for INDIVIDUAL");
+        // getMyProjects ترجع Future<List<ProjectsimplifiedModel>>
+        // ProjectsimplifiedModel هو جزء من dynamic، لذا هذا التعيين صحيح
+        return await _projectService.getMyProjects();
+      } else {
+        throw Exception("Unknown user type: $_sessionUserType");
+      }
+    } catch (e, s) {
+      logger.e("Error in _loadDataBasedOnUserType", error: e, stackTrace: s);
+      rethrow;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isInitializing = false;
+        });
+      }
+    }
+  }
+
+  // ✅  دالة _refreshProjects أيضاً يجب أن تعيد تعيين Future<List<dynamic>>
+  Future<void> _refreshProjects() async {
+    if (mounted) {
+      logger.i("Refreshing projects for user type: $_sessionUserType");
+      setState(() {
+        _myProjectsFuture = _loadDataBasedOnUserType();
       });
     }
   }
@@ -48,8 +98,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
           ),
         ],
       ),
-      // (6) الـ FutureBuilder يجب أن يستخدم نفس تعريف ProjectModel
-      body: FutureBuilder<List<ProjectsimplifiedModel>>(
+      body: FutureBuilder<List<dynamic>>(
         future: _myProjectsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -69,19 +118,19 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                 return MyProjectCard(
                   project: project,
                   onTap: () {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder:
-                    //         (context) =>
-                    //             ProjectreadDetailsScreen(projectId: project.id),
-                    //   ),
-                    // ).then((value) {
-                    //   if (value == true) {
-                    //     _refreshProjects();
-                    //   }
-                    // });
-                    print("Tapped on project: ${project.name}");
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                ProjectDetailsViewScreen(projectId: project.id),
+                      ),
+                    ).then((value) {
+                      if (value == true) {
+                        _refreshProjects();
+                      }
+                    });
+                    logger.i("Tapped on project: ${project.name}");
                   },
                 );
               },

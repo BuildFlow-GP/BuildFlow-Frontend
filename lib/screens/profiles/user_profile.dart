@@ -1,6 +1,5 @@
 import 'package:buildflow_frontend/themes/app_colors.dart';
-import 'package:buildflow_frontend/widgets/Basic/custom_bottom_nav.dart';
-import 'package:buildflow_frontend/widgets/navbar.dart';
+import 'package:buildflow_frontend/widgets/Navbar/navbar.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -21,7 +20,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> formData = {};
   String? _password;
-  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -268,14 +266,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
-      bottomNavigationBar: CustomBottomNav(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() => _selectedIndex = index);
-          // التنقل بين الصفحات حسب index إن أردت
-        },
-      ),
       body:
           formData.isEmpty
               ? const Center(child: CircularProgressIndicator())
