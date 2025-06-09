@@ -6,9 +6,11 @@ import '../../models/Basic/project_model.dart';
 import '../../models/Basic/review_model.dart'; // استخدام ReviewModel الخاص بكِ (الذي اسمه Review)
 import '../session.dart'; // للوصول إلى التوكن
 import '../../utils/constants.dart'; // تأكدي من وجود هذا الملف في المسار الصحيح
+import 'package:logger/logger.dart';
 
 class CompanyProfileService {
   static const String _baseUrl = '${Constants.baseUrl}/companies';
+  final Logger logger = Logger();
 
   Future<CompanyModel> getCompanyDetails(int companyId) async {
     final response = await http.get(Uri.parse('$_baseUrl/$companyId'));
@@ -17,7 +19,7 @@ class CompanyProfileService {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return CompanyModel.fromJson(data);
     } else {
-      print(
+      logger.e(
         'Failed to load company details: ${response.statusCode} ${response.body}',
       );
       throw Exception(
@@ -38,7 +40,7 @@ class CompanyProfileService {
           )
           .toList();
     } else {
-      print(
+      logger.e(
         'Failed to load company projects: ${response.statusCode} ${response.body}',
       );
       throw Exception(
@@ -59,7 +61,7 @@ class CompanyProfileService {
           ) // استخدام ReviewModel.fromJson
           .toList();
     } else {
-      print(
+      logger.e(
         'Failed to load company reviews: ${response.statusCode} ${response.body}',
       );
       throw Exception(
@@ -96,7 +98,9 @@ class CompanyProfileService {
       ); // استخدام ReviewModel.fromJson
     } else {
       final errorBody = response.body;
-      print('Failed to add company review: ${response.statusCode} $errorBody');
+      logger.e(
+        'Failed to add company review: ${response.statusCode} $errorBody',
+      );
       try {
         final errorJson = jsonDecode(errorBody) as Map<String, dynamic>;
         throw Exception(errorJson['message'] ?? 'Failed to add company review');

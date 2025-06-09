@@ -34,9 +34,11 @@ dependencies:
 
   get: ^4.6.6
   http: ^0.13.6
+
   flutter_secure_storage: ^5.0.2 
   logger: ^2.0.2  
   image_picker: ^1.0.7
+
  # file_picker: ^6.1.1
   curved_navigation_bar: ^1.0.3
   get_storage: ^2.1.1

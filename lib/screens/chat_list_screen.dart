@@ -1,28 +1,13 @@
 import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
+import '../models/chat_model.dart';
 import 'chat_screen.dart';
 
-// Contact model with lastMessage and unreadCount
-class Contact {
-  final String id;
-  final String name;
-  final String avatarUrl;
-  final String lastMessage;
-  final int unreadCount;
-  final DateTime lastMessageTime;
-
-  Contact({
-    required this.id,
-    required this.name,
-    required this.avatarUrl,
-    required this.lastMessage,
-    required this.unreadCount,
-    required this.lastMessageTime,
-  });
-}
-
 class ChatListScreen extends StatefulWidget {
+  const ChatListScreen({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _ChatListScreenState createState() => _ChatListScreenState();
 }
 
@@ -109,7 +94,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         ),
       ),
       body: Center(
-        child: Container(
+        child: SizedBox(
           width:
               MediaQuery.of(context).size.width > 800
                   ? MediaQuery.of(context).size.width * 0.75

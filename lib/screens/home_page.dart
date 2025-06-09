@@ -1,25 +1,16 @@
-import 'dart:convert';
-
 import 'package:buildflow_frontend/screens/Basic/favorite.dart';
-
-import '../services/Basic/favorite_service.dart'; // تمت الإضافة
-//import '../models/fav/detailed_fav_model.dart';
-//import '../models/fav/userfav_model.dart'; // تمت الإضافة (افترض أن هذا هو اسم ملف الموديل)
+import '../services/Basic/favorite_service.dart';
 import 'ReadonlyProfiles/project_readonly_profile.dart';
 import 'Basic/my_projects.dart';
-import 'profiles/company_profile.dart';
 import 'ReadonlyProfiles/office_readonly_profile.dart';
 import 'ReadonlyProfiles/company_readonly_profile.dart';
-// import 'ReadonlyProfiles/project_readonly_profile.dart'; // إذا كان لديك
-import 'profiles/office_profile.dart';
-import 'profiles/user_profile.dart'; // لبروفايل المستخدم
 import '../services/session.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../widgets/Basic/about_section.dart';
 import '../widgets/Basic/contact_us.dart';
 import 'Design/type_of_project.dart';
-import '../widgets/navbar.dart';
+import '../widgets/Navbar/navbar.dart';
 
 import '../models/Basic/office_model.dart';
 import '../models/Basic/company_model.dart';
@@ -28,11 +19,6 @@ import '../services/Basic/suggestion_service.dart';
 import '../widgets/suggestions/office_suggestion_card.dart';
 import '../widgets/suggestions/company_suggestion_card.dart';
 import '../widgets/suggestions/project_suggestion_card.dart';
-import 'Basic/search.dart';
-// افترض أن لديك هذه الشاشات لبروفايلات القراءة فقط أو العادية
-// تأكدي من المسارات الصحيحة
-// import 'profiles/office_profile.dart' as OfficeOwnerProfile; // لتجنب التعارض إذا كانت الأسماء متشابهة
-// import 'profiles/company_profile.dart' as CompanyOwnerProfile;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -87,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ]).catchError((e) {
       // معالجة خطأ عام إذا فشل أحد الطلبات الرئيسية
       if (mounted) {
-        print("Error during _fetchAllData: $e");
+        logger.e("Error during _fetchAllData: $e");
         // يمكنك ضبط رسالة خطأ عامة هنا
       }
     });
@@ -126,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _isLoadingFavorites = false;
           _favoritesError = "Failed to load favorites list."; // رسالة للمستخدم
-          print("Error fetching user favorites: $e");
+          logger.e("Error fetching user favorites: $e");
         });
       }
     }
@@ -147,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _isLoadingOffices = false;
           _officeError = "Failed to load offices: ${e.toString()}";
-          print("Error fetching offices: $e");
+          logger.e("Error fetching offices: $e");
         });
       }
     }
@@ -166,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _isLoadingCompanies = false;
           _companyError = "Failed to load companies: ${e.toString()}";
-          print("Error fetching companies: $e");
+          logger.e("Error fetching companies: $e");
         });
       }
     }
@@ -185,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _isLoadingProjects = false;
           _projectError = "Failed to load projects: ${e.toString()}";
-          print("Error fetching projects: $e");
+          logger.e("Error fetching projects: $e");
         });
       }
     }
@@ -317,7 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       }
-      print("Error toggling favorite for $itemType $itemId: $e");
+      logger.e("Error toggling favorite for $itemType $itemId: $e");
     } finally {
       // if (mounted) setState(() => _isTogglingFavorite = false);
     }
@@ -347,41 +333,41 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () => Get.to(() => const TypeOfProjectPage()),
                     child: const Text("Start New Project"),
                   ),
-                  ElevatedButton(
-                    onPressed: _navigateToProfile,
-                    child: const Text("My Profile"),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => Get.to(() => const SearchScreen()),
-                    child: const Text("Search"),
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final token = await Session.getToken();
-                      if (token == null || token.isEmpty) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Please log in to view your favorites.',
-                              ),
-                            ),
-                          );
-                          // Get.to(() => SignInScreen());
-                        }
-                        return;
-                      }
-                      // الانتقال إلى شاشة المفضلة ثم تحديث قائمة المفضلة عند العودة
-                      final result = await Get.to(
-                        () => const FavoritesScreen(),
-                      );
-                      if (result == true || result == null) {
-                        // إذا تم أي تغيير في المفضلة أو تم الإغلاق
-                        _fetchCurrentUserFavorites();
-                      }
-                    },
-                    child: const Text("Favorites"),
-                  ),
+                  // ElevatedButton(
+                  //   onPressed: _navigateToProfile,
+                  //   child: const Text("My Profile"),
+                  // ),
+                  // ElevatedButton(
+                  //   onPressed: () => Get.to(() => const SearchScreen()),
+                  //   child: const Text("Search"),
+                  // ),
+                  // ElevatedButton(
+                  //   onPressed: () async {
+                  //     final token = await Session.getToken();
+                  //     if (token == null || token.isEmpty) {
+                  //       if (mounted) {
+                  //         ScaffoldMessenger.of(context).showSnackBar(
+                  //           const SnackBar(
+                  //             content: Text(
+                  //               'Please log in to view your favorites.',
+                  //             ),
+                  //           ),
+                  //         );
+                  //         // Get.to(() => SignInScreen());
+                  //       }
+                  //       return;
+                  //     }
+                  //     // الانتقال إلى شاشة المفضلة ثم تحديث قائمة المفضلة عند العودة
+                  //     final result = await Get.to(
+                  //       () => const FavoritesScreen(),
+                  //     );
+                  //     if (result == true || result == null) {
+                  //       // إذا تم أي تغيير في المفضلة أو تم الإغلاق
+                  //       _fetchCurrentUserFavorites();
+                  //     }
+                  //   },
+                  //   child: const Text("Favorites"),
+                  // ),
 
                   // ... (الكود السابق للأزرار الأخرى) ...
                   OutlinedButton(
@@ -536,7 +522,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ProjectreadDetailsScreen(projectId: project.id),
                       ),
                     );
-                    print(
+                    logger.i(
                       'Tapped on Project: ${project.name} (ID: ${project.id})',
                     );
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -563,76 +549,76 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  void _navigateToProfile() async {
-    final token = await Session.getToken();
-    if (token == null) {
-      debugPrint("No token found, user likely not logged in.");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please log in to view your profile.")),
-        );
-      }
-      return;
-    }
-    try {
-      final parts = token.split('.');
-      if (parts.length != 3) {
-        debugPrint("Invalid token format");
-        return;
-      }
-      final payload = utf8.decode(
-        base64Url.decode(base64Url.normalize(parts[1])),
-      );
-      final data = json.decode(payload);
-      final userType = data['userType']?.toString();
-      final int id = data['id'] as int; // افترض أن id دائماً موجود وهو int
-
-      if (!mounted) return;
-      if (userType == null) {
-        debugPrint('Token data is incomplete: userType or id is null');
-        return;
-      }
-
-      Widget? profilePage;
-      switch (userType.toLowerCase()) {
-        case 'individual':
-          // تأكدي أن UserProfileScreen تقبل isOwner أو userId
-          profilePage = UserProfileScreen(isOwner: true /* userId: id */);
-          break;
-        case 'company':
-          // تأكدي أن CompanyProfileScreen تقبل isOwner و companyId
-          profilePage = CompanyProfileScreen(isOwner: true, companyId: id);
-          break;
-        case 'office':
-          // تأكدي أن OfficerProfileScreen (أو OfficeProfileScreen) تقبل isOwner و officeId
-          profilePage = OfficeProfileScreen(isOwner: true, officeId: id);
-          break;
-        default:
-          debugPrint("Unknown userType: $userType");
-      }
-      if (profilePage != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => profilePage!),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("No profile page for type: $userType")),
-        );
-      }
-    } catch (e) {
-      debugPrint("Error parsing token or navigating in _navigateToProfile: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Error accessing your profile.")),
-        );
-      }
-    }
-  }
 }
+  //   void _navigateToProfile() async {
+  //     final token = await Session.getToken();
+  //     if (token == null) {
+  //       debugPrint("No token found, user likely not logged in.");
+  //       if (mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(content: Text("Please log in to view your profile.")),
+  //         );
+  //       }
+  //       return;
+  //     }
+  //     try {
+  //       final parts = token.split('.');
+  //       if (parts.length != 3) {
+  //         debugPrint("Invalid token format");
+  //         return;
+  //       }
+  //       final payload = utf8.decode(
+  //         base64Url.decode(base64Url.normalize(parts[1])),
+  //       );
+  //       final data = json.decode(payload);
+  //       final userType = data['userType']?.toString();
+  //       final int id = data['id'] as int; // افترض أن id دائماً موجود وهو int
 
-/*
+  //       if (!mounted) return;
+  //       if (userType == null) {
+  //         debugPrint('Token data is incomplete: userType or id is null');
+  //         return;
+  //       }
+
+  //       Widget? profilePage;
+  //       switch (userType.toLowerCase()) {
+  //         case 'individual':
+  //           // تأكدي أن UserProfileScreen تقبل isOwner أو userId
+  //           profilePage = UserProfileScreen(isOwner: true /* userId: id */);
+  //           break;
+  //         case 'company':
+  //           // تأكدي أن CompanyProfileScreen تقبل isOwner و companyId
+  //           profilePage = CompanyProfileScreen(isOwner: true, companyId: id);
+  //           break;
+  //         case 'office':
+  //           // تأكدي أن OfficerProfileScreen (أو OfficeProfileScreen) تقبل isOwner و officeId
+  //           profilePage = OfficeProfileScreen(isOwner: true, officeId: id);
+  //           break;
+  //         default:
+  //           debugPrint("Unknown userType: $userType");
+  //       }
+  //       if (profilePage != null) {
+  //         Navigator.push(
+  //           context,
+  //           MaterialPageRoute(builder: (context) => profilePage!),
+  //         );
+  //       } else {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(content: Text("No profile page for type: $userType")),
+  //         );
+  //       }
+  //     } catch (e) {
+  //       debugPrint("Error parsing token or navigating in _navigateToProfile: $e");
+  //       if (mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(content: Text("Error accessing your profile.")),
+  //         );
+  //       }
+  //     }
+  //   }
+  // }
+
+  /*
 // lib/screens/home_screen.dart
 
 import 'dart:convert';
