@@ -26,7 +26,11 @@ class ProjectModel {
   String? document3D;
 
   String? rejectionReason; //  إذا أضفتيه في الـ backend model
-
+  // ✅✅✅ الحقول الجديدة للدفع والتقدم ✅✅✅
+  final double? proposedPaymentAmount;
+  final String? paymentNotes;
+  final String? paymentStatus;
+  final int? progressStage; //  (0-5 مثلاً)
   final DateTime createdAt; //  تم تحويله لـ DateTime
 
   // IDs للربط (مهمة جداً)
@@ -57,6 +61,10 @@ class ProjectModel {
     this.basinNumber = '', // قيمة افتراضية
     this.landLocation = '', // قيمة افتراضية
     this.rejectionReason,
+    this.proposedPaymentAmount,
+    this.paymentNotes,
+    this.paymentStatus,
+    this.progressStage,
     required this.createdAt,
     this.userId, //  تمت الإضافة
     this.officeId, //  تمت الإضافة
@@ -90,6 +98,10 @@ class ProjectModel {
       startDate: parseDate(json['start_date'] as String?),
       endDate: parseDate(json['end_date'] as String?),
       location: json['location'] as String? ?? '',
+      proposedPaymentAmount: parseDouble(json['proposed_payment_amount']),
+      paymentNotes: json['payment_notes'] as String?,
+      paymentStatus: json['payment_status'] as String?,
+      progressStage: json['progress_stage'] as int?,
 
       licenseFile: json['license_file'] as String?,
       agreementFile: json['agreement_file'] as String?,
@@ -148,7 +160,12 @@ class ProjectModel {
     if (plotNumber!.isNotEmpty) data['plot_number'] = plotNumber;
     if (basinNumber!.isNotEmpty) data['basin_number'] = basinNumber;
     if (landLocation!.isNotEmpty) data['land_location'] = landLocation;
-
+    if (proposedPaymentAmount != null) {
+      data['proposed_payment_amount'] = proposedPaymentAmount;
+    }
+    if (paymentNotes != null) data['payment_notes'] = paymentNotes;
+    if (paymentStatus != null) data['payment_status'] = paymentStatus;
+    if (progressStage != null) data['progress_stage'] = progressStage;
     // لا نرسل user_id أو office_id عند تحديث المستخدم للتفاصيل، هذه يتم تعيينها عند الإنشاء
     // if (userId != null) data['user_id'] = userId;
     // if (officeId != null) data['office_id'] = officeId;
