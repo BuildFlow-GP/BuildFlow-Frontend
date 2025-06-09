@@ -1,11 +1,11 @@
 // widgets/my_project_card.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // لـ DateFormat
-import '../../models/userprojects/project_simplified_model.dart';
+// import '../../models/userprojects/project_simplified_model.dart';
 import '../../utils/constants.dart'; // لمسار الصور (إذا لزم الأمر)
 
 class MyProjectCard extends StatelessWidget {
-  final ProjectsimplifiedModel project;
+  final dynamic project;
   final VoidCallback? onTap;
 
   const MyProjectCard({super.key, required this.project, this.onTap});

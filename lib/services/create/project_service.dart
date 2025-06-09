@@ -6,13 +6,85 @@ import '../../models/userprojects/project_simplified_model.dart';
 import '../session.dart';
 import '../../utils/Constants.dart';
 import 'package:logger/logger.dart';
-import 'package:http_parser/http_parser.dart'; //  ✅✅✅ إضافة هذا الـ import ✅✅✅
+import 'package:http_parser/http_parser.dart';
 
-import '../../models/userprojects/project_readonly_model.dart'; // تأكدي من أن المسار صحيح لملف ProjectModel
+import '../../models/userprojects/project_readonly_model.dart';
 
 class ProjectService {
   final String _baseUrl = Constants.baseUrl;
   final Logger logger = Logger();
+
+  Future<List<ProjectModel>> getAssignedOfficeProjects({
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final token = await Session.getToken(); //  التوكن الخاص بالمكتب المسجل
+    if (token == null || token.isEmpty) {
+      logger.w(
+        "getAssignedOfficeProjects: No office token found, throwing exception.",
+      );
+      throw Exception('Office authentication token not found. Please log in.');
+    }
+
+    final String url = '$_baseUrl/me/projects?limit=$limit&offset=$offset';
+    logger.i("getAssignedOfficeProjects: Requesting URL: $url");
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      logger.i(
+        "getAssignedOfficeProjects: Response status: ${response.statusCode}",
+      );
+      if (response.statusCode != 200) {
+        logger.w("getAssignedOfficeProjects: Response body: ${response.body}");
+      }
+
+      if (response.statusCode == 200) {
+        // الـ API يرجع مصفوفة من المشاريع مباشرة (وليس كائن pagination كما في getMyNotifications)
+        // إذا كان الـ API يرجع كائن pagination، ستحتاجين لتعديل هذا الجزء
+        List<dynamic> body = jsonDecode(response.body);
+        return body
+            .map(
+              (dynamic item) =>
+                  ProjectModel.fromJson(item as Map<String, dynamic>),
+            )
+            .toList();
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        // 403 قد تعني أن المستخدم ليس مكتباً
+        throw Exception(
+          'Authentication failed or not authorized (not an office). Please log in again.',
+        );
+      } else if (response.statusCode == 404) {
+        logger.w('Assigned office projects endpoint not found (404): $url');
+        throw Exception(
+          'Could not find assigned projects. Service might be unavailable (404).',
+        );
+      } else {
+        logger.w(
+          'Failed to load assigned office projects (Status: ${response.statusCode}): ${response.body}',
+        );
+        throw Exception(
+          'Failed to load assigned projects. Please try again later.',
+        );
+      }
+    } catch (e) {
+      logger.e(
+        "getAssignedOfficeProjects: HTTP request FAILED or error during processing: $e",
+      );
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception(
+        "An unexpected error occurred in getAssignedOfficeProjects: ${e.toString()}",
+      );
+    }
+  }
 
   Future<List<ProjectsimplifiedModel>> getMyProjects() async {
     logger.i("getMyProjects CALLED");
