@@ -156,7 +156,7 @@ class _DesignCard extends StatelessWidget {
               clipBehavior: Clip.antiAlias,
               shadowColor: AppColors.primary.withOpacity(0.3),
               child: Container(
-                constraints: BoxConstraints(maxHeight: 500),
+                constraints: BoxConstraints(maxHeight: 350),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -201,7 +201,7 @@ class _SupervisionCard extends StatelessWidget {
               clipBehavior: Clip.antiAlias,
               shadowColor: AppColors.primary.withOpacity(0.3),
               child: Container(
-                constraints: BoxConstraints(maxHeight: 500),
+                constraints: BoxConstraints(maxHeight: 350),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -246,7 +246,7 @@ class _ConsultationCard extends StatelessWidget {
               clipBehavior: Clip.antiAlias,
               shadowColor: AppColors.primary.withOpacity(0.3),
               child: Container(
-                constraints: BoxConstraints(maxHeight: 500),
+                constraints: BoxConstraints(maxHeight: 350),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [

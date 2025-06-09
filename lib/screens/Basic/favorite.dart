@@ -548,11 +548,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     return isWeb
         ? GridView.builder(
           padding: const EdgeInsets.all(16.0),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 16.0,
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 350, //  العرض الأقصى لكل كرت
             mainAxisSpacing: 16.0,
-            childAspectRatio: 1.0,
+            crossAxisSpacing: 16.0,
+            childAspectRatio: 1, // أو عدّل حسب ما يناسب التصميم
           ),
           itemCount: _detailedFavorites.length,
           itemBuilder: (context, index) {
