@@ -1,14 +1,15 @@
 import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 
-class ProjectDetailsScreen extends StatefulWidget {
-  const ProjectDetailsScreen({super.key});
+class ProjectDescriptionScreen extends StatefulWidget {
+  const ProjectDescriptionScreen({super.key, required int projectId});
 
   @override
-  State<ProjectDetailsScreen> createState() => _ProjectDetailsScreenState();
+  State<ProjectDescriptionScreen> createState() =>
+      _ProjectDescriptionScreenState();
 }
 
-class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
+class _ProjectDescriptionScreenState extends State<ProjectDescriptionScreen> {
   final _formKey = GlobalKey<FormState>();
 
   // Form state variables

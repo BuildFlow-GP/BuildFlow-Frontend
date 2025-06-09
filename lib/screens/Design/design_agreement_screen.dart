@@ -1,4 +1,4 @@
-// screens/DesignAgreementScreen.dart (أو اسم ملفك)
+// screens/DesignAgreementScreen.dart
 import 'dart:io';
 import 'package:buildflow_frontend/models/Basic/project_model.dart';
 import 'package:buildflow_frontend/models/Basic/user_model.dart'; // تأكدي من المسار الصحيح
@@ -8,7 +8,8 @@ import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:logger/logger.dart';
-import 'package:flutter/foundation.dart' show kIsWeb; // للتحقق من المنصة
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'project_description.dart';
 import 'dart:typed_data'; // لـ Uint8List
 
 import 'app_strings.dart'; // تأكدي من وجود هذا أو استبدلي النصوص مباشرة
@@ -440,15 +441,41 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
         logger.i(
           "Final project details submitted successfully for project ${widget.projectId}",
         );
+        // if (mounted) {
+        //   ScaffoldMessenger.of(context).showSnackBar(
+        //     const SnackBar(
+        //       content: Text(
+        //         'Project details submitted successfully! Waiting for office review.',
+        //       ),
+        //     ),
+        //   );
+        //   // Navigator.of(context).popUntil((route) => route.isFirst);
+        // }
+        // داخل _submitFinalForm، بعد SnackBar
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
                 'Project details submitted successfully! Waiting for office review.',
               ),
+              backgroundColor: Colors.green, //  لون للنجاح
             ),
           );
-          Navigator.of(context).popUntil((route) => route.isFirst);
+
+          // ✅✅✅ التعديل هنا ✅✅✅
+          Navigator.pushReplacement(
+            //  استبدال الشاشة الحالية
+            context,
+            MaterialPageRoute(
+              // افترض أن ProjectDetailsScreen تتوقع projectId
+              // إذا لم تكن تتوقعه، يمكنكِ إزالة المعامل
+              builder:
+                  (context) => ProjectDescriptionScreen(
+                    projectId: widget.projectId,
+                    // تمرير البيانات الحالية
+                  ),
+            ),
+          );
         }
       } catch (e, s) {
         // إمساك الخطأ هنا وتفاصيله
