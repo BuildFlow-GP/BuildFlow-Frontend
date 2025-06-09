@@ -402,4 +402,196 @@ class ProjectService {
       throw Exception(errorMessage);
     }
   }
+
+  // (1) تعديل getProjectProfile لترجع ProjectModel كاملاً (مع ProjectDesign)
+  Future<ProjectModel> getProjectProfile(int projectId) async {
+    final token = await Session.getToken();
+    // الـ backend route GET /projects/:id أصبح يتطلب توثيقاً ويتحقق من الصلاحية
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found. Please log in.');
+    }
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/projects/$projectId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token', // إرسال التوكن دائماً
+      },
+    );
+
+    logger.i(
+      "GetProjectProfile for ID $projectId - Status: ${response.statusCode}",
+    );
+    if (response.statusCode != 200) {
+      logger.e("GetProjectProfile Body: ${response.body}");
+    }
+
+    if (response.statusCode == 200) {
+      return ProjectModel.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    } else if (response.statusCode == 404) {
+      throw Exception('Project with ID $projectId not found.');
+    } else if (response.statusCode == 403) {
+      throw Exception(
+        'Forbidden: You are not authorized to view this project.',
+      );
+    } else {
+      throw Exception('Failed to load project details for ID $projectId');
+    }
+  }
+
+  // (2) دالة لاقتراح سعر من المكتب
+  Future<ProjectModel> proposePayment(
+    int projectId,
+    double amount,
+    String? notes,
+  ) async {
+    final token = await Session.getToken(); // توكن المكتب
+    if (token == null || token.isEmpty) {
+      throw Exception('Office authentication token not found.');
+    }
+
+    final Map<String, dynamic> body = {'payment_amount': amount};
+    if (notes != null && notes.isNotEmpty) {
+      body['payment_notes'] = notes;
+    }
+
+    logger.i("Proposing payment for project $projectId: ${jsonEncode(body)}");
+
+    final response = await http.put(
+      Uri.parse('$_baseUrl/projects/$projectId/propose-payment'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+
+    logger.i("ProposePayment response status: ${response.statusCode}");
+    if (response.statusCode != 200) {
+      logger.e("ProposePayment response body: ${response.body}");
+    }
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      // الـ API يرجع { message: '...', project: { ... } }
+      if (responseData.containsKey('project')) {
+        return ProjectModel.fromJson(
+          responseData['project'] as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Project data not found in propose payment response.');
+      }
+    } else {
+      String errorMessage = 'Failed to propose payment.';
+      try {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        errorMessage = responseData['message'] ?? errorMessage;
+      } catch (_) {}
+      throw Exception(errorMessage);
+    }
+  }
+
+  // (3) دالة لرفع مستند 2D (ويمكن عمل دالة مشابهة لـ 3D)
+  Future<String?> uploadProjectDocument2D(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) async {
+    final token = await Session.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found.');
+    }
+
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/projects/$projectId/upload-document2d'),
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'document2dFile', // اسم الحقل الذي يتوقعه multer في الـ backend
+        fileBytes,
+        filename: fileName,
+        contentType: MediaType(
+          'application',
+          'octet-stream',
+        ), // نوع عام، أو حددي نوع الملف إذا كان معروفاً دائماً
+        // (مثلاً application/pdf, image/vnd.dwg)
+        // multer سيتحقق من الـ mimetype بناءً على الفلتر
+      ),
+    );
+
+    logger.i("Uploading 2D document: $fileName for project $projectId");
+
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
+
+    logger.i("Upload 2D document response status: ${response.statusCode}");
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      logger.e("Upload 2D document response body: ${response.body}");
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      // الـ API يرجع { message: '...', filePath: '...', project: { ... } }
+      // نهتم بـ filePath هنا
+      return responseData['filePath'] as String?;
+    } else {
+      String errorMessage = 'Failed to upload 2D document.';
+      try {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        errorMessage = responseData['message'] ?? errorMessage;
+      } catch (_) {}
+      throw Exception(errorMessage);
+    }
+  }
+
+  //  يمكنكِ إضافة دالة مشابهة لـ uploadProjectDocument3D إذا احتجتِ إليها
+
+  // (4) دالة لتحديث مرحلة تقدم المشروع
+  Future<ProjectModel> updateProjectProgress(int projectId, int stage) async {
+    final token = await Session.getToken(); // توكن المكتب
+    if (token == null || token.isEmpty) {
+      throw Exception('Office authentication token not found.');
+    }
+
+    final Map<String, dynamic> body = {'stage': stage};
+
+    logger.i("Updating project $projectId progress to stage $stage");
+
+    final response = await http.put(
+      Uri.parse('$_baseUrl/projects/$projectId/progress'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+
+    logger.i("Update project progress response status: ${response.statusCode}");
+    if (response.statusCode != 200) {
+      logger.e("Update project progress response body: ${response.body}");
+    }
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      if (responseData.containsKey('project')) {
+        return ProjectModel.fromJson(
+          responseData['project'] as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Project data not found in update progress response.');
+      }
+    } else {
+      String errorMessage = 'Failed to update project progress.';
+      try {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        errorMessage = responseData['message'] ?? errorMessage;
+      } catch (_) {}
+      throw Exception(errorMessage);
+    }
+  }
 }

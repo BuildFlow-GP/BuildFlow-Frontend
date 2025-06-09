@@ -4,6 +4,7 @@ import '../../services/create/project_service.dart';
 import '../../models/userprojects/project_simplified_model.dart';
 
 import '../../widgets/Suggestions/my_project_card.dart';
+import '../Design/my_project_details.dart';
 
 class MyProjectsScreen extends StatefulWidget {
   const MyProjectsScreen({super.key});
@@ -69,19 +70,19 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                 return MyProjectCard(
                   project: project,
                   onTap: () {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder:
-                    //         (context) =>
-                    //             ProjectreadDetailsScreen(projectId: project.id),
-                    //   ),
-                    // ).then((value) {
-                    //   if (value == true) {
-                    //     _refreshProjects();
-                    //   }
-                    // });
-                    print("Tapped on project: ${project.name}");
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                ProjectDetailsViewScreen(projectId: project.id),
+                      ),
+                    ).then((value) {
+                      if (value == true) {
+                        _refreshProjects();
+                      }
+                    });
+                    logger.i("Tapped on project: ${project.name}");
                   },
                 );
               },

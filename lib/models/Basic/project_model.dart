@@ -1,4 +1,5 @@
 // models/project_model.dart (أو المسار الصحيح لديكِ models/Basic/project_model.dart)
+import '../create/project_design_model.dart';
 import 'office_model.dart'; // تأكدي من المسارات الصحيحة
 import 'company_model.dart';
 import 'user_model.dart';
@@ -36,6 +37,8 @@ class ProjectModel {
   // IDs للربط (مهمة جداً)
   final int? userId;
   final int? officeId;
+  ProjectDesignModel? projectDesign; // ✅✅✅ أضيفي هذا الحقل ✅✅✅
+
   // final int? companyId; // إذا كنتِ ستضيفينه
 
   // الكائنات المتداخلة (إذا أرجعها الـ API)
@@ -72,6 +75,7 @@ class ProjectModel {
     this.office,
     this.company,
     this.user,
+    this.projectDesign,
   });
 
   factory ProjectModel.fromJson(Map<String, dynamic> json) {
@@ -121,7 +125,12 @@ class ProjectModel {
 
       userId: json['user_id'] as int?, //  قراءة الـ ID
       officeId: json['office_id'] as int?, //  قراءة الـ ID
-
+      projectDesign:
+          json['projectDesign'] != null
+              ? ProjectDesignModel.fromJson(
+                json['projectDesign'] as Map<String, dynamic>,
+              )
+              : null, // ✅
       office:
           json['office'] != null
               ? OfficeModel.fromJson(json['office'] as Map<String, dynamic>)

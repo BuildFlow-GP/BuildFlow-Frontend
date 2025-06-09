@@ -6,9 +6,11 @@ import '../../models/Basic/project_model.dart';
 import '../../models/Basic/review_model.dart'; // استخدام ReviewModel الخاص بكِ
 import '../session.dart';
 import '../../utils/constants.dart'; // تأكدي من وجود هذا الملف في المسار الصحيح
+import 'package:logger/logger.dart';
 
 class OfficeProfileService {
   static const String _baseUrl = Constants.baseUrl;
+  final Logger logger = Logger();
 
   Future<OfficeModel> getOfficeDetails(int officeId) async {
     final response = await http.get(Uri.parse('$_baseUrl/offices/$officeId'));
@@ -17,7 +19,7 @@ class OfficeProfileService {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return OfficeModel.fromJson(data);
     } else {
-      print(
+      logger.e(
         'Failed to load office details: ${response.statusCode} ${response.body}',
       );
       throw Exception(
@@ -40,7 +42,7 @@ class OfficeProfileService {
           )
           .toList();
     } else {
-      print(
+      logger.e(
         'Failed to load office projects: ${response.statusCode} ${response.body}',
       );
       throw Exception(
@@ -63,7 +65,7 @@ class OfficeProfileService {
           )
           .toList();
     } else {
-      print(
+      logger.e(
         'Failed to load office reviews: ${response.statusCode} ${response.body}',
       );
       throw Exception(
@@ -97,13 +99,13 @@ class OfficeProfileService {
     );
 
     if (response.statusCode == 201) {
-      print('Review added successfully: ${response.body}');
+      logger.i('Review added successfully: ${response.body}');
       // الـ API يرجع { message: 'Review created', review: {...} }
       final responseData = jsonDecode(response.body) as Map<String, dynamic>;
       return Review.fromJson(responseData['review'] as Map<String, dynamic>);
     } else {
       final errorBody = response.body;
-      print('Failed to add review: ${response.statusCode} $errorBody');
+      logger.e('Failed to add review: ${response.statusCode} $errorBody');
       try {
         final errorJson = jsonDecode(errorBody) as Map<String, dynamic>;
         throw Exception(errorJson['message'] ?? 'Failed to add review');
