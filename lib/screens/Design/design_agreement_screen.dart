@@ -325,118 +325,158 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
     }
   }
 
+  // داخل _DesignAgreementScreenState
+
   Future<void> _submitFinalForm() async {
     logger.i(
       "_submitFinalForm CALLED. _isCurrentStepFormValid: $_isCurrentStepFormValid (for step 2)",
     );
-    if (!_isCurrentStepFormValid && _currentStep == 2) {
+    // التحقق من صلاحية النموذج للخطوة الحالية (خطوة الملف) يجب أن يتم هنا أيضاً
+    // لأن _handleNextStepOrSubmit قد لا تكون هي التي تستدعي _submitFinalForm مباشرة دائماً
+    // أو للتأكيد الإضافي.
+    if (!_isCurrentStepFormValid) {
+      //  أعدت التحقق هنا
+      logger.w(
+        "_submitFinalForm: PDF file is missing (checked via _isCurrentStepFormValid).",
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please upload the agreement PDF.')),
       );
+      // لا نضبط _isSubmittingFinal إلى false هنا لأننا لم نضبطها إلى true بعد
       return;
     }
-    if (_isSubmittingFinal || _isSavingStepData) {
-      logger.i("_submitFinalForm: Action already in progress. Returning.");
+
+    if (_isSubmittingFinal) {
+      //  تم إزالة _isSavingStepData من هذا الشرط
+      logger.i(
+        "_submitFinalForm: Submission already in progress (outer check). Returning.",
+      );
       return;
     }
     setState(() => _isSubmittingFinal = true);
 
     logger.i("Attempting final submission for project ${widget.projectId}...");
-
     String? finalAgreementFilePathOnServer =
-        _uploadedAgreementFilePath; // المسار من السيرفر إذا تم الرفع سابقاً
+        _uploadedAgreementFilePath; //  كان اسمه _uploadedAgreementFilePathDB
 
-    // 1. رفع الملف إذا تم اختيار ملف جديد ولم يتم رفعه بعد
-    if (_pickedFileBytes != null && _pickedFileName != null) {
-      logger.i("Uploading new agreement file: $_pickedFileName");
-      try {
-        finalAgreementFilePathOnServer = await _projectService
-            .uploadProjectAgreement(
-              widget.projectId,
-              _pickedFileBytes!,
-              _pickedFileName!,
-            );
-        if (finalAgreementFilePathOnServer == null) {
-          throw Exception("File path not returned after upload.");
-        }
+    try {
+      //  Try block رئيسي يغلف كل العملية
+      // 1. رفع الملف إذا تم اختيار ملف جديد ولم يتم رفعه بعد
+      if (_pickedFileBytes != null && _pickedFileName != null) {
         logger.i(
-          "File uploaded successfully, path on server: $finalAgreementFilePathOnServer",
+          "Uploading new agreement file: $_pickedFileName for project ${widget.projectId}",
         );
-        if (mounted) {
-          setState(() {
-            // تحديث UI ليعكس أن الملف تم رفعه
-            _uploadedAgreementFilePath = finalAgreementFilePathOnServer;
-            _pickedFileBytes = null;
-            _pickedFileName = null;
-          });
+        try {
+          finalAgreementFilePathOnServer = await _projectService
+              .uploadProjectAgreement(
+                widget.projectId,
+                _pickedFileBytes!,
+                _pickedFileName!,
+              );
+
+          if (finalAgreementFilePathOnServer == null) {
+            logger.e(
+              "File path not returned after upload from service (uploadProjectAgreement).",
+            );
+            throw Exception("File path not returned after upload.");
+          }
+          logger.i(
+            "File uploaded via service, path on server: $finalAgreementFilePathOnServer",
+          );
+          if (mounted) {
+            setState(() {
+              _uploadedAgreementFilePath =
+                  finalAgreementFilePathOnServer; //  تحديث الاسم هنا
+              _pickedFileBytes = null;
+              _pickedFileName = null;
+            });
+          }
+        } catch (e, s) {
+          //  إمساك الخطأ هنا وتفاصيله
+          logger.e(
+            "Error during _projectService.uploadProjectAgreement",
+            error: e,
+            stackTrace: s,
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Failed to upload agreement PDF: ${e.toString()}',
+                ),
+              ),
+            );
+          }
+          //  لا تقم بـ return هنا مباشرة، دع الـ finally الرئيسي يتعامل مع _isSubmittingFinal
+          rethrow; //  أعد رمي الخطأ ليتم الإمساك به بواسطة الـ catch block الخارجي
         }
-      } catch (e) {
-        logger.e("Error uploading agreement file during final submit: $e");
+      } else if (_uploadedAgreementFilePath == null ||
+          _uploadedAgreementFilePath!.isEmpty) {
+        logger.w(
+          "_submitFinalForm: No file selected and no previous file exists. PDF is required.",
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to upload agreement PDF: ${e.toString()}'),
+            const SnackBar(
+              content: Text('Agreement PDF is required for submission.'),
             ),
           );
-          setState(() => _isSubmittingFinal = false);
         }
-        return;
+        //  لا تقم بـ return هنا مباشرة، دع الـ finally الرئيسي يتعامل مع _isSubmittingFinal
+        throw Exception(
+          "Agreement PDF is required.",
+        ); //  ارمي خطأً ليتم الإمساك به
       }
-    } else if (_uploadedAgreementFilePath == null ||
-        _uploadedAgreementFilePath!.isEmpty) {
-      logger.w(
-        "No new file picked and no previously uploaded file. PDF is required.",
-      ); // إذا لم يكن هناك ملف مرفوع سابقاً ولم يتم اختيار جديد
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Agreement PDF is required for submission.'),
-          ),
+
+      // 2. استدعاء API الـ Submit النهائي
+      logger.i(
+        "Calling _projectService.submitFinalProjectDetails for project ${widget.projectId} with agreement: $finalAgreementFilePathOnServer",
+      );
+      try {
+        await _projectService.submitFinalProjectDetails(
+          widget.projectId,
+          finalAgreementFilePathFromUpload: finalAgreementFilePathOnServer,
         );
-        setState(() => _isSubmittingFinal = false);
-      }
-      return;
-    }
-
-    // 2. استدعاء API الـ Submit النهائي
-    try {
-      logger.i(
-        "Calling _projectService.submitFinalProjectDetails for project ${widget.projectId}",
-      );
-      // افترض أن هذه الدالة تستدعي PUT /api/projects/:projectId/submit-details
-      // ويمكنها اختيارياً إرسال finalAgreementFilePathOnServer إذا كان الـ backend يحتاجه
-      // أو إذا كان الـ backend يعتمد على أن uploadProjectAgreement قد حدث الحقل بالفعل.
-      await _projectService.submitFinalProjectDetails(
-        widget.projectId,
-        finalAgreementFilePathFromUpload: finalAgreementFilePathOnServer,
-        // ^ إذا كان API الـ submit-details يتوقع مسار الملف كجزء من الـ body
-        // إذا كان uploadProjectAgreement يحدث الحقل مباشرة، قد لا تحتاجين لإرساله هنا.
-      );
-
-      logger.i(
-        "Final project details submitted for project ${widget.projectId}",
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Project details submitted successfully! Waiting for office review.',
+        logger.i(
+          "Final project details submitted successfully for project ${widget.projectId}",
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Project details submitted successfully! Waiting for office review.',
+              ),
             ),
-          ),
+          );
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      } catch (e, s) {
+        // إمساك الخطأ هنا وتفاصيله
+        logger.e(
+          "Error in final submission API call (submitFinalProjectDetails)",
+          error: e,
+          stackTrace: s,
         );
-        Navigator.of(
-          context,
-        ).popUntil((route) => route.isFirst); // العودة للهوم
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Final submission failed: ${e.toString()}')),
+          );
+        }
+        rethrow; //  أعد رمي الخطأ ليتم الإمساك به بواسطة الـ catch block الخارجي
       }
     } catch (e) {
-      logger.e("Error in final submission API call: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Final submission failed: ${e.toString()}')),
-        );
-      }
+      //  Catch block خارجي لأي أخطاء أخرى في التدفق
+      logger.e("An error occurred in _submitFinalForm logic", error: e);
+      //  الرسالة للمستخدم قد تكون عُرضت بالفعل من الـ catch blocks الداخلية
+      //  إذا لم تكن، يمكنكِ عرض رسالة عامة هنا
     } finally {
-      if (mounted) setState(() => _isSubmittingFinal = false);
+      logger.i(
+        "_submitFinalForm finally block executing. Current _isSubmittingFinal: $_isSubmittingFinal",
+      );
+      if (mounted) {
+        setState(() => _isSubmittingFinal = false);
+        logger.i("_submitFinalForm: _isSubmittingFinal set to false.");
+      }
     }
   }
 

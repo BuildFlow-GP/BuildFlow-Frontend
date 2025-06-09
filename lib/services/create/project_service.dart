@@ -6,6 +6,7 @@ import '../../models/userprojects/project_simplified_model.dart';
 import '../session.dart';
 import '../../utils/Constants.dart';
 import 'package:logger/logger.dart';
+import 'package:http_parser/http_parser.dart'; //  ✅✅✅ إضافة هذا الـ import ✅✅✅
 
 import '../../models/userprojects/project_readonly_model.dart'; // تأكدي من أن المسار صحيح لملف ProjectModel
 
@@ -314,7 +315,7 @@ class ProjectService {
         'agreementFile', //  اسم الحقل الذي يتوقعه multer
         fileBytes,
         filename: fileName,
-        // contentType: MediaType('application', 'pdf'), // اختياري
+        contentType: MediaType('application', 'pdf'), // اختياري
       ),
     );
 
