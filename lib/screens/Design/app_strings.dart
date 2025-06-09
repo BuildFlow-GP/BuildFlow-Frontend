@@ -22,4 +22,6 @@ class AppStrings {
   static const submissionSuccess = 'Information Submitted!';
   static const submissionFailed = 'Submission failed, please try again';
   static const fillAllFields = 'Please fill all fields and upload PDF';
+
+  static var currencySymbol = 'JOD';
 }
