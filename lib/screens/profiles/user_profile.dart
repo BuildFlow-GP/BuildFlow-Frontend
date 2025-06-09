@@ -266,7 +266,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
       body:
           formData.isEmpty
               ? const Center(child: CircularProgressIndicator())
