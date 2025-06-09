@@ -288,13 +288,15 @@ import 'package:buildflow_frontend/screens/ReadonlyProfiles/project_readonly_pro
 import 'package:buildflow_frontend/services/Basic/favorite_service.dart';
 import 'package:flutter/material.dart';
 import 'package:buildflow_frontend/themes/app_colors.dart';
+import 'package:logger/logger.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
-
   @override
   State<FavoritesScreen> createState() => _FavoritesScreenState();
 }
+
+final Logger logger = Logger();
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
   final FavoriteService _favoriteService = FavoriteService();
@@ -336,7 +338,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               itemDetail: detail,
             );
           } catch (e) {
-            print(
+            logger.i(
               "Error fetching detail for ${favInfo.itemType} ${favInfo.itemId}: $e",
             );
             return null;
@@ -361,7 +363,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           _isLoading = false;
         });
       }
-      print("Error in _loadFavorites: $e");
+      logger.e("Error in _loadFavorites: $e");
     }
   }
 
@@ -395,7 +397,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           ),
         );
       }
-      print("Error removing favorite: $e");
+      logger.e("Error removing favorite: $e");
     }
   }
 
@@ -443,7 +445,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               ),
         ),
       );
-      print("Navigate to project details: ${detailedItem.favoriteInfo.itemId}");
+      logger.i(
+        "Navigate to project details: ${detailedItem.favoriteInfo.itemId}",
+      );
     }
   }
 
@@ -572,9 +576,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     String title;
     String subtitle;
     // لم نعد بحاجة لـ imageProvider أو defaultIcon بما أننا لن نعرض CircleAvatar
-    // ImageProvider? imageProvider;
-    // IconData defaultIcon = Icons.folder_open;
-
+    // ignore: unused_local_variable
+    ImageProvider? imageProvider;
     dynamic actualItem = detailedItem.itemDetail;
 
     // معالجة حالة itemDetail == null
@@ -582,29 +585,34 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       title = 'Unavailable Item';
       subtitle =
           'ID: ${detailedItem.favoriteInfo.itemId} (Type: ${detailedItem.favoriteInfo.itemType})';
-      // defaultIcon = Icons.broken_image;
     } else if (actualItem is OfficeModel) {
-      title = actualItem.name ?? 'Office';
+      title = actualItem.name;
       subtitle = 'Office Location: ${actualItem.location ?? 'N/A'}';
-      // if (actualItem.profileImage != null && actualItem.profileImage!.isNotEmpty) {
-      //   imageProvider = NetworkImage(actualItem.profileImage!.startsWith('http') ? actualItem.profileImage! : '$baseUrl/${actualItem.profileImage}');
-      // }
-      // defaultIcon = Icons.location_city;
+      if (actualItem.profileImage != null &&
+          actualItem.profileImage!.isNotEmpty) {
+        imageProvider = NetworkImage(
+          actualItem.profileImage!.startsWith('http')
+              ? actualItem.profileImage!
+              : '$baseUrl/${actualItem.profileImage}',
+        );
+      }
     } else if (actualItem is CompanyModel) {
-      title = actualItem.name ?? 'Company';
+      title = actualItem.name;
       subtitle = 'Company Type: ${actualItem.companyType ?? 'N/A'}';
-      // if (actualItem.profileImage != null && actualItem.profileImage!.isNotEmpty) {
-      //   imageProvider = NetworkImage(actualItem.profileImage!.startsWith('http') ? actualItem.profileImage! : '$baseUrl/${actualItem.profileImage}');
-      // }
-      // defaultIcon = Icons.corporate_fare;
+      if (actualItem.profileImage != null &&
+          actualItem.profileImage!.isNotEmpty) {
+        imageProvider = NetworkImage(
+          actualItem.profileImage!.startsWith('http')
+              ? actualItem.profileImage!
+              : '$baseUrl/${actualItem.profileImage}',
+        );
+      }
     } else if (actualItem is ProjectModel) {
-      title = actualItem.name ?? 'Project';
+      title = actualItem.name;
       subtitle = 'Status: ${actualItem.status ?? 'N/A'}';
-      // defaultIcon = Icons.construction;
     } else {
-      title = 'Unknown Item Type';
+      title = 'Favorite Project';
       subtitle = 'Type: ${detailedItem.favoriteInfo.itemType}';
-      // defaultIcon = Icons.help_outline;
     }
 
     return GestureDetector(

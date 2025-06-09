@@ -152,6 +152,20 @@ class _ProjectreadDetailsScreenState extends State<ProjectreadDetailsScreen> {
       symbol: '\$',
     ); // عدلي حسب عملتك
 
+    // DEBUG PRINTS
+    debugPrint("Project ID: ${project.id}");
+    debugPrint("Raw startDate from model: ${project.startDate}");
+    debugPrint("Raw endDate from model: ${project.endDate}");
+    debugPrint("Raw createdAt from model: ${project.createdAt}");
+
+    if (project.startDate != null) {
+      debugPrint("Type of startDate: ${project.startDate.runtimeType}");
+    }
+    if (project.endDate != null) {
+      debugPrint("Type of endDate: ${project.endDate.runtimeType}");
+    }
+    debugPrint("Type of createdAt: ${project.createdAt.runtimeType}");
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
