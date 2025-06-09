@@ -288,13 +288,15 @@ import 'package:buildflow_frontend/screens/ReadonlyProfiles/project_readonly_pro
 import 'package:buildflow_frontend/services/Basic/favorite_service.dart';
 import 'package:flutter/material.dart';
 import 'package:buildflow_frontend/themes/app_colors.dart';
+import 'package:logger/logger.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
-
   @override
   State<FavoritesScreen> createState() => _FavoritesScreenState();
 }
+
+final Logger logger = Logger();
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
   final FavoriteService _favoriteService = FavoriteService();
@@ -336,7 +338,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               itemDetail: detail,
             );
           } catch (e) {
-            print(
+            logger.i(
               "Error fetching detail for ${favInfo.itemType} ${favInfo.itemId}: $e",
             );
             return null;
@@ -361,7 +363,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           _isLoading = false;
         });
       }
-      print("Error in _loadFavorites: $e");
+      logger.e("Error in _loadFavorites: $e");
     }
   }
 
@@ -395,7 +397,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           ),
         );
       }
-      print("Error removing favorite: $e");
+      logger.e("Error removing favorite: $e");
     }
   }
 
@@ -443,7 +445,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               ),
         ),
       );
-      print("Navigate to project details: ${detailedItem.favoriteInfo.itemId}");
+      logger.i(
+        "Navigate to project details: ${detailedItem.favoriteInfo.itemId}",
+      );
     }
   }
 

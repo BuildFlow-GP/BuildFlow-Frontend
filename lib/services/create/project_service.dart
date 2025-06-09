@@ -1,27 +1,30 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import '../../models/Basic/project_model.dart';
 import '../../models/userprojects/project_simplified_model.dart';
 import '../session.dart';
 import '../../utils/Constants.dart';
+import 'package:logger/logger.dart';
 
 import '../../models/userprojects/project_readonly_model.dart'; // تأكدي من أن المسار صحيح لملف ProjectModel
 
 class ProjectService {
   final String _baseUrl = Constants.baseUrl;
+  final Logger logger = Logger();
 
   Future<List<ProjectsimplifiedModel>> getMyProjects() async {
-    print("getMyProjects CALLED");
+    logger.i("getMyProjects CALLED");
     final token = await Session.getToken();
-    print("Token for getMyProjects: $token");
+    logger.i("Token for getMyProjects: $token");
 
     if (token == null || token.isEmpty) {
-      print("getMyProjects: No token found, throwing exception.");
+      logger.w("getMyProjects: No token found, throwing exception.");
       throw Exception('Authentication token not found. Please log in.');
     }
 
     final String url = '$_baseUrl/users/me/projects';
-    print("getMyProjects: Requesting URL: $url");
+    logger.i("getMyProjects: Requesting URL: $url");
 
     try {
       final response = await http.get(
@@ -32,9 +35,9 @@ class ProjectService {
         },
       );
 
-      print("getMyProjects: Response status: ${response.statusCode}");
+      logger.i("getMyProjects: Response status: ${response.statusCode}");
       if (response.statusCode != 200) {
-        print("getMyProjects: Response body: ${response.body}");
+        logger.w("getMyProjects: Response body: ${response.body}");
       }
 
       if (response.statusCode == 200) {
@@ -48,12 +51,12 @@ class ProjectService {
       } else if (response.statusCode == 401) {
         throw Exception('Unauthorized. Please log in again.');
       } else if (response.statusCode == 404) {
-        print('My Projects endpoint not found (404): $url');
+        logger.w('My Projects endpoint not found (404): $url');
         throw Exception(
           'Could not find your projects. The service might be unavailable (404). URL: $url',
         );
       } else {
-        print(
+        logger.w(
           'Failed to load my projects (Status: ${response.statusCode}): ${response.body}',
         );
         throw Exception(
@@ -61,7 +64,7 @@ class ProjectService {
         );
       }
     } catch (e) {
-      print(
+      logger.e(
         "getMyProjects: HTTP request FAILED or error during processing: $e",
       );
       // أعد رمي الخطأ الأصلي أو خطأ مخصص
@@ -95,7 +98,7 @@ class ProjectService {
     } else if (response.statusCode == 404) {
       throw Exception('Project with ID $projectId not found.');
     } else {
-      print(
+      logger.e(
         'Failed to load project details for ID $projectId (Status: ${response.statusCode}): ${response.body}',
       );
       throw Exception('Failed to load project details for ID $projectId');
@@ -145,7 +148,7 @@ class ProjectService {
         'Failed to send project request: ${responseBody['message'] ?? "Office not found."}',
       );
     } else {
-      print(
+      logger.e(
         'Error in requestInitialProject (Status: ${response.statusCode}): ${response.body}',
       );
       throw Exception(
@@ -181,14 +184,14 @@ class ProjectService {
     );
 
     if (response.statusCode == 200) {
-      print(
+      logger.i(
         'Project request $projectId action ${action.toLowerCase()} successful.',
       );
       // يمكنكِ تحليل الـ response.body إذا أردتِ استخدام المشروع المحدث
       // final responseData = jsonDecode(response.body);
       // final updatedProject = ProjectModel.fromJson(responseData['project']); // إذا أردتِ إرجاعه
     } else {
-      print(
+      logger.e(
         'Failed to ${action.toLowerCase()} project request $projectId (Status: ${response.statusCode}): ${response.body}',
       );
       String errorMessage = 'Failed to ${action.toLowerCase()} request.';
@@ -219,7 +222,9 @@ class ProjectService {
     // التأكد من أن القيم الرقمية يتم إرسالها كأرقام إذا كانت كذلك في الـ backend
     // (jsonEncode يتعامل مع هذا بشكل جيد عادة)
 
-    print("Updating project $projectId with data: ${jsonEncode(dataToUpdate)}");
+    logger.i(
+      "Updating project $projectId with data: ${jsonEncode(dataToUpdate)}",
+    );
 
     final response = await http.put(
       Uri.parse('$_baseUrl/projects/$projectId'),
@@ -250,7 +255,7 @@ class ProjectService {
           errorMessage += "\nDetails: ${responseBody['errors'].join(', ')}";
         }
       } catch (_) {}
-      print(
+      logger.e(
         'Error updating project $projectId (Status: ${response.statusCode}): ${response.body}',
       );
       throw Exception(errorMessage);
@@ -278,10 +283,122 @@ class ProjectService {
     } else if (response.statusCode == 404) {
       throw Exception('Project with ID $projectId not found.');
     } else {
-      print(
+      logger.e(
         'Failed to load project details for ID $projectId (Status: ${response.statusCode}): ${response.body}',
       );
       throw Exception('Failed to load project details for ID $projectId');
+    }
+  }
+
+  /// Uploads a project agreement file to the server.
+  Future<String?> uploadProjectAgreement(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) async {
+    final token = await Session.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found.');
+    }
+
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse(
+        '${Constants.baseUrl}/projects/$projectId/upload-agreement',
+      ), // استخدام الـ endpoint الجديد
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'agreementFile', //  اسم الحقل الذي يتوقعه multer
+        fileBytes,
+        filename: fileName,
+        // contentType: MediaType('application', 'pdf'), // اختياري
+      ),
+    );
+
+    logger.i("Uploading agreement file: $fileName for project $projectId");
+
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
+
+    logger.i("Upload agreement response status: ${response.statusCode}");
+    logger.i("Upload agreement response body: ${response.body}");
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      // افترض أن الـ API يرجع المسار/الاسم الجديد للملف في حقل 'filePath'
+      return responseData['filePath'] as String?;
+    } else {
+      String errorMessage = 'Failed to upload agreement file.';
+      try {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        errorMessage = responseData['message'] ?? errorMessage;
+      } catch (_) {}
+      throw Exception(errorMessage);
+    }
+  }
+
+  Future<ProjectModel> submitFinalProjectDetails(
+    int projectId, {
+    String? finalAgreementFilePathFromUpload,
+  }) async {
+    final token = await Session.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found.');
+    }
+
+    // هذا الـ body اختياري. إذا كان API الرفع يحدث agreement_file مباشرة،
+    // وكان API الـ submit-final-details لا يتوقع أي body (فقط يغير الحالة بناءً على projectId)،
+    // يمكنكِ إرسال body فارغ.
+    // إذا كان submit-final-details يتوقع مسار الملف لتحديثه مرة أخرى (للتأكيد مثلاً)،
+    // يمكنكِ إرساله. حالياً، الـ backend route الذي كتبناه لا يستخدم الـ body.
+    Map<String, dynamic> body = {};
+    // if (finalAgreementFilePathFromUpload != null && finalAgreementFilePathFromUpload.isNotEmpty) {
+    //   body['agreement_file'] = finalAgreementFilePathFromUpload; // اسم الحقل كما يتوقعه الـ backend
+    // }
+
+    logger.i(
+      "Service: Submitting final details for project $projectId. Body (if any): ${jsonEncode(body)}",
+    );
+
+    final response = await http.put(
+      Uri.parse(
+        '${Constants.baseUrl}/projects/$projectId/submit-final-details',
+      ), //  الـ Endpoint الجديد
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(
+        body,
+      ), // أرسلي body فارغ إذا كان الـ API لا يحتاج لبيانات إضافية
+    );
+
+    logger.i(
+      "Service: Submit final details response status: ${response.statusCode}",
+    );
+    logger.i("Service: Submit final details response body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      if (responseData.containsKey('project')) {
+        return ProjectModel.fromJson(
+          responseData['project'] as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception(
+          "Project data not found in submit-final-details response.",
+        );
+      }
+    } else {
+      String errorMessage = 'Failed to submit final project details.';
+      try {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        errorMessage = responseData['message'] ?? errorMessage;
+      } catch (_) {}
+      throw Exception(errorMessage);
     }
   }
 }

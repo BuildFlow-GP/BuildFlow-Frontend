@@ -1,6 +1,5 @@
 // screens/DesignAgreementScreen.dart (أو اسم ملفك)
 import 'dart:io';
-
 import 'package:buildflow_frontend/models/Basic/project_model.dart';
 import 'package:buildflow_frontend/models/Basic/user_model.dart'; // تأكدي من المسار الصحيح
 import '/services/create/project_service.dart';
@@ -172,7 +171,11 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
 
   // دالة لحفظ بيانات الخطوة الحالية والانتقال للخطوة التالية أو الـ Submit
   Future<void> _handleNextStepOrSubmit() async {
+    logger.i(
+      "Attempting to handle next step or submit. Current step: $_currentStep",
+    );
     if (!_isCurrentStepFormValid) {
+      logger.w("Form is NOT valid for current step: $_currentStep");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill all required fields for the current step'),
@@ -180,8 +183,12 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
       );
       return;
     }
+    logger.i("Form IS valid for current step: $_currentStep");
 
-    if (_isSavingStepData || _isSubmittingFinal) return; // منع الضغط المتكرر
+    if (_isSavingStepData || _isSubmittingFinal) {
+      logger.i("Action already in progress. Returning.");
+      return; // منع الضغط المتكرر
+    }
 
     setState(() => _isSavingStepData = true);
 
@@ -233,6 +240,8 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
             _populateControllersForCurrentStep(); // تعبئة بيانات الخطوة الجديدة
           });
         } else {
+          logger.i("Last step, calling _submitFinalForm()");
+
           // وصلنا للخطوة الأخيرة، وتم التحقق من صلاحية النموذج (وجود ملف)
           await _submitFinalForm(); // تغيير إلى await
         }
@@ -261,8 +270,9 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
   }
 
   Future<void> _pickPDF() async {
-    if (_isSavingStepData || _isSubmittingFinal)
+    if (_isSavingStepData || _isSubmittingFinal) {
       return; // منع اختيار ملف أثناء عملية أخرى
+    }
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -274,10 +284,11 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
         PlatformFile file = result.files.single;
         if (file.size > 5 * 1024 * 1024) {
           // 5MB
-          if (mounted)
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('File size must be less than 5MB')),
             );
+          }
           return;
         }
 
@@ -295,65 +306,72 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
             _pickedFileName = file.name;
             _uploadedAgreementFilePath = null;
           });
-          if (mounted)
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('PDF Selected: ${_pickedFileName}')),
+              SnackBar(content: Text('PDF Selected: $_pickedFileName')),
             );
+          }
         } else {
           throw Exception("Could not read file bytes.");
         }
       }
     } catch (e) {
       logger.e("Error picking file: $e");
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Failed to pick file.')));
+      }
     }
   }
 
-  //  دالة الـ Submit النهائية
   Future<void> _submitFinalForm() async {
+    logger.i(
+      "_submitFinalForm CALLED. _isCurrentStepFormValid: $_isCurrentStepFormValid (for step 2)",
+    );
     if (!_isCurrentStepFormValid && _currentStep == 2) {
-      // تحقق إضافي للخطوة الأخيرة
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please upload the agreement PDF.')),
       );
       return;
     }
-    if (_isSubmittingFinal || _isSavingStepData) return;
+    if (_isSubmittingFinal || _isSavingStepData) {
+      logger.i("_submitFinalForm: Action already in progress. Returning.");
+      return;
+    }
     setState(() => _isSubmittingFinal = true);
 
     logger.i("Attempting final submission for project ${widget.projectId}...");
 
-    String? finalAgreementFilePathOnServer = _uploadedAgreementFilePath;
+    String? finalAgreementFilePathOnServer =
+        _uploadedAgreementFilePath; // المسار من السيرفر إذا تم الرفع سابقاً
 
     // 1. رفع الملف إذا تم اختيار ملف جديد ولم يتم رفعه بعد
     if (_pickedFileBytes != null && _pickedFileName != null) {
       logger.i("Uploading new agreement file: $_pickedFileName");
-      // setState(() => _isUploadingFile = true); // يمكن استخدام _isSubmittingFinal
       try {
-        //  افترض أن لديك دالة في ProjectService لرفع الملف وإرجاع مساره/اسمه من السيرفر
-        //  `uploadProjectDocument(projectId, fileBytes, fileName, documentType)`
-        //  `documentType` يمكن أن يكون 'agreement_file'
-        // finalAgreementFilePathOnServer = await _projectService
-        //     // .uploadProjectDocument(
-        //     //   widget.projectId,
-        //     //   _pickedFileBytes!,
-        //     //   _pickedFileName!,
-        //     //   'agreement_file',
-        //     // );
+        finalAgreementFilePathOnServer = await _projectService
+            .uploadProjectAgreement(
+              widget.projectId,
+              _pickedFileBytes!,
+              _pickedFileName!,
+            );
+        if (finalAgreementFilePathOnServer == null) {
+          throw Exception("File path not returned after upload.");
+        }
         logger.i(
           "File uploaded successfully, path on server: $finalAgreementFilePathOnServer",
         );
-        setState(() {
-          // تحديث UI ليعكس أن الملف تم رفعه
-          _uploadedAgreementFilePath = finalAgreementFilePathOnServer;
-          _pickedFileBytes = null;
-          _pickedFileName = null;
-        });
+        if (mounted) {
+          setState(() {
+            // تحديث UI ليعكس أن الملف تم رفعه
+            _uploadedAgreementFilePath = finalAgreementFilePathOnServer;
+            _pickedFileBytes = null;
+            _pickedFileName = null;
+          });
+        }
       } catch (e) {
-        logger.e("Error uploading agreement file: $e");
+        logger.e("Error uploading agreement file during final submit: $e");
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -364,12 +382,11 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
         }
         return;
       }
-      // finally {
-      //   if (mounted) setState(() => _isUploadingFile = false);
-      // }
     } else if (_uploadedAgreementFilePath == null ||
         _uploadedAgreementFilePath!.isEmpty) {
-      // إذا لم يكن هناك ملف مرفوع سابقاً ولم يتم اختيار جديد
+      logger.w(
+        "No new file picked and no previously uploaded file. PDF is required.",
+      ); // إذا لم يكن هناك ملف مرفوع سابقاً ولم يتم اختيار جديد
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -381,33 +398,23 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
       return;
     }
 
-    // 2. (اختياري) إرسال كل البيانات مرة أخرى للتأكيد، أو فقط تحديث الحالة وإرسال إشعار
-    // بما أننا نحفظ تدريجياً، قد لا نحتاج لإرسال كل شيء مرة أخرى.
-    // يمكننا فقط إرسال طلب لتغيير حالة المشروع إلى "Details Submitted"
-    // أو إذا كان الـ API `PUT /projects/:id` يغير الحالة إذا تم إرسال كل الحقول المطلوبة.
-    // للتبسيط الآن، سنفترض أن الـ backend يتعامل مع تغيير الحالة عند استدعاء API معين
-    // أو أن تحديث `agreement_file` كافٍ.
-
-    // حالياً، `PUT /projects/:id` لا يغير الحالة.
-    // ستحتاجين لـ API endpoint جديد أو تعديل `PUT /projects/:id/respond`
-    // ليتم استدعاؤه من المستخدم بعد تعبئة كل شيء لتغيير الحالة وإعلام المكتب.
-    // مثال: `PUT /api/projects/:projectId/submit-details`
-
-    //  ===========================================================================
-    //  هنا يجب أن تقرري:
-    //  1. هل مجرد تحديث `agreement_file` (بعد رفعه) كافٍ لينتقل المشروع للمرحلة التالية؟
-    //  2. أم تحتاجين لاستدعاء API خاص (مثلاً `submitFinalDetails`) يقوم بتغيير حالة المشروع
-    //     وإرسال إشعار للمكتب بأن المستخدم أكمل إدخال البيانات؟
-    //  الخيار (2) أفضل. سأفترض أنكِ ستنشئين API `PUT /projects/:projectId/submit-details`
-    //  في الـ backend، ودالة مقابلة في `ProjectService`.
-    //  ===========================================================================
-
+    // 2. استدعاء API الـ Submit النهائي
     try {
-      //  نفترض أن هذه الدالة موجودة في ProjectService وتستدعي API لتغيير الحالة وإرسال إشعار
-      //  await _projectService.submitFinalProjectDetails(widget.projectId);
+      logger.i(
+        "Calling _projectService.submitFinalProjectDetails for project ${widget.projectId}",
+      );
+      // افترض أن هذه الدالة تستدعي PUT /api/projects/:projectId/submit-details
+      // ويمكنها اختيارياً إرسال finalAgreementFilePathOnServer إذا كان الـ backend يحتاجه
+      // أو إذا كان الـ backend يعتمد على أن uploadProjectAgreement قد حدث الحقل بالفعل.
+      await _projectService.submitFinalProjectDetails(
+        widget.projectId,
+        finalAgreementFilePathFromUpload: finalAgreementFilePathOnServer,
+        // ^ إذا كان API الـ submit-details يتوقع مسار الملف كجزء من الـ body
+        // إذا كان uploadProjectAgreement يحدث الحقل مباشرة، قد لا تحتاجين لإرساله هنا.
+      );
 
       logger.i(
-        "Final project details marked as submitted for project ${widget.projectId}",
+        "Final project details submitted for project ${widget.projectId}",
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -422,7 +429,7 @@ class _DesignAgreementScreenState extends State<DesignAgreementScreen> {
         ).popUntil((route) => route.isFirst); // العودة للهوم
       }
     } catch (e) {
-      logger.e("Error in final submission: $e");
+      logger.e("Error in final submission API call: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Final submission failed: ${e.toString()}')),
@@ -950,7 +957,6 @@ class _CustomAppBar extends StatelessWidget {
   const _CustomAppBar();
   @override
   Widget build(BuildContext context) {
-    // ... (نفس الكود بدون تغيير)
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 28, 16, 20),
       decoration: BoxDecoration(
@@ -993,8 +999,6 @@ class _CustomAppBar extends StatelessWidget {
   }
 }
 
-//  شاشة لتفاصيل المشروع النهائية (للانتقال إليها بعد الـ submit)
-//  هذه مجرد شاشة placeholder، يجب استبدالها بشاشة عرض تفاصيل المشروع الفعلية
 class ProjectDetailsScreen extends StatelessWidget {
   final int? projectId; // قد تحتاجين لتمرير projectId هنا
   const ProjectDetailsScreen({super.key, this.projectId});
