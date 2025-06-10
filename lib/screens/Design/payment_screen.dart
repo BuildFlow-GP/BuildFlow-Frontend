@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 
 class PaymentScreen extends StatefulWidget {
   final double totalAmount;
-  const PaymentScreen({super.key, this.totalAmount = 150.0});
+  const PaymentScreen({
+    super.key,
+    this.totalAmount = 15000.0,
+    required int projectId,
+    required double amount,
+  });
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -54,11 +59,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
       setState(() {
         _isLoading = false;
       });
+      var amount;
       _showPaymentResultDialog(
         context,
         title: 'Payment Successful',
         content:
-            'You have successfully paid \$${widget.totalAmount.toStringAsFixed(2)} via Credit Card.',
+            'You have successfully paid \$${amount.toStringAsFixed(2)} via Credit Card.',
         isSuccess: true,
       );
       _cardNumberController.clear();

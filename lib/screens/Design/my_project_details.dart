@@ -19,7 +19,7 @@ import '../../utils/constants.dart';
 
 // شاشات للانتقال إليها
 import 'project_description.dart'; // لتعديل وصف التصميم
-// import 'payment_screen.dart'; //  للدفع (TODO)
+import 'payment_screen.dart'; //  للدفع (TODO)
 import '../Profiles/office_profile.dart'; // لعرض بروفايل المكتب
 // import '../ReadonlyProfiles/user_readonly_profile.dart'; // لعرض بروفايل المستخدم (إذا لزم الأمر)
 // import 'planner_5d_viewer_screen.dart'; // للـ 3D (TODO)
@@ -493,7 +493,16 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     if (paymentRequiredStates.contains(_project!.status) &&
         _project!.proposedPaymentAmount != null &&
         _project!.proposedPaymentAmount! > 0) {
-      // TODO: Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentScreen(projectId: widget.projectId, amount: _project!.proposedPaymentAmount!)));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => PaymentScreen(
+                projectId: widget.projectId,
+                amount: _project!.proposedPaymentAmount!,
+              ),
+        ),
+      );
       logger.i(
         "TODO: Navigate to PaymentScreen for project ${widget.projectId}, amount: ${_project!.proposedPaymentAmount}",
       );
