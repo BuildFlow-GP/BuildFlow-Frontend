@@ -7,6 +7,8 @@ import '../session.dart';
 import '../../utils/Constants.dart';
 import 'package:logger/logger.dart';
 import 'package:http_parser/http_parser.dart';
+// ignore: depend_on_referenced_packages
+import 'package:mime/mime.dart';
 
 import '../../models/userprojects/project_readonly_model.dart';
 
@@ -667,147 +669,6 @@ class ProjectService {
     }
   }
 
-  Future<String?> _uploadProjectDocumentInternal({
-    //  جعلتها خاصة ومستدعاة من الدوال العامة
-    required int projectId,
-    required Uint8List fileBytes,
-    required String fileName,
-    required String apiEndpointSuffix,
-    required String formFieldName,
-  }) async {
-    final token = await Session.getToken();
-    if (token == null || token.isEmpty) {
-      throw Exception('Authentication token not found.');
-    }
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('$_baseUrl/projects/$projectId/$apiEndpointSuffix'),
-    );
-    request.headers['Authorization'] = 'Bearer $token';
-    request.files.add(
-      http.MultipartFile.fromBytes(
-        formFieldName,
-        fileBytes,
-        filename: fileName,
-        contentType: MediaType('application', 'octet-stream'),
-      ),
-    );
-    logger.i(
-      "Uploading $formFieldName: $fileName for project $projectId to $apiEndpointSuffix",
-    );
-    var streamedResponse = await request.send();
-    var response = await http.Response.fromStream(streamedResponse);
-    _logResponse("uploadProjectDocument ($formFieldName)", response);
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-      return responseData['filePath'] as String?;
-    }
-    _handleError(response, "upload $formFieldName for $apiEndpointSuffix");
-  }
-
-  Future<String?> uploadProjectLicense(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) {
-    return _uploadProjectDocumentInternal(
-      projectId: projectId,
-      fileBytes: fileBytes,
-      fileName: fileName,
-      apiEndpointSuffix: 'upload-license',
-      formFieldName: 'licenseFile',
-    );
-  }
-
-  Future<String?> uploadArchitecturalDocument(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) {
-    // Doc 1
-    return _uploadProjectDocumentInternal(
-      projectId: projectId,
-      fileBytes: fileBytes,
-      fileName: fileName,
-      apiEndpointSuffix: 'upload-document1',
-      formFieldName: 'document1File',
-    );
-  }
-
-  Future<String?> uploadStructuralDocument(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) {
-    // Doc 2
-    return _uploadProjectDocumentInternal(
-      projectId: projectId,
-      fileBytes: fileBytes,
-      fileName: fileName,
-      apiEndpointSuffix: 'upload-document2',
-      formFieldName: 'document2File',
-    );
-  }
-
-  Future<String?> uploadElectricalDocument(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) {
-    // Doc 3
-    return _uploadProjectDocumentInternal(
-      projectId: projectId,
-      fileBytes: fileBytes,
-      fileName: fileName,
-      apiEndpointSuffix: 'upload-document3',
-      formFieldName: 'document3File',
-    );
-  }
-
-  Future<String?> uploadMechanicalDocument(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) {
-    // Doc 4
-    return _uploadProjectDocumentInternal(
-      projectId: projectId,
-      fileBytes: fileBytes,
-      fileName: fileName,
-      apiEndpointSuffix: 'upload-document4',
-      formFieldName: 'document4File',
-    );
-  }
-
-  Future<String?> uploadFinal2DDocument(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) {
-    // Doc 5 (2D Final)
-    return _uploadProjectDocumentInternal(
-      projectId: projectId,
-      fileBytes: fileBytes,
-      fileName: fileName,
-      apiEndpointSuffix: 'upload-final2d',
-      formFieldName: 'final2dFile',
-    );
-  }
-
-  Future<String?> uploadOptional3DDocument(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) {
-    return _uploadProjectDocumentInternal(
-      projectId: projectId,
-      fileBytes: fileBytes,
-      fileName: fileName,
-      apiEndpointSuffix: 'upload-optional3d',
-      formFieldName: 'optional3dFile',
-    );
-  }
-
   Map<String, String> _authHeaders(
     String? token, {
     bool includeContentType = true,
@@ -861,5 +722,144 @@ class ProjectService {
       } catch (_) {}
     }
     throw Exception(errorMessage);
+  }
+
+  Future<String?> uploadLicenseFile(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) async {
+    final token = await Session.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found.');
+    }
+
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/projects/$projectId/upload-license'),
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+
+    String? mimeType = lookupMimeType(fileName);
+    MediaType? contentType =
+        mimeType != null
+            ? MediaType.parse(mimeType)
+            : MediaType('application', 'octet-stream');
+
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'licenseFile',
+        fileBytes,
+        filename: fileName,
+        contentType: contentType,
+      ),
+    );
+
+    logger.i(
+      "Uploading licenseFile: '$fileName' as ${contentType.toString()} for project $projectId",
+    );
+
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
+    _logResponse("Upload of 'licenseFile'", response);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      return responseData['filePath'] as String?;
+    }
+    _handleError(response, "upload license file");
+  }
+
+  Future<String?> uploadArchitecturalFile(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) async {
+    final token = await Session.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found.');
+    }
+
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/projects/$projectId/upload-architectural'),
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+
+    String? mimeType = lookupMimeType(fileName);
+    MediaType? contentType =
+        mimeType != null
+            ? MediaType.parse(mimeType)
+            : MediaType('application', 'octet-stream');
+
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'architecturalFile',
+        fileBytes,
+        filename: fileName,
+        contentType: contentType,
+      ),
+    );
+
+    logger.i(
+      "Uploading architecturalFile: '$fileName' as ${contentType.toString()} for project $projectId",
+    );
+
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
+    _logResponse("Upload of 'architecturalFile'", response);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      return responseData['filePath'] as String?;
+    }
+    _handleError(response, "upload architectural file");
+  }
+
+  Future<String?> uploadFinal2DFile(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) async {
+    final token = await Session.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found.');
+    }
+
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/projects/$projectId/upload-final2d'),
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+
+    String? mimeType = lookupMimeType(fileName);
+    // ignore: unnecessary_null_comparison
+    MediaType? contentType =
+        mimeType != null
+            ? MediaType.parse(mimeType)
+            : MediaType('application', 'octet-stream');
+
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'final2dFile',
+        fileBytes,
+        filename: fileName,
+        contentType: contentType,
+      ),
+    );
+
+    logger.i(
+      "Uploading final2dFile: '$fileName' as ${contentType.toString()} for project $projectId",
+    );
+
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
+    _logResponse("Upload of 'final2dFile'", response);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      return responseData['filePath'] as String?;
+    }
+    _handleError(response, "upload final 2D file");
   }
 }

@@ -25,10 +25,10 @@ class ProjectModel {
   String? agreementFile;
   String? document2D;
   String? document3D;
-  String? document1;
-  String? document2;
-  String? document3;
-  String? document4;
+  String? architectural_file;
+  String? structural_file; //  أو document_2
+  String? electrical_file; //  أو document_3
+  String? mechanical_file; //  أو document_4
 
   String? rejectionReason; //  إذا أضفتيه في الـ backend model
   // ✅✅✅ الحقول الجديدة للدفع والتقدم ✅✅✅
@@ -63,10 +63,10 @@ class ProjectModel {
     this.agreementFile,
     this.document2D,
     this.document3D,
-    this.document1,
-    this.document2,
-    this.document3,
-    this.document4,
+    this.architectural_file,
+    this.structural_file, //  أو document_2
+    this.electrical_file, //  أو document_3
+    this.mechanical_file, //  أو document_4
     this.landArea,
     this.plotNumber = '', // قيمة افتراضية
     this.basinNumber = '', // قيمة افتراضية
@@ -119,10 +119,10 @@ class ProjectModel {
       agreementFile: json['agreement_file'] as String?,
       document2D: json['document_2d'] as String?,
       document3D: json['document_3d'] as String?,
-      document1: json['document_1'] as String?,
-      document2: json['document_2'] as String?,
-      document3: json['document_3'] as String?,
-      document4: json['document_4'] as String?,
+      architectural_file: json['architectural_file'] as String?,
+      structural_file: json['structural_file'] as String?,
+      electrical_file: json['electrical_file'] as String?,
+      mechanical_file: json['mechanical_file'] as String?,
 
       landArea: parseDouble(json['land_area']),
       plotNumber: json['plot_number'] as String? ?? '',
