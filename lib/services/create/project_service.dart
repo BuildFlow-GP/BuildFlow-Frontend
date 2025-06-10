@@ -363,7 +363,6 @@ class ProjectService {
     }
   }
 
-  /// Uploads a project agreement file to the server.
   Future<String?> uploadProjectAgreement(
     int projectId,
     Uint8List fileBytes,
@@ -475,10 +474,8 @@ class ProjectService {
     }
   }
 
-  // (1) تعديل getProjectProfile لترجع ProjectModel كاملاً (مع ProjectDesign)
   Future<ProjectModel> getProjectProfile(int projectId) async {
     final token = await Session.getToken();
-    // الـ backend route GET /projects/:id أصبح يتطلب توثيقاً ويتحقق من الصلاحية
     if (token == null || token.isEmpty) {
       throw Exception('Authentication token not found. Please log in.');
     }
@@ -513,7 +510,6 @@ class ProjectService {
     }
   }
 
-  // (2) دالة لاقتراح سعر من المكتب
   Future<ProjectModel> proposePayment(
     int projectId,
     double amount,
@@ -564,8 +560,7 @@ class ProjectService {
       throw Exception(errorMessage);
     }
   }
-
-  // (3) دالة لرفع مستند 2D (ويمكن عمل دالة مشابهة لـ 3D)
+  /*
   Future<String?> uploadProjectDocument2D(
     int projectId,
     Uint8List fileBytes,
@@ -619,11 +614,138 @@ class ProjectService {
       } catch (_) {}
       throw Exception(errorMessage);
     }
+  }*/
+
+  Future<String?> uploadProjectDocument({
+    required int projectId,
+    required Uint8List fileBytes,
+    required String fileName,
+    required String
+    apiEndpointSuffix, // مثل 'upload-agreement', 'upload-document2d'
+    required String formFieldName, // مثل 'agreementFile', 'document2dFile'
+  }) async {
+    final token = await Session.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found.');
+    }
+
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/projects/$projectId/$apiEndpointSuffix'),
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        formFieldName,
+        fileBytes,
+        filename: fileName,
+        contentType: MediaType(
+          'application',
+          'octet-stream',
+        ), //  نوع عام، الـ backend يتحقق
+      ),
+    );
+
+    logger.i(
+      "Uploading $formFieldName: $fileName for project $projectId to $apiEndpointSuffix",
+    );
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
+    logger.i("uploadProjectDocument ($formFieldName)", error: response);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      return responseData['filePath'] as String?;
+    }
+    logger.e("upload $formFieldName", error: response);
+    return null; //  لإرضاء المحلل، _handleError يجب أن يرمي خطأ
   }
 
-  //  يمكنكِ إضافة دالة مشابهة لـ uploadProjectDocument3D إذا احتجتِ إليها
+  Future<String?> uploadProjectDocument2D(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
+    return uploadProjectDocument(
+      projectId: projectId,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      apiEndpointSuffix: 'upload-document2d',
+      formFieldName: 'document2dFile',
+    );
+  }
 
-  // (4) دالة لتحديث مرحلة تقدم المشروع
+  Future<String?> uploadProjectDocument3D(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
+    return uploadProjectDocument(
+      projectId: projectId,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      apiEndpointSuffix: 'upload-document3d',
+      formFieldName: 'document3dFile',
+    );
+  }
+
+  Future<String?> uploadProjectDocument1(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
+    return uploadProjectDocument(
+      projectId: projectId,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      apiEndpointSuffix:
+          'upload-document_1', //  أو upload-document1 حسب الـ route
+      formFieldName: 'document1File', //  أو document_1File
+    );
+  }
+
+  Future<String?> uploadProjectDocument2(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
+    return uploadProjectDocument(
+      projectId: projectId,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      apiEndpointSuffix: 'upload-document_2',
+      formFieldName: 'document2File',
+    );
+  }
+
+  Future<String?> uploadProjectDocument3(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
+    return uploadProjectDocument(
+      projectId: projectId,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      apiEndpointSuffix: 'upload-document_3',
+      formFieldName: 'document3File',
+    );
+  }
+
+  Future<String?> uploadProjectDocument4(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
+    return uploadProjectDocument(
+      projectId: projectId,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      apiEndpointSuffix: 'upload-document_4',
+      formFieldName: 'document4File',
+    );
+  }
+
   Future<ProjectModel> updateProjectProgress(int projectId, int stage) async {
     final token = await Session.getToken(); // توكن المكتب
     if (token == null || token.isEmpty) {

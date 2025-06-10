@@ -25,6 +25,10 @@ class ProjectModel {
   String? agreementFile;
   String? document2D;
   String? document3D;
+  String? document1;
+  String? document2;
+  String? document3;
+  String? document4;
 
   String? rejectionReason; //  إذا أضفتيه في الـ backend model
   // ✅✅✅ الحقول الجديدة للدفع والتقدم ✅✅✅
@@ -59,6 +63,10 @@ class ProjectModel {
     this.agreementFile,
     this.document2D,
     this.document3D,
+    this.document1,
+    this.document2,
+    this.document3,
+    this.document4,
     this.landArea,
     this.plotNumber = '', // قيمة افتراضية
     this.basinNumber = '', // قيمة افتراضية
@@ -111,6 +119,10 @@ class ProjectModel {
       agreementFile: json['agreement_file'] as String?,
       document2D: json['document_2d'] as String?,
       document3D: json['document_3d'] as String?,
+      document1: json['document_1'] as String?,
+      document2: json['document_2'] as String?,
+      document3: json['document_3'] as String?,
+      document4: json['document_4'] as String?,
 
       landArea: parseDouble(json['land_area']),
       plotNumber: json['plot_number'] as String? ?? '',
@@ -147,19 +159,15 @@ class ProjectModel {
   }
 
   Map<String, dynamic> toJson() {
-    // هذا الـ toJson يستخدم لإرسال البيانات للـ backend
-    // يجب أن يعكس الحقول التي يتوقعها الـ API عند الإنشاء أو التحديث
     final Map<String, dynamic> data = <String, dynamic>{};
     data['name'] = name;
     if (description!.isNotEmpty) data['description'] = description;
-    // status عادة لا يتم إرساله من المستخدم عند التحديث الجزئي، الـ backend يديره
     // if (status.isNotEmpty && status != 'Unknown') data['status'] = status;
     if (budget != null) data['budget'] = budget;
     if (startDate != null) data['start_date'] = startDate!.toIso8601String();
     if (endDate != null) data['end_date'] = endDate!.toIso8601String();
     if (location!.isNotEmpty) data['location'] = location;
 
-    // لا نرسل عادة مسارات الملفات هنا، الرفع وتحديث المسار يتم بعملية منفصلة
     // if (licenseFile != null) data['license_file'] = licenseFile;
     // if (agreementFile != null) data['agreement_file'] = agreementFile;
     // if (document2D != null) data['document_2d'] = document2D;
@@ -175,12 +183,7 @@ class ProjectModel {
     if (paymentNotes != null) data['payment_notes'] = paymentNotes;
     if (paymentStatus != null) data['payment_status'] = paymentStatus;
     if (progressStage != null) data['progress_stage'] = progressStage;
-    // لا نرسل user_id أو office_id عند تحديث المستخدم للتفاصيل، هذه يتم تعيينها عند الإنشاء
-    // if (userId != null) data['user_id'] = userId;
-    // if (officeId != null) data['office_id'] = officeId;
 
-    // إذا كان API الإنشاء المبدئي يتوقع office_id، يجب أن يكون في toJson آخر أو يتم تمريره بشكل منفصل
-    // في حالتنا، `requestInitialProject` في السيرفس يبني الـ body بشكل مخصص.
     return data;
   }
 }
