@@ -1,11 +1,8 @@
-
 import 'themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'screens/sign/signin_screen.dart';
 import 'package:get/get.dart';
-// import 'widgets/drawer_wrapper.dart';
-// import 'screens/payment_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // مهم قبل async init
@@ -37,7 +34,30 @@ class MyApp extends StatelessWidget {
       ),
 
       home: SignInScreen(),
-
     );
   }
 }
+// import 'package:flutter/material.dart';
+// import 'package:firebase_core/firebase_core.dart';
+// import 'dart:developer';
+
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   try {
+//     await Firebase.initializeApp();
+//     print("✅ Firebase Initialized Successfully");
+//   } catch (e) {
+//     print("❌ Firebase Initialization Failed: $e");
+//   }
+//   runApp(const MyApp());
+// }
+
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+//   @override
+//   Widget build(BuildContext context) {
+//     return const MaterialApp(
+//       home: Scaffold(body: Center(child: Text('Firebase Check'))),
+//     );
+//   }
+// }
