@@ -1,6 +1,6 @@
 import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
-import '../models/chat_model.dart';
+import '../../models/chat_model.dart';
 import 'chat_screen.dart';
 
 class ChatListScreen extends StatefulWidget {

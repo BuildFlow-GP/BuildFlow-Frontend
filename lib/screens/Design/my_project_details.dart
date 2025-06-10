@@ -1,30 +1,30 @@
 // screens/project_details_view_screen.dart
 import 'package:buildflow_frontend/models/Basic/user_model.dart';
-import 'package:buildflow_frontend/services/create/user_update_service.dart'; //  للحصول على المستخدم الحالي
+import 'package:buildflow_frontend/services/create/project_design_service.dart';
+import 'package:buildflow_frontend/services/create/user_update_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:file_picker/file_picker.dart'; //  لرفع الملفات
-import 'dart:typed_data'; //  لـ Uint8List
+import 'package:file_picker/file_picker.dart';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io'; //  لـ File على الموبايل
-
-import '../../services/create/project_service.dart';
-import '../../services/create/project_design_service.dart';
-import '../../services/session.dart'; //  للحصول على المستخدم الحالي
-import '../../models/Basic/project_model.dart';
-
-import '../../themes/app_colors.dart'; //  لتنسيق الألوان
-import '../../utils/constants.dart'; //  لـ BASE_URL إذا احتجتِ لصور المشروع مباشرة
-
-//  شاشات للانتقال إليها
-import 'project_description.dart'; //  لتعديل وصف التصميم
-// import 'payment_screen.dart'; //  شاشة الدفع (ستحتاجين لإنشائها)
-import '../ReadonlyProfiles/office_readonly_profile.dart'; // لعرض بروفايل المكتب
-
-//  للتوضيح، سأضع Logger هنا، يمكنكِ استخدام logger instance الخاص بكِ
+import 'dart:io';
 import 'package:logger/logger.dart';
 
-final logger = Logger();
+import '../../services/create/project_service.dart'; // تم تغيير المسار
+import '../../services/session.dart';
+import '../../models/Basic/project_model.dart'; // يجب أن يكون هذا الموديل محدثاً
+
+import '../../themes/app_colors.dart';
+import '../../utils/constants.dart';
+
+import 'project_description.dart';
+import '../Profiles/office_profile.dart';
+// import 'payment_screen.dart'; //  للدفع
+// import 'planner_5d_viewer_screen.dart'; // للـ 3D
+
+final Logger logger = Logger(
+  printer: PrettyPrinter(methodCount: 1, errorMethodCount: 5),
+);
 
 class ProjectDetailsViewScreen extends StatefulWidget {
   final int projectId;
@@ -38,16 +38,17 @@ class ProjectDetailsViewScreen extends StatefulWidget {
 class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
   final ProjectService _projectService = ProjectService();
   // ignore: unused_field
-  final ProjectDesignService _projectDesignService =
-      ProjectDesignService(); //  للتعديل المحتمل
-  final UserService _userService = UserService(); //  للحصول على المستخدم الحالي
+  final ProjectDesignService _projectDesignService = ProjectDesignService();
+  final UserService _userService = UserService();
+
   ProjectModel? _project;
-  UserModel? _currentUser; //  لتحديد دور المستخدم الحالي
+  UserModel? _currentUser;
+  String? _sessionUserType;
 
   bool _isLoading = true;
   String? _error;
 
-  //  حالات للـ UI الخاص بالمكتب
+  // حالات UI للمكتب
   bool _isOfficeProposingPayment = false;
   bool _isOfficeUpdatingProgress = false;
   bool _isOfficeUploadingDoc = false;
@@ -56,26 +57,31 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
   final TextEditingController _paymentAmountController =
       TextEditingController();
   final TextEditingController _paymentNotesController = TextEditingController();
-  final TextEditingController _projectNameController =
-      TextEditingController(); //  لتعديل اسم المشروع
+  final TextEditingController _projectNameController = TextEditingController();
 
-  //  لتقدم المشروع (مثال مبسط، يمكنكِ جعله أكثر تفصيلاً)
   final List<String> _progressStageLabels = [
-    "Initial Request", // Stage 0
-    "Design Phase", // Stage 1
-    "2D Drafting", // Stage 2
-    "3D Modeling", // Stage 3
-    "Revisions", // Stage 4
-    "Final Delivery", // Stage 5
+    "Kick-off", // Stage 0 (المرحلة الأولية)
+    "Architectural Design", // Stage 1
+    "Structural Design", // Stage 2
+    "Electrical Design", // Stage 3
+    "Mechanical Design", // Stage 4
+    "Final 2D Drawings", // Stage 5
   ];
-  // int _currentProgressStage = 0; // سيتم أخذه من _project.progressStage
-  String? _sessionUserType;
+  //  أسماء حقول الملفات في ProjectModel لمراحل التقدم
+  // ignore: unused_field
+  final List<String> _progressDocumentKeys = [
+    '', // لا يوجد ملف للمرحلة 0
+    'document_1', // Architectural
+    'document_2', // Structural
+    'document_3', // Electrical
+    'document_4', // Mechanical
+    'document_2d', // Final 2D (يحدث document_2d)
+  ];
 
   @override
   void initState() {
     super.initState();
-    _loadAllProjectData();
-    _loadSessionUserType();
+    _loadInitialData();
   }
 
   @override
@@ -86,35 +92,29 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     super.dispose();
   }
 
-  Future<void> _loadSessionUserType() async {
-    _sessionUserType =
-        await Session.getUserType(); //  افترض أن Session.getUserType() موجودة
-    if (mounted) setState(() {});
-  }
-
-  Future<void> _loadAllProjectData({bool showLoading = true}) async {
+  Future<void> _loadInitialData({bool showLoadingIndicator = true}) async {
     if (!mounted) return;
-    if (showLoading) {
+    if (showLoadingIndicator) {
       setState(() => _isLoading = true);
     }
     _error = null;
 
     try {
       final results = await Future.wait([
-        _projectService.getProjectDetailscreate(
-          widget.projectId,
-        ), //  يفترض أن هذه ترجع ProjectModel كامل
-        _userService
-            .getCurrentUserDetails(), //  للحصول على المستخدم الحالي وتحديد دوره
+        // استخدام getbyofficeProjectDetails لجلب كل شيء
+        _projectService.getbyofficeProjectDetails(widget.projectId),
+        _userService.getCurrentUserDetails(),
+        Session.getUserType(), // جلب نوع المستخدم من السيشن مباشرة
       ]);
 
       if (mounted) {
         setState(() {
           _project = results[0] as ProjectModel;
           _currentUser = results[1] as UserModel;
+          _sessionUserType = results[2] as String?;
+
           if (_project != null) {
             _projectNameController.text = _project!.name;
-            // _currentProgressStage = _project!.progressStage ?? 0;
             if (_project!.proposedPaymentAmount != null) {
               _paymentAmountController.text = _project!.proposedPaymentAmount!
                   .toStringAsFixed(2);
@@ -126,7 +126,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
       }
     } catch (e, s) {
       logger.e(
-        "Error loading project details for view",
+        "Error loading project details for view screen",
         error: e,
         stackTrace: s,
       );
@@ -139,7 +139,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     }
   }
 
-  // === دوال خاصة بالمكتب ===
+  // === دوال الأفعال ===
   Future<void> _handleProposePayment() async {
     if (_isOfficeProposingPayment || _project == null) return;
     final amount = double.tryParse(_paymentAmountController.text);
@@ -151,7 +151,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     }
     setState(() => _isOfficeProposingPayment = true);
     try {
-      await _projectService.proposePayment(
+      final updatedProject = await _projectService.proposePayment(
         widget.projectId,
         amount,
         _paymentNotesController.text,
@@ -163,9 +163,9 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        _loadAllProjectData(
-          showLoading: false,
-        ); //  تحديث البيانات بدون إظهار شاشة تحميل كاملة
+        setState(
+          () => _project = updatedProject,
+        ); // تحديث المشروع بالبيانات الجديدة
       }
     } catch (e) {
       logger.e("Error proposing payment", error: e);
@@ -179,65 +179,94 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     }
   }
 
-  Future<void> _handleUploadDocument(String documentType) async {
-    // documentType: 'document_2d' or 'document_3d'
+  Future<void> _handleUploadProgressDocument(
+    String documentKeyInModel,
+    String formFieldNameForMulter,
+  ) async {
     if (_isOfficeUploadingDoc || _project == null) return;
 
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      //  يمكنكِ تحديد allowedExtensions بشكل أكثر دقة لكل نوع
-      allowedExtensions:
-          documentType == 'document_2d'
-              ? ['pdf', 'dwg', 'zip']
-              : ['jpg', 'png', 'skp', 'max', 'obj', 'fbx', 'zip'],
+      allowedExtensions: ['pdf', 'dwg', 'zip', 'jpg', 'png'], //  أنواع شائعة
       withData: kIsWeb,
     );
 
     if (result != null) {
       PlatformFile file = result.files.single;
-      //  يمكنكِ إضافة تحقق من حجم الملف هنا إذا أردتِ
-      if (file.size > 15 * 1024 * 1024) {
-        // مثال: 15MB
+      if (file.size > 10 * 1024 * 1024) {
+        // 10MB حد أقصى لملفات التقدم
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("File is too large (max 15MB).")),
+            const SnackBar(content: Text("File is too large (max 10MB).")),
           );
         }
         return;
       }
-
       Uint8List? fileBytes;
       if (kIsWeb) {
         fileBytes = file.bytes;
-      } else {
-        if (file.path != null) fileBytes = await File(file.path!).readAsBytes();
-      }
+      } else if (file.path != null)
+        // ignore: curly_braces_in_flow_control_structures
+        fileBytes = await File(file.path!).readAsBytes();
 
       if (fileBytes != null) {
         setState(() => _isOfficeUploadingDoc = true);
         try {
-          //  uploadProjectDocument يجب أن تقبل documentType
-          await _projectService.uploadProjectDocument2D(
-            widget.projectId,
-            fileBytes,
-            file.name,
-          );
-          if (mounted) {
+          //  استخدام دالة الرفع العامة من ProjectService
+          //  نحتاج لتمرير الـ apiEndpointSuffix الصحيح والـ formFieldName
+          // ignore: unused_local_variable
+          String apiSuffix;
+          if (documentKeyInModel == 'document_1') {
+            apiSuffix = 'upload-document1';
+          } else if (documentKeyInModel == 'document_2')
+            apiSuffix = 'upload-document2';
+          else if (documentKeyInModel == 'document_3')
+            apiSuffix = 'upload-document3';
+          else if (documentKeyInModel == 'document_4')
+            apiSuffix = 'upload-document4';
+          else if (documentKeyInModel == 'document_2d')
+            apiSuffix = 'upload-final2d'; // لـ 2D النهائي
+          else if (documentKeyInModel == 'document_3d')
+            apiSuffix = 'upload-optional3d'; // لـ 3D الاختياري
+          else if (documentKeyInModel == 'license_file')
+            apiSuffix = 'upload-license';
+          else if (documentKeyInModel == 'agreement_file')
+            apiSuffix = 'upload-agreement'; // من DesignAgreementScreen
+          else {
+            throw Exception(
+              "Unknown document type key for upload: $documentKeyInModel",
+            );
+          }
+
+          final uploadedPath = await _projectService
+              ._uploadProjectDocumentInternal(
+                widget.projectId,
+                fileBytes,
+                file.name,
+                documentKeyInModel,
+                formFieldNameForMulter,
+              );
+
+          if (uploadedPath != null && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text("$documentType uploaded successfully!"),
+                content: Text(
+                  "${documentKeyInModel.replaceAll('_', ' ')} uploaded successfully!",
+                ),
                 backgroundColor: Colors.green,
               ),
             );
-            _loadAllProjectData(showLoading: false);
+            _loadInitialData(
+              showLoadingIndicator: false,
+            ); // تحديث بيانات المشروع
           }
         } catch (e) {
-          logger.e("Error uploading $documentType", error: e);
+          logger.e("Error uploading $documentKeyInModel", error: e);
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  "Failed to upload $documentType: ${e.toString()}",
+                  "Failed to upload $documentKeyInModel: ${e.toString()}",
                 ),
               ),
             );
@@ -251,14 +280,12 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
 
   Future<void> _handleUpdateProgress(int newStage) async {
     if (_isOfficeUpdatingProgress || _project == null) return;
-    //  يمكنكِ إضافة تحقق هنا لمنع الرجوع للخلف في المراحل إذا أردتِ
-    // if (newStage < (_project!.progressStage ?? 0) ) {
-    //   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cannot revert to a previous stage.")));
-    //   return;
-    // }
     setState(() => _isOfficeUpdatingProgress = true);
     try {
-      await _projectService.updateProjectProgress(widget.projectId, newStage);
+      final updatedProject = await _projectService.updateProjectProgress(
+        widget.projectId,
+        newStage,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -266,7 +293,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        _loadAllProjectData(showLoading: false);
+        setState(() => _project = updatedProject);
       }
     } catch (e) {
       logger.e("Error updating progress", error: e);
@@ -287,21 +314,16 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
       return;
     }
     if (_projectNameController.text == _project!.name) {
-      // لم يتغير الاسم
-      if (mounted) {
-        setState(
-          () => _isOfficeEditingName = false,
-        ); //  فقط لإخفاء مؤشر التحميل إذا كان هناك واحد
-      }
+      if (mounted) setState(() => _isOfficeEditingName = false);
       return;
     }
-
     setState(() => _isOfficeEditingName = true);
     try {
-      // استخدام updateProjectDetails لتحديث الاسم فقط
-      await _projectService.updateProjectDetails(widget.projectId, {
-        'name': _projectNameController.text,
-      });
+      //  استخدام updatebyofficeProjectDetails إذا كان المكتب هو من يعدل
+      final updatedProject = await _projectService.updatebyofficeProjectDetails(
+        widget.projectId,
+        {'name': _projectNameController.text},
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -309,7 +331,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        _loadAllProjectData(showLoading: false); // تحديث البيانات
+        setState(() => _project = updatedProject);
       }
     } catch (e) {
       logger.e("Error updating project name", error: e);
@@ -319,20 +341,18 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
             content: Text("Failed to update project name: ${e.toString()}"),
           ),
         );
-        _projectNameController.text =
-            _project?.name ?? ''; //  إعادة الاسم القديم عند الفشل
+        _projectNameController.text = _project?.name ?? '';
       }
     } finally {
       if (mounted) setState(() => _isOfficeEditingName = false);
     }
   }
 
-  // === دوال خاصة بالمستخدم ===
   void _handleEditDesignDetails() {
     if (_project == null) return;
-    //  تحديد الحالات التي يمكن فيها للمستخدم تعديل تفاصيل التصميم
     const editableStates = [
-      'Office Approved - Awaiting Details' /*, 'Revision Requested by Office' */,
+      'Office Approved - Awaiting Details',
+      'Details Submitted - Pending Office Review',
     ];
     if (editableStates.contains(_project!.status)) {
       Navigator.push(
@@ -343,10 +363,8 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                   ProjectDescriptionScreen(projectId: widget.projectId),
         ),
       ).then((value) {
-        //  بعد العودة من شاشة تعديل التصميم، قومي بتحديث البيانات
         if (value == true || value == null) {
-          //  إذا تم أي تغيير أو تم الإغلاق
-          _loadAllProjectData();
+          _loadInitialData(showLoadingIndicator: false); //  تحديث بعد العودة
         }
       });
     } else {
@@ -362,17 +380,13 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
 
   void _handleMakePayment() {
     if (_project == null) return;
-    //  الانتقال لصفحة الدفع فقط إذا كان هناك اقتراح دفع والمستخدم لم يدفع بعد
     const paymentRequiredStates = [
       'Payment Proposal Sent',
       'Awaiting User Payment',
     ];
     if (paymentRequiredStates.contains(_project!.status) &&
         _project!.proposedPaymentAmount != null) {
-      // Navigator.push(
-      //   context,
-      //   MaterialPageRoute(builder: (context) => PaymentScreen(projectId: widget.projectId, amount: _project!.proposedPaymentAmount!)),
-      // );
+      // Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentScreen(projectId: widget.projectId, amount: _project!.proposedPaymentAmount!)));
       logger.i(
         "TODO: Navigate to PaymentScreen for project ${widget.projectId}, amount: ${_project!.proposedPaymentAmount}",
       );
@@ -390,14 +404,21 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     }
   }
 
-  void _handleView3D() {
-    logger.i("TODO: Implement 3D Viewer (e.g., Planner 5D integration)");
+  void _handleView3DViaPlanner5D() {
+    //  تم تغيير اسم الدالة
+    logger.i(
+      "TODO: Implement Planner 5D integration for project ${widget.projectId}",
+    );
+    //  هنا يمكنكِ فتح رابط Planner 5D أو استخدام الـ SDK إذا كان متاحاً
+    //  String planner5dUrl = "https://planner5d.com/view/?key=YOUR_PROJECT_KEY_OR_ID_ON_PLANNER5D";
+    //  await launchUrl(Uri.parse(planner5dUrl));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("3D Viewer (Not Implemented Yet)")),
+      const SnackBar(
+        content: Text("3D Viewer (Planner 5D - Not Implemented Yet)"),
+      ),
     );
   }
 
-  // === ويدجتس البناء ===
   final dateFormat = DateFormat('dd MMM, yyyy');
   final currencyFormat = NumberFormat.currency(
     locale: 'ar_JO',
@@ -412,21 +433,23 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     bool isLink = false,
     VoidCallback? onLinkTap,
   }) {
-    // ... (نفس الكود من الرد السابق، مع تعديل بسيط لـ onLinkTap)
-    if (value == null || value.isEmpty) return const SizedBox.shrink();
+    if (value == null || value.isEmpty || value.toLowerCase() == 'n/a') {
+      return const SizedBox.shrink(); //  تحسين: إخفاء الصف إذا كانت القيمة N/A
+    }
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      padding: const EdgeInsets.symmetric(vertical: 5.0), // تقليل المسافة
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (icon != null) ...[
+          if (icon != null)
             Icon(
               icon,
-              size: 18,
-              color: AppColors.textSecondary.withOpacity(0.7),
-            ),
-            const SizedBox(width: 10),
-          ],
+              size: 16,
+              color: AppColors.textSecondary.withOpacity(0.8),
+            )
+          else
+            const SizedBox(width: 26), // مساحة للأيقونة
+          const SizedBox(width: 8),
           Expanded(
             flex: 2,
             child: Text(
@@ -434,7 +457,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
-                fontSize: 14,
+                fontSize: 13.5,
               ),
             ),
           ),
@@ -446,23 +469,33 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                       onTap:
                           onLinkTap ??
                           () {
-                            logger.i(
-                              "Tapped link: $value",
-                            ); /* TODO: Implement open link */
+                            String fullUrl =
+                                value.startsWith('http')
+                                    ? value
+                                    : '${Constants.baseUrl}/$value';
+                            logger.i("Tapped link: $fullUrl");
+                            //  TODO: Implement launchUrl(Uri.parse(fullUrl));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Open: $fullUrl (Not implemented)",
+                                ),
+                              ),
+                            );
                           },
                       child: Text(
                         value.split('/').last,
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.primary,
                           decoration: TextDecoration.underline,
-                          fontSize: 14,
+                          fontSize: 13.5,
                         ),
                       ),
                     )
                     : Text(
                       value,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13.5,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -473,16 +506,16 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
   }
 
   Widget _buildSectionTitle(String title, {Widget? trailing}) {
-    // ... (نفس الكود من الرد السابق)
     return Padding(
-      padding: const EdgeInsets.only(top: 24.0, bottom: 10.0),
+      padding: const EdgeInsets.only(top: 20.0, bottom: 8.0), // تعديل المسافات
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             title,
             style: TextStyle(
-              fontSize: 17,
+              fontSize: 16.5,
               fontWeight: FontWeight.bold,
               color: AppColors.primary,
             ),
@@ -494,12 +527,10 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
   }
 
   Widget _buildStatusChip(String? status) {
-    // ... (نفس الكود)
     if (status == null || status.isEmpty) return const SizedBox.shrink();
-    Color statusColor = Colors.grey;
-    IconData statusIcon = Icons.hourglass_empty_rounded;
+    Color statusColor = Colors.grey.shade600;
+    IconData statusIcon = Icons.info_outline_rounded;
     switch (status.toLowerCase().replaceAll(' ', '').replaceAll('-', '')) {
-      // توحيد الحالة
       case 'pendingofficeapproval':
         statusColor = Colors.orange.shade700;
         statusIcon = Icons.hourglass_top_rounded;
@@ -522,9 +553,9 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
         statusIcon = Icons.payment_outlined;
         break;
       case 'inprogress':
-        statusColor = Colors.cyan.shade700;
+        statusColor = Colors.lightBlue.shade700;
         statusIcon = Icons.construction_rounded;
-        break;
+        break; // تغيير اللون
       case 'completed':
         statusColor = Colors.green.shade700;
         statusIcon = Icons.check_circle_rounded;
@@ -534,25 +565,25 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
         statusColor = Colors.red.shade700;
         statusIcon = Icons.cancel_rounded;
         break;
-      default:
-        statusIcon = Icons.info_outline_rounded;
     }
     return Chip(
-      avatar: Icon(statusIcon, color: Colors.white, size: 16),
+      avatar: Icon(statusIcon, color: Colors.white, size: 15),
       label: Text(
         status,
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 11,
+          fontSize: 10.5,
           fontWeight: FontWeight.w500,
         ),
       ),
       backgroundColor: statusColor,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      labelPadding: const EdgeInsets.only(
-        left: 4,
-        right: 6,
-      ), // تعديل الحشو ليكون متناسقاً
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 2,
+      ), // تقليل الحشو
+      labelPadding: const EdgeInsets.only(left: 3, right: 5),
+      materialTapTargetSize:
+          MaterialTapTargetSize.shrinkWrap, // لجعل الـ chip أصغر
     );
   }
 
@@ -563,36 +594,35 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     IconData defaultIcon = Icons.person,
     VoidCallback? onTap,
   }) {
-    // ... (نفس الكود، تأكدي أن imageUrl هو URL كامل)
     ImageProvider? imageProv;
     if (imageUrl != null && imageUrl.isNotEmpty) {
       imageProv = NetworkImage(imageUrl);
     }
     return Card(
-      elevation: 1.5,
-      shadowColor: AppColors.shadow.withOpacity(0.1),
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      elevation: 1,
+      shadowColor: AppColors.shadow.withOpacity(0.05),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: ListTile(
         leading: CircleAvatar(
-          radius: 20,
+          radius: 18,
           backgroundImage: imageProv,
           onBackgroundImageError: imageProv != null ? (_, __) {} : null,
-          backgroundColor: AppColors.background, // لون خلفية مناسب
+          backgroundColor: AppColors.background,
           child:
               imageProv == null
-                  ? Icon(defaultIcon, size: 18, color: AppColors.textSecondary)
+                  ? Icon(defaultIcon, size: 16, color: AppColors.textSecondary)
                   : null,
         ),
         title: Text(
           name,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
-        ),
+          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+        ), // تصغير الخط
         subtitle:
             typeLabel != null
                 ? Text(
                   typeLabel,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 )
                 : null,
         onTap: onTap,
@@ -601,29 +631,28 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                 ? Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 14,
-                  color: AppColors.accent,
+                  color: AppColors.accent.withOpacity(0.7),
                 )
                 : null,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 4,
-        ), // تعديل الحشو
+        dense: true, // لجعل الـ ListTile أصغر
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // ... (نفس build)
     return Scaffold(
       appBar: AppBar(
-        title: Text(_project?.name ?? 'Project Details'),
+        title: Text(
+          _project?.name ?? 'Loading Project...',
+        ), //  عرض اسم المشروع أو تحميل
         elevation: 1,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh Project Data',
-            onPressed: _isLoading ? null : () => _loadAllProjectData(),
+            onPressed: _isLoading ? null : () => _loadInitialData(),
           ),
         ],
       ),
@@ -634,101 +663,114 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
               ? Center(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    'Error: $_error',
-                    style: const TextStyle(color: Colors.red),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red, size: 40),
+                      SizedBox(height: 10),
+                      Text(
+                        'Error: $_error',
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: _loadInitialData,
+                        child: Text("Retry"),
+                      ),
+                    ],
                   ),
                 ),
               )
               : _project == null
-              ? const Center(
-                child: Text('Project data not found or could not be loaded.'),
-              )
+              ? const Center(child: Text('Project data could not be loaded.'))
               : _buildProjectContentView(),
     );
   }
 
   Widget _buildProjectContentView() {
-    if (_project == null) {
-      return const Center(child: Text("No project data.")); //  تحقق إضافي
+    if (_project == null || _currentUser == null || _sessionUserType == null) {
+      return const Center(
+        child: Text("Required data is missing to display project details."),
+      );
     }
 
     final project = _project!;
     final design = project.projectDesign;
-    final bool isUserOwner =
-        _currentUser?.id == project.userId &&
-        _sessionUserType?.toLowerCase() == 'individual';
-    final bool isAssignedOffice =
-        _currentUser?.id == project.officeId &&
-        _sessionUserType?.toLowerCase() == 'office';
+    final isUserOwner =
+        _currentUser!.id == project.userId &&
+        _sessionUserType!.toLowerCase() == 'individual';
+    final isAssignedOffice =
+        _currentUser!.id == project.officeId &&
+        _sessionUserType!.toLowerCase() == 'office';
 
     return RefreshIndicator(
-      // لإضافة السحب للتحديث
-      onRefresh:
-          () => _loadAllProjectData(
-            showLoading: false,
-          ), //  لا تظهري مؤشر التحميل الدائري هنا
+      onRefresh: () => _loadInitialData(showLoadingIndicator: false),
       child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(), //  لتمكين السحب دائماً
-        padding: const EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          70,
-        ), //  إضافة padding سفلي للزر العائم
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 70),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // === معلومات المشروع الأساسية ===
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child:
-                      isAssignedOffice &&
-                              project.status ==
-                                  'Pending Office Approval' //  السماح للمكتب بتعديل الاسم في هذه الحالة فقط
+                      (isAssignedOffice &&
+                              [
+                                'Pending Office Approval',
+                                'Office Approved - Awaiting Details',
+                              ].contains(project.status))
                           ? Row(
                             children: [
                               Expanded(
-                                child: TextField(
+                                child: TextFormField(
+                                  // استخدام TextFormField لتعديل أفضل
                                   controller: _projectNameController,
-                                  decoration: const InputDecoration(
-                                    labelText: "Project Name",
+                                  decoration: InputDecoration(
+                                    hintText: "Project Name",
                                     border: InputBorder.none,
-                                    contentPadding: EdgeInsets.zero,
                                     isDense: true,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                    ),
                                   ),
                                   style: Theme.of(
                                     context,
-                                  ).textTheme.headlineSmall?.copyWith(
+                                  ).textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.textPrimary,
+                                  ), // استخدام titleLarge
+                                  onFieldSubmitted:
+                                      (value) => _handleUpdateProjectName(),
+                                ),
+                              ),
+                              _isOfficeEditingName
+                                  ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : IconButton(
+                                    icon: Icon(
+                                      Icons.save_alt_rounded,
+                                      color: AppColors.accent,
+                                      size: 22,
+                                    ),
+                                    onPressed: _handleUpdateProjectName,
+                                    tooltip: "Save Name",
                                   ),
-                                  onSubmitted:
-                                      (value) =>
-                                          _handleUpdateProjectName(), //  حفظ عند الضغط على enter
-                                ),
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  Icons.save_outlined,
-                                  color: AppColors.accent,
-                                  size: 20,
-                                ),
-                                onPressed:
-                                    _isOfficeEditingName
-                                        ? null
-                                        : _handleUpdateProjectName,
-                              ),
                             ],
                           )
                           : Text(
                             project.name,
                             style: Theme.of(
                               context,
-                            ).textTheme.headlineSmall?.copyWith(
+                            ).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
                             ),
@@ -739,23 +781,23 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
               ],
             ),
             if (project.description!.isNotEmpty) ...[
-              const SizedBox(height: 12.0),
+              const SizedBox(height: 10.0),
               Text(
                 project.description ?? '',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
-                  fontSize: 15,
+                  fontSize: 14.5,
                 ),
               ),
             ],
 
             _buildSectionTitle('Key Information'),
             _buildInfoRow(
-              'Budget:',
+              'Est. Budget (User):',
               project.budget != null
                   ? currencyFormat.format(project.budget)
                   : 'N/A',
-              icon: Icons.attach_money_outlined,
+              icon: Icons.account_balance_wallet_outlined,
             ),
             _buildInfoRow(
               'Start Date:',
@@ -769,42 +811,42 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
               project.endDate != null
                   ? dateFormat.format(project.endDate!.toLocal())
                   : 'N/A',
-              icon: Icons.event_available_outlined,
+              icon: Icons.event_busy_outlined,
             ),
             _buildInfoRow(
-              'Location:',
+              'General Location:',
               project.location!.isNotEmpty ? project.location : 'N/A',
-              icon: Icons.location_on_outlined,
+              icon: Icons.location_city_outlined,
             ),
             _buildInfoRow(
               'Created:',
               dateFormat.format(project.createdAt.toLocal()),
-              icon: Icons.history_rounded,
+              icon: Icons.history_edu_outlined,
             ),
 
             if (project.landArea != null || project.plotNumber!.isNotEmpty) ...[
-              _buildSectionTitle('Land Details'),
+              _buildSectionTitle('Land Specifics'),
               _buildInfoRow(
                 'Land Area:',
                 project.landArea != null
                     ? '${project.landArea!.toStringAsFixed(2)} m²'
                     : 'N/A',
-                icon: Icons.square_foot_outlined,
+                icon: Icons.landscape_outlined,
               ),
               _buildInfoRow(
                 'Plot Number:',
                 project.plotNumber!.isNotEmpty ? project.plotNumber : 'N/A',
-                icon: Icons.map_outlined,
+                icon: Icons.signpost_outlined,
               ),
               _buildInfoRow(
                 'Basin Number:',
                 project.basinNumber!.isNotEmpty ? project.basinNumber : 'N/A',
-                icon: Icons.confirmation_number_outlined,
+                icon: Icons.document_scanner_outlined,
               ),
               _buildInfoRow(
-                'Land Location Detail:',
+                'Land Location (Detail):',
                 project.landLocation!.isNotEmpty ? project.landLocation : 'N/A',
-                icon: Icons.pin_drop_outlined,
+                icon: Icons.explore_outlined,
               ),
             ],
 
@@ -812,16 +854,23 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
               'Design Specifications',
               trailing:
                   (isUserOwner &&
-                          (project.status ==
-                              'Office Approved - Awaiting Details' /* || حالة طلب التعديل */ ))
-                      ? IconButton(
-                        icon: Icon(
-                          Icons.edit_outlined,
-                          color: AppColors.accent,
-                          size: 20,
+                          [
+                            'Office Approved - Awaiting Details',
+                            'Details Submitted - Pending Office Review',
+                          ].contains(project.status))
+                      ? Tooltip(
+                        message: "Edit Design Details",
+                        child: InkWell(
+                          onTap: _handleEditDesignDetails,
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Icon(
+                              Icons.edit_note_rounded,
+                              color: AppColors.accent,
+                              size: 22,
+                            ),
+                          ),
                         ),
-                        onPressed: _handleEditDesignDetails,
-                        tooltip: "Edit Design Details",
                       )
                       : null,
             ),
@@ -829,12 +878,12 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
               _buildInfoRow(
                 'Floors:',
                 design.floorCount?.toString() ?? 'N/A',
-                icon: Icons.layers_outlined,
+                icon: Icons.stairs_outlined,
               ),
               _buildInfoRow(
                 'Bedrooms:',
                 design.bedrooms?.toString() ?? 'N/A',
-                icon: Icons.king_bed_outlined,
+                icon: Icons.bed_outlined,
               ),
               _buildInfoRow(
                 'Bathrooms:',
@@ -854,21 +903,21 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
               _buildInfoRow(
                 'Kitchen Type:',
                 design.kitchenType ?? 'N/A',
-                icon: Icons.countertops_outlined,
+                icon: Icons.restaurant_menu_outlined,
               ),
               _buildInfoRow(
                 'Master Has Bathroom:',
                 design.masterHasBathroom == true
                     ? 'Yes'
                     : (design.masterHasBathroom == false ? 'No' : 'N/A'),
-                icon: Icons.wc_outlined,
+                icon: Icons.wc_rounded,
               ),
               if (design.specialRooms != null &&
                   design.specialRooms!.isNotEmpty)
                 _buildInfoRow(
                   'Special Rooms:',
                   design.specialRooms!.join(', '),
-                  icon: Icons.star_border_purple500_outlined,
+                  icon: Icons.meeting_room_outlined,
                 ),
               if (design.directionalRooms != null &&
                   design.directionalRooms!.isNotEmpty)
@@ -880,8 +929,8 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                       Row(
                         children: [
                           const Icon(
-                            Icons.explore_outlined,
-                            size: 18,
+                            Icons.compass_calibration_outlined,
+                            size: 16,
                             color: AppColors.textSecondary,
                           ),
                           const SizedBox(width: 10),
@@ -890,13 +939,13 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
                               color: AppColors.textSecondary,
-                              fontSize: 14,
+                              fontSize: 13.5,
                             ),
                           ),
                         ],
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(left: 28, top: 4),
+                        padding: const EdgeInsets.only(left: 30, top: 3),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children:
@@ -907,7 +956,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                                 return Text(
                                   '• ${roomMap['room']}: ${roomMap['direction']}',
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 13.5,
                                     color: AppColors.textPrimary,
                                   ),
                                 );
@@ -918,45 +967,48 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                   ),
                 ),
               if (design.budgetMin != null || design.budgetMax != null) ...[
-                _buildSectionTitle('User\'s Estimated Design Budget'),
+                _buildSectionTitle('User\'s Design Budget Range'),
                 _buildInfoRow(
-                  'Min Budget:',
+                  'Min:',
                   design.budgetMin != null
                       ? currencyFormat.format(design.budgetMin)
                       : 'N/A',
-                  icon: Icons.money_off_csred_outlined,
+                  icon: Icons.remove_circle_outline_outlined,
                 ),
                 _buildInfoRow(
-                  'Max Budget:',
+                  'Max:',
                   design.budgetMax != null
                       ? currencyFormat.format(design.budgetMax)
                       : 'N/A',
-                  icon: Icons.monetization_on_outlined,
+                  icon: Icons.add_circle_outline_outlined,
                 ),
               ],
-              _buildSectionTitle('Design Descriptions (User Input)'),
+              _buildSectionTitle('User\'s Design Descriptions'),
               if (design.generalDescription != null &&
                   design.generalDescription!.isNotEmpty)
                 _buildInfoRow(
                   'General:',
                   design.generalDescription,
-                  icon: Icons.description_outlined,
+                  icon: Icons.notes_outlined,
                 ),
               if (design.interiorDesign != null &&
                   design.interiorDesign!.isNotEmpty)
                 _buildInfoRow(
                   'Interior:',
                   design.interiorDesign,
-                  icon: Icons.chair_outlined,
+                  icon: Icons.palette_outlined,
                 ),
               if (design.roomDistribution != null &&
                   design.roomDistribution!.isNotEmpty)
                 _buildInfoRow(
-                  'Distribution:',
+                  'Room Layout:',
                   design.roomDistribution,
-                  icon: Icons.grid_view_outlined,
+                  icon: Icons.space_dashboard_outlined,
                 ),
-            ] else if (project.status == 'Office Approved - Awaiting Details' &&
+            ] else if ((project.status ==
+                        'Office Approved - Awaiting Details' ||
+                    project.status ==
+                        'Details Submitted - Pending Office Review') &&
                 isUserOwner)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -964,7 +1016,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                   child: Column(
                     children: [
                       Text(
-                        "Design details have not been submitted yet.",
+                        "You haven't submitted design details yet.",
                         style: TextStyle(
                           fontStyle: FontStyle.italic,
                           color: Colors.grey[700],
@@ -972,8 +1024,8 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
-                        icon: const Icon(Icons.add_circle_outline),
-                        label: const Text("Add Design Details"),
+                        icon: const Icon(Icons.description_outlined),
+                        label: const Text("Submit Design Details Now"),
                         onPressed: _handleEditDesignDetails,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accent,
@@ -985,21 +1037,18 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                 ),
               )
             else
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10.0),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10.0),
                 child: Center(
                   child: Text(
-                    "No design details available for this project yet.",
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey[700],
-                    ),
+                    "No design details submitted for this project yet.",
+                    style: TextStyle(fontStyle: FontStyle.italic),
                   ),
                 ),
               ),
 
             if (project.office != null) ...[
-              _buildSectionTitle('Implementing Office'),
+              _buildSectionTitle('Assigned Office'),
               _buildEntityCard(
                 name: project.office!.name,
                 imageUrl: project.office!.profileImage,
@@ -1010,15 +1059,17 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                     context,
                     MaterialPageRoute(
                       builder:
-                          (context) => OfficerProfileScreen(
+                          (context) => OfficeProfileScreen(
                             officeId: project.office!.id,
+                            isOwner: true,
                           ),
                     ),
                   );
                 },
               ),
             ],
-            if (project.user != null) ...[
+            if (project.user != null && !isUserOwner) ...[
+              //  لا تعرض مالك المشروع إذا كان هو نفسه المستخدم الحالي
               _buildSectionTitle('Project Owner'),
               _buildEntityCard(
                 name: project.user!.name,
@@ -1028,33 +1079,62 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
               ),
             ],
 
-            _buildSectionTitle('Project Documents'),
+            _buildSectionTitle('Documents'),
             _buildDocumentItem(
-              'Agreement:',
+              'Agreement Document:',
               project.agreementFile,
               'agreement_file',
+              canUserUpload:
+                  isUserOwner &&
+                  project.status ==
+                      'Office Approved - Awaiting Details' /* أو حالة أخرى تسمح للمستخدم برفع الاتفاقية */,
             ),
             _buildDocumentItem(
-              'License:',
+              'License File:',
               project.licenseFile,
               'license_file',
-            ), // إذا كان المستخدم يرفعه
+              canUserUpload:
+                  isUserOwner &&
+                  project.status ==
+                      'Office Approved - Awaiting Details' /* أو حالة أخرى تسمح للمستخدم برفع الرخصة */,
+            ),
             _buildDocumentItem(
-              '2D Documents:',
+              '2D Architectural (from Office):',
+              project.document1,
+              'document_1',
+            ), // هذا ملف التقدم الأول
+            _buildDocumentItem(
+              '2D Structural (from Office):',
+              project.document2,
+              'document_2',
+            ),
+            _buildDocumentItem(
+              '2D Electrical (from Office):',
+              project.document3,
+              'document_3',
+            ),
+            _buildDocumentItem(
+              '2D Mechanical (from Office):',
+              project.document4,
+              'document_4',
+            ),
+            _buildDocumentItem(
+              'Final 2D Drawings (from Office):',
               project.document2D,
               'document_2d',
-            ),
+            ), // هذا هو document_2d من المشروع
             _buildDocumentItem(
-              '3D Model/Renders:',
+              'Optional 3D Model (from Office):',
               project.document3D,
               'document_3d',
-            ),
-
+            ), // هذا هو document_3d من المشروع
             // === أقسام خاصة بالمكتب ===
             if (isAssignedOffice) ...[
               _buildOfficePaymentSection(project),
               _buildOfficeProgressSection(project),
-              _buildOfficeDocumentUploadSection(project),
+              _buildOfficeDocumentUploadSectionForProgress(
+                project,
+              ), //  دالة جديدة لرفع ملفات التقدم
             ],
 
             // === أقسام خاصة بالمستخدم ===
@@ -1062,26 +1142,187 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
               _buildUserPaymentActionSection(project),
               _buildUser3DViewSection(project),
             ],
-
             const SizedBox(height: 30),
           ],
         ),
       ),
-      // FloatingActionButton يمكن إضافته هنا لأفعال سريعة
     );
   }
 
-  // === ويدجتس فرعية للأقسام الخاصة بالمكتب ===
+  Widget _buildOfficeDocumentUploadSectionForProgress(ProjectModel project) {
+    final bool canUpload = [
+      'In Progress',
+      'Details Submitted - Pending Office Review',
+      'Awaiting User Payment',
+      'Payment Proposal Sent',
+    ].contains(project.status);
+    if (!canUpload) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Upload Progress Documents (Office)'),
+        _buildUploadButtonForProgressStage(
+          project,
+          1,
+          'document_1',
+          'Architectural',
+        ), //  المرحلة 1 -> document_1
+        _buildUploadButtonForProgressStage(
+          project,
+          2,
+          'document_2',
+          'Structural',
+        ), //  المرحلة 2 -> document_2
+        _buildUploadButtonForProgressStage(
+          project,
+          3,
+          'document_3',
+          'Electrical',
+        ), //  المرحلة 3 -> document_3
+        _buildUploadButtonForProgressStage(
+          project,
+          4,
+          'document_4',
+          'Mechanical',
+        ), //  المرحلة 4 -> document_4
+        _buildUploadButtonForProgressStage(
+          project,
+          5,
+          'document_2d',
+          'Final 2D',
+        ), //  المرحلة 5 -> document_2d
+        _buildUploadButtonForProgressStage(
+          project,
+          -1,
+          'document_3d',
+          'Optional 3D Model',
+        ), //  -1 لتمييزه كاختياري
+        if (_isOfficeUploadingDoc)
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Center(child: LinearProgressIndicator()),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildUploadButtonForProgressStage(
+    ProjectModel project,
+    int stageNumber,
+    String documentKeyInModel,
+    String buttonLabel,
+  ) {
+    // استخراج المسار الحالي للملف من كائن المشروع
+    String? currentFilePath;
+    // هذه طريقة غير مباشرة للوصول للحقل، الأفضل إذا كان ProjectModel لديه طريقة للوصول للحقول بالاسم
+    // أو يمكنكِ عمل switch case هنا
+    if (documentKeyInModel == 'document_1') {
+      currentFilePath = project.document1;
+    } else if (documentKeyInModel == 'document_2')
+      // ignore: curly_braces_in_flow_control_structures
+      currentFilePath = project.document2;
+    else if (documentKeyInModel == 'document_3')
+      // ignore: curly_braces_in_flow_control_structures
+      currentFilePath = project.document3;
+    else if (documentKeyInModel == 'document_4')
+      // ignore: curly_braces_in_flow_control_structures
+      currentFilePath = project.document4;
+    else if (documentKeyInModel == 'document_2d')
+      // ignore: curly_braces_in_flow_control_structures
+      currentFilePath = project.document2D;
+    else if (documentKeyInModel == 'document_3d')
+      // ignore: curly_braces_in_flow_control_structures
+      currentFilePath = project.document3D;
+
+    String formFieldName = '';
+    if (documentKeyInModel == 'document_1') {
+      formFieldName = 'document1File';
+    } else if (documentKeyInModel == 'document_2')
+      formFieldName = 'document2File';
+    else if (documentKeyInModel == 'document_3')
+      formFieldName = 'document3File';
+    else if (documentKeyInModel == 'document_4')
+      formFieldName = 'document4File';
+    else if (documentKeyInModel == 'document_2d')
+      formFieldName = 'final2dFile';
+    else if (documentKeyInModel == 'document_3d')
+      formFieldName = 'optional3dFile';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              "Stage ${stageNumber > 0 ? stageNumber : ''}: $buttonLabel",
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            ),
+          ),
+          if (currentFilePath != null && currentFilePath.isNotEmpty)
+            IconButton(
+              icon: Icon(
+                Icons.visibility_outlined,
+                color: AppColors.accent,
+                size: 20,
+              ),
+              onPressed: () {
+                String fullUrl =
+                    currentFilePath!.startsWith('http')
+                        ? currentFilePath
+                        : '${Constants.baseUrl}/$currentFilePath';
+                logger.i("Viewing document: $fullUrl");
+                // TODO: launchUrl(Uri.parse(fullUrl));
+              },
+              tooltip: "View ${currentFilePath.split('/').last}",
+            )
+          else
+            const Icon(
+              Icons.description_outlined,
+              color: Colors.grey,
+              size: 20,
+            ), // أيقونة إذا لم يتم الرفع بعد
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed:
+                _isOfficeUploadingDoc
+                    ? null
+                    : () => _handleUploadProgressDocument(
+                      documentKeyInModel,
+                      formFieldName,
+                    ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  (currentFilePath != null && currentFilePath.isNotEmpty)
+                      ? Colors.orangeAccent
+                      : AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              textStyle: const TextStyle(fontSize: 11),
+            ),
+            child: Text(
+              (currentFilePath != null && currentFilePath.isNotEmpty)
+                  ? "Re-upload"
+                  : "Upload",
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOfficePaymentSection(ProjectModel project) {
+    // ... (نفس الكود من الرد السابق مع تعديل بسيط في validator إذا لزم الأمر)
     const SizedBoxtiny = SizedBox(height: 8);
-    //  يعرض فقط إذا كانت الحالة تسمح بذلك (مثلاً، بعد أن يرسل المستخدم التفاصيل)
     final bool canProposePayment =
         project.status == 'Details Submitted - Pending Office Review' ||
         project.status == 'Awaiting Payment Proposal by Office';
     final bool paymentAlreadyProposed =
         project.proposedPaymentAmount != null &&
         (project.status == 'Payment Proposal Sent' ||
-            project.status == 'Awaiting User Payment');
+            project.status == 'Awaiting User Payment' ||
+            project.status == 'In Progress' ||
+            project.status == 'Completed');
 
     if (!canProposePayment && !paymentAlreadyProposed) {
       return const SizedBox.shrink();
@@ -1099,23 +1340,38 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
           ),
           if (project.paymentNotes != null && project.paymentNotes!.isNotEmpty)
             _buildInfoRow(
-              'Payment Notes:',
+              'Office Notes:',
               project.paymentNotes,
               icon: Icons.notes_rounded,
             ),
           _buildInfoRow(
             'Payment Status:',
-            project.paymentStatus ?? 'Pending User Action',
+            project.paymentStatus ?? 'N/A',
             icon: Icons.credit_card_outlined,
           ),
-          const SizedBox(height: 10),
-          Text(
-            "Payment proposal has been sent to the user.",
-            style: TextStyle(
-              fontStyle: FontStyle.italic,
-              color: Colors.green.shade700,
+          if (project.paymentStatus?.toLowerCase().contains('pending') ??
+              true) //  إذا كان لا يزال pending
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                "Payment proposal has been sent to the user.",
+                style: TextStyle(
+                  fontStyle: FontStyle.italic,
+                  color: Colors.blue.shade700,
+                ),
+              ),
+            )
+          else if (project.paymentStatus?.toLowerCase() == 'paid')
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                "Payment received. Project is active.",
+                style: TextStyle(
+                  fontStyle: FontStyle.italic,
+                  color: Colors.green.shade700,
+                ),
+              ),
             ),
-          ),
         ] else if (canProposePayment) ...[
           TextFormField(
             controller: _paymentAmountController,
@@ -1123,13 +1379,20 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
             decoration: InputDecoration(
               labelText: 'Proposed Payment Amount (JOD)',
               prefixText: '${currencyFormat.currencySymbol} ',
-              border: const OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ), // تعديل الـ radius
               filled: true,
               fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 14,
+              ), // تعديل الحشو
             ),
             validator: (value) {
               if (value == null || value.isEmpty) return 'Amount is required';
-              if (double.tryParse(value) == null || double.parse(value) <= 0) {
+              final pValue = double.tryParse(value);
+              if (pValue == null || pValue <= 0) {
                 return 'Enter a valid positive amount';
               }
               return null;
@@ -1138,11 +1401,17 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
           SizedBoxtiny,
           TextFormField(
             controller: _paymentNotesController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Payment Notes (Optional)',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               filled: true,
               fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 14,
+              ),
             ),
             maxLines: 2,
           ),
@@ -1160,17 +1429,21 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                           color: Colors.white,
                         ),
                       )
-                      : const Icon(Icons.send_outlined, size: 18),
+                      : const Icon(
+                        Icons.send_and_archive_outlined,
+                        size: 18,
+                      ), // تغيير الأيقونة
               label: Text(
                 _isOfficeProposingPayment
                     ? 'Sending...'
-                    : 'Send Payment Proposal',
+                    : 'Send Payment Proposal to User',
               ),
               onPressed:
                   _isOfficeProposingPayment ? null : _handleProposePayment,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.accent,
                 foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
@@ -1180,21 +1453,26 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
   }
 
   Widget _buildOfficeProgressSection(ProjectModel project) {
-    //  يعرض فقط إذا كان المشروع في مراحل معينة (مثلاً، بعد الدفع وبدء العمل)
+    // ... (نفس الكود من الرد السابق مع تعديل label الـ slider)
     final bool canUpdateProgress = [
       'In Progress',
       'Details Submitted - Pending Office Review',
       'Awaiting User Payment',
       'Payment Proposal Sent',
     ].contains(project.status);
-    if (!canUpdateProgress && project.status != 'Completed')
+    if (!canUpdateProgress &&
+        project.status != 'Completed' &&
+        project.status != 'Pending Office Approval' &&
+        project.status != 'Office Approved - Awaiting Details') {
+      // لا تعرض إذا لم يبدأ العمل الفعلي
       return const SizedBox.shrink();
+    }
 
     int currentStage = project.progressStage ?? 0;
-    // التأكد من أن currentStage ضمن الحدود
     if (currentStage < 0) currentStage = 0;
-    if (currentStage >= _progressStageLabels.length)
+    if (currentStage >= _progressStageLabels.length) {
       currentStage = _progressStageLabels.length - 1;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1208,140 +1486,130 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                 style: TextStyle(color: Colors.white),
               ),
               backgroundColor: Colors.green,
-              avatar: Icon(Icons.check_circle, color: Colors.white),
+              avatar: Icon(Icons.verified_user_outlined, color: Colors.white),
+            ),
+          )
+        else if (project.status == 'Pending Office Approval' ||
+            project.status == 'Office Approved - Awaiting Details')
+          Center(
+            child: Chip(
+              label: Text(
+                "Waiting for project details submission or payment to start progress.",
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+              backgroundColor: Colors.grey.shade300,
+              avatar: Icon(
+                Icons.hourglass_empty_rounded,
+                color: AppColors.textSecondary,
+              ),
             ),
           )
         else ...[
+          Text(
+            "Current Stage: ${_progressStageLabels[currentStage]} (${((currentStage / (_progressStageLabels.length - 1)) * 100).toStringAsFixed(0)}%)",
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+              color: AppColors.textPrimary,
+            ),
+          ),
           Slider(
             value: currentStage.toDouble(),
             min: 0,
             max: (_progressStageLabels.length - 1).toDouble(),
             divisions: _progressStageLabels.length - 1,
-            label: _progressStageLabels[currentStage],
+            label:
+                _progressStageLabels[currentStage], // الـ label يظهر عند السحب
             activeColor: AppColors.accent,
             inactiveColor: AppColors.primary.withOpacity(0.3),
             onChanged:
                 _isOfficeUpdatingProgress
                     ? null
                     : (double value) {
-                      // لا نحدث الـ state هنا مباشرة، بل عند الضغط على زر
+                      // لا نحدث مباشرة هنا، بل بعد انتهاء السحب
                     },
             onChangeEnd: (double value) {
-              //  يُستدعى عند انتهاء المستخدم من السحب
               _handleUpdateProgress(value.toInt());
             },
           ),
-          Center(
-            child: Text(
-              'Current Stage: ${_progressStageLabels[currentStage]} (${((currentStage / (_progressStageLabels.length - 1)) * 100).toStringAsFixed(0)}%)',
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ),
           if (_isOfficeUpdatingProgress)
             const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Center(child: LinearProgressIndicator()),
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Center(child: LinearProgressIndicator(minHeight: 2)),
             ),
         ],
       ],
     );
   }
 
-  Widget _buildOfficeDocumentUploadSection(ProjectModel project) {
-    //  يسمح بالرفع إذا كان المكتب هو المنفذ والمشروع في حالة مناسبة
-    final bool canUpload = [
-      'In Progress',
-      'Details Submitted - Pending Office Review',
-      'Awaiting User Payment',
-      'Payment Proposal Sent',
-    ].contains(project.status);
-    if (!canUpload) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle('Upload Design Documents (Office)'),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            ElevatedButton.icon(
-              icon: const Icon(Icons.file_upload_outlined, size: 18),
-              label: const Text('Upload 2D'),
-              onPressed:
-                  _isOfficeUploadingDoc
-                      ? null
-                      : () => _handleUploadDocument('document_2d'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-            ),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.file_upload_outlined, size: 18),
-              label: const Text('Upload 3D'),
-              onPressed:
-                  _isOfficeUploadingDoc
-                      ? null
-                      : () => _handleUploadDocument('document_3d'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        if (_isOfficeUploadingDoc)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Center(child: LinearProgressIndicator()),
-          ),
-      ],
-    );
-  }
-
-  // === ويدجتس فرعية للأقسام الخاصة بالمستخدم ===
   Widget _buildUserPaymentActionSection(ProjectModel project) {
-    //  يعرض فقط إذا كان المستخدم هو المالك وحالة المشروع تتطلب الدفع
+    // ... (نفس الكود)
     final bool canMakePayment =
         (project.status == 'Payment Proposal Sent' ||
             project.status == 'Awaiting User Payment') &&
-        project.proposedPaymentAmount != null;
-    if (!canMakePayment) return const SizedBox.shrink();
+        project.proposedPaymentAmount != null &&
+        project.proposedPaymentAmount! > 0;
+    final bool isPaid =
+        project.paymentStatus?.toLowerCase() == 'paid' ||
+        project.status == 'In Progress' ||
+        project.status == 'Completed';
+
+    if (!canMakePayment && !isPaid) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle('Payment Required'),
+          _buildSectionTitle('Payment Information'),
           _buildInfoRow(
-            'Amount Due:',
-            currencyFormat.format(project.proposedPaymentAmount!),
-            icon: Icons.payment_rounded,
+            'Proposed Amount:',
+            project.proposedPaymentAmount != null
+                ? currencyFormat.format(project.proposedPaymentAmount!)
+                : 'N/A',
+            icon: Icons.monetization_on_outlined,
           ),
           if (project.paymentNotes != null && project.paymentNotes!.isNotEmpty)
             _buildInfoRow(
-              'Office Notes:',
+              'Office Notes on Payment:',
               project.paymentNotes,
-              icon: Icons.speaker_notes_outlined,
+              icon: Icons.sticky_note_2_outlined,
             ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.credit_card_rounded, size: 20),
-              label: const Text(
-                'Proceed to Payment',
-                style: TextStyle(fontSize: 16),
-              ),
-              onPressed: _handleMakePayment,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
+          _buildInfoRow(
+            'Payment Status:',
+            project.paymentStatus ?? 'Pending',
+            icon: Icons.credit_score_outlined,
           ),
+          const SizedBox(height: 12),
+          if (canMakePayment &&
+              !isPaid) //  فقط إذا كان الدفع مطلوباً ولم يتم بعد
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.payment_rounded, size: 20),
+                label: const Text(
+                  'Proceed to Payment',
+                  style: TextStyle(fontSize: 16),
+                ),
+                onPressed: _handleMakePayment,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            )
+          else if (isPaid)
+            Center(
+              child: Chip(
+                label: Text(
+                  "Payment Confirmed",
+                  style: TextStyle(color: Colors.white),
+                ),
+                backgroundColor: Colors.green,
+                avatar: Icon(Icons.price_check_rounded, color: Colors.white),
+              ),
+            ),
         ],
       ),
     );
@@ -1349,21 +1617,28 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
 
   Widget _buildUser3DViewSection(ProjectModel project) {
     //  يعرض فقط إذا كان المستخدم هو المالك وهناك ملف 3D
-    if (project.document3D == null || project.document3D!.isEmpty)
+    //  أو إذا كان المكتب هو الذي يشاهد وهناك ملف 3D
+    if (project.document3D == null || project.document3D!.isEmpty) {
       return const SizedBox.shrink();
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
       child: SizedBox(
         width: double.infinity,
         child: OutlinedButton.icon(
-          icon: const Icon(Icons.threed_rotation_rounded, size: 20),
+          icon: const Icon(
+            Icons.view_in_ar_rounded,
+            size: 20,
+          ), // تغيير الأيقونة
           label: const Text(
-            'View 3D Model (External)',
+            'View 3D Model (Launch External)',
             style: TextStyle(fontSize: 15),
           ),
-          onPressed: _handleView3D,
+          onPressed: _handleView3DViaPlanner5D, //  تغيير اسم الدالة
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: AppColors.accent),
+            side: BorderSide(
+              color: AppColors.accent.withOpacity(0.7),
+            ), // تعديل اللون
             foregroundColor: AppColors.accent,
             padding: const EdgeInsets.symmetric(vertical: 12),
           ),
@@ -1372,34 +1647,65 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     );
   }
 
-  // لعرض روابط المستندات
   Widget _buildDocumentItem(
     String label,
     String? filePath,
-    String documentKey,
-  ) {
+    String documentKey, {
+    bool canUserUpload = false,
+  }) {
+    bool isOfficeViewing =
+        _sessionUserType?.toLowerCase() == 'office' &&
+        _project?.officeId == _currentUser?.id;
+    //  تحديد إذا كان المكتب يمكنه رفع هذا النوع من الملفات
+    bool canOfficeUploadThisDocType = false;
+    if (isOfficeViewing) {
+      final officeUploadableDocs = [
+        'document_1',
+        'document_2',
+        'document_3',
+        'document_4',
+        'document_2d',
+        'document_3d',
+        'license_file',
+        'agreement_file',
+      ]; //  المكتب يمكنه رفع كل شيء تقريباً
+      canOfficeUploadThisDocType = officeUploadableDocs.contains(documentKey);
+    }
+    //  تحديد اسم حقل النموذج لـ multer
+    String formFieldName = documentKey; //  افتراضياً
+    if (documentKey == 'document_1') {
+      formFieldName = 'document1File';
+    } else if (documentKey == 'document_2')
+      formFieldName = 'document2File';
+    else if (documentKey == 'document_3')
+      formFieldName = 'document3File';
+    else if (documentKey == 'document_4')
+      formFieldName = 'document4File';
+    else if (documentKey == 'document_2d')
+      formFieldName = 'final2dFile'; //  لـ 2D النهائي
+    else if (documentKey == 'document_3d')
+      formFieldName = 'optional3dFile'; //  لـ 3D الاختياري
+    else if (documentKey == 'license_file')
+      formFieldName = 'licenseFile';
+    else if (documentKey == 'agreement_file')
+      formFieldName = 'agreementFile';
+
     if (filePath == null || filePath.isEmpty) {
-      //  إذا كان المكتب هو الذي يشاهد، يمكنه رفع الملف إذا لم يكن موجوداً
-      if (_sessionUserType?.toLowerCase() == 'office' &&
-          _project?.officeId == _currentUser?.id) {
-        final bool canUploadDoc = [
+      if ((canUserUpload && _currentUser?.id == _project?.userId) ||
+          (canOfficeUploadThisDocType && isOfficeViewing)) {
+        final bool canUploadNow = [
+          'Office Approved - Awaiting Details',
           'In Progress',
           'Details Submitted - Pending Office Review',
-          'Awaiting User Payment',
-          'Payment Proposal Sent',
         ].contains(_project?.status ?? '');
-        if (canUploadDoc &&
-            (documentKey == 'document_2d' ||
-                documentKey == 'document_3d' ||
-                documentKey ==
-                    'license_file' /* أو agreement_file إذا المكتب يرفعه*/ )) {
+        if (canUploadNow) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 4.0),
             child: Row(
               children: [
                 Icon(
                   Icons.attach_file_outlined,
-                  size: 18,
+                  size: 16,
                   color: Colors.grey.shade600,
                 ),
                 const SizedBox(width: 10),
@@ -1408,7 +1714,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
-                    fontSize: 14,
+                    fontSize: 13.5,
                   ),
                 ),
                 const Spacer(),
@@ -1416,9 +1722,17 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                   onPressed:
                       _isOfficeUploadingDoc
                           ? null
-                          : () => _handleUploadDocument(documentKey),
+                          : () => _handleUploadProgressDocument(
+                            documentKey,
+                            formFieldName,
+                          ),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(60, 20),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   child: Text(
-                    'Upload $label',
+                    'Upload',
                     style: TextStyle(fontSize: 12, color: AppColors.accent),
                   ),
                 ),
@@ -1429,27 +1743,26 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
       }
       return _buildInfoRow(
         label,
-        'Not available',
-        icon: Icons.file_present_outlined,
+        'Not yet uploaded',
+        icon: Icons.insert_drive_file_outlined,
+        onLinkTap: null,
       );
     }
     return _buildInfoRow(
       label,
-      filePath,
+      filePath.split('/').last, // عرض اسم الملف فقط
       icon: Icons.insert_drive_file_outlined,
       isLink: true,
       onLinkTap: () {
-        // TODO: Implement actual file opening/downloading logic
-        //  مؤقتاً، يمكن طباعة الـ URL الكامل إذا كان filePath هو مسار نسبي
         String fullUrl =
             filePath.startsWith('http')
                 ? filePath
                 : '${Constants.baseUrl}/$filePath';
         logger.i("Attempting to open document: $fullUrl");
-        // await launchUrl(Uri.parse(fullUrl)); // يتطلب url_launcher package
+        // TODO: await launchUrl(Uri.parse(fullUrl));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Link to: $fullUrl (Open link not implemented)"),
+            content: Text("Open: $fullUrl (Link tap not fully implemented)"),
           ),
         );
       },

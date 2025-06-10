@@ -2,7 +2,7 @@ import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
-import '../models/chat_model.dart';
+import '../../models/chat_model.dart';
 
 class ChatScreen extends StatefulWidget {
   final Contact contact;

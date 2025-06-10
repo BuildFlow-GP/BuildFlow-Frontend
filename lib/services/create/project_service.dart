@@ -10,6 +10,19 @@ import 'package:http_parser/http_parser.dart';
 
 import '../../models/userprojects/project_readonly_model.dart';
 
+Map<String, dynamic> _cleanRequestBody(Map<String, dynamic> data) {
+  // إنشاء نسخة جديدة من الـ map حتى لا نعدل الـ map الأصلية مباشرة
+  final Map<String, dynamic> cleanedData = Map.from(data);
+
+  cleanedData.removeWhere((key, value) {
+    if (value == null) return true; // إزالة القيم الـ null
+    if (value is String && value.isEmpty) return true; // إزالة النصوص الفارغة
+
+    return false;
+  });
+  return cleanedData;
+}
+
 class ProjectService {
   final String _baseUrl = Constants.baseUrl;
   final Logger logger = Logger();
@@ -335,6 +348,56 @@ class ProjectService {
     }
   }
 
+  //هاي حطيتها بس لتغيير الاسم للمشروع من قبل المكتب في صفحة تفاصيل المشروع
+
+  Future<ProjectModel> getbyofficeProjectDetails(int projectId) async {
+    final token = await Session.getToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/projects/$projectId'),
+      headers: _authHeaders(token, includeContentType: true),
+    );
+    _logResponse("getProjectDetails for $projectId", response);
+    if (response.statusCode == 200) {
+      //  الـ API يرجع الآن ProjectModel كاملاً مع projectDesign و user و office و company
+      return ProjectModel.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    }
+    _handleError(response, "fetch project details for ID $projectId");
+  }
+
+  //هاي حطيتها بس لتغيير الاسم للمشروع من قبل المكتب في صفحة تفاصيل المشروع
+  Future<ProjectModel> updatebyofficeProjectDetails(
+    int projectId,
+    Map<String, dynamic> dataToUpdate,
+  ) async {
+    final token = await Session.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found.');
+    }
+    final cleanedData = _cleanRequestBody(dataToUpdate);
+
+    logger.d(
+      "Updating project $projectId with data: ${jsonEncode(cleanedData)}",
+    );
+    final response = await http.put(
+      Uri.parse(
+        '$_baseUrl/projects/byoffice/$projectId',
+      ), //  يستدعي PUT /:id العام
+      headers: _authHeaders(token),
+      body: jsonEncode(cleanedData),
+    );
+    _logResponse("updateProjectDetails for $projectId", response);
+    if (response.statusCode == 200) {
+      final rd = jsonDecode(response.body) as Map<String, dynamic>;
+      if (rd.containsKey('project')) {
+        return ProjectModel.fromJson(rd['project'] as Map<String, dynamic>);
+      }
+      throw Exception('Project data not returned in update response.');
+    }
+    _handleError(response, "update project details");
+  }
+
   Future<ProjectModel> getProjectDetailscreate(int projectId) async {
     final token =
         await Session.getToken(); // التوكن قد يكون اختيارياً هنا إذا كانت تفاصيل المشروع عامة
@@ -560,191 +623,6 @@ class ProjectService {
       throw Exception(errorMessage);
     }
   }
-  /*
-  Future<String?> uploadProjectDocument2D(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) async {
-    final token = await Session.getToken();
-    if (token == null || token.isEmpty) {
-      throw Exception('Authentication token not found.');
-    }
-
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('$_baseUrl/projects/$projectId/upload-document2d'),
-    );
-    request.headers['Authorization'] = 'Bearer $token';
-
-    request.files.add(
-      http.MultipartFile.fromBytes(
-        'document2dFile', // اسم الحقل الذي يتوقعه multer في الـ backend
-        fileBytes,
-        filename: fileName,
-        contentType: MediaType(
-          'application',
-          'octet-stream',
-        ), // نوع عام، أو حددي نوع الملف إذا كان معروفاً دائماً
-        // (مثلاً application/pdf, image/vnd.dwg)
-        // multer سيتحقق من الـ mimetype بناءً على الفلتر
-      ),
-    );
-
-    logger.i("Uploading 2D document: $fileName for project $projectId");
-
-    var streamedResponse = await request.send();
-    var response = await http.Response.fromStream(streamedResponse);
-
-    logger.i("Upload 2D document response status: ${response.statusCode}");
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      logger.e("Upload 2D document response body: ${response.body}");
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-      // الـ API يرجع { message: '...', filePath: '...', project: { ... } }
-      // نهتم بـ filePath هنا
-      return responseData['filePath'] as String?;
-    } else {
-      String errorMessage = 'Failed to upload 2D document.';
-      try {
-        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-        errorMessage = responseData['message'] ?? errorMessage;
-      } catch (_) {}
-      throw Exception(errorMessage);
-    }
-  }*/
-
-  Future<String?> uploadProjectDocument({
-    required int projectId,
-    required Uint8List fileBytes,
-    required String fileName,
-    required String
-    apiEndpointSuffix, // مثل 'upload-agreement', 'upload-document2d'
-    required String formFieldName, // مثل 'agreementFile', 'document2dFile'
-  }) async {
-    final token = await Session.getToken();
-    if (token == null || token.isEmpty) {
-      throw Exception('Authentication token not found.');
-    }
-
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('$_baseUrl/projects/$projectId/$apiEndpointSuffix'),
-    );
-    request.headers['Authorization'] = 'Bearer $token';
-    request.files.add(
-      http.MultipartFile.fromBytes(
-        formFieldName,
-        fileBytes,
-        filename: fileName,
-        contentType: MediaType(
-          'application',
-          'octet-stream',
-        ), //  نوع عام، الـ backend يتحقق
-      ),
-    );
-
-    logger.i(
-      "Uploading $formFieldName: $fileName for project $projectId to $apiEndpointSuffix",
-    );
-    var streamedResponse = await request.send();
-    var response = await http.Response.fromStream(streamedResponse);
-    logger.i("uploadProjectDocument ($formFieldName)", error: response);
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-      return responseData['filePath'] as String?;
-    }
-    logger.e("upload $formFieldName", error: response);
-    return null; //  لإرضاء المحلل، _handleError يجب أن يرمي خطأ
-  }
-
-  Future<String?> uploadProjectDocument2D(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) {
-    return uploadProjectDocument(
-      projectId: projectId,
-      fileBytes: fileBytes,
-      fileName: fileName,
-      apiEndpointSuffix: 'upload-document2d',
-      formFieldName: 'document2dFile',
-    );
-  }
-
-  Future<String?> uploadProjectDocument3D(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) {
-    return uploadProjectDocument(
-      projectId: projectId,
-      fileBytes: fileBytes,
-      fileName: fileName,
-      apiEndpointSuffix: 'upload-document3d',
-      formFieldName: 'document3dFile',
-    );
-  }
-
-  Future<String?> uploadProjectDocument1(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) {
-    return uploadProjectDocument(
-      projectId: projectId,
-      fileBytes: fileBytes,
-      fileName: fileName,
-      apiEndpointSuffix:
-          'upload-document_1', //  أو upload-document1 حسب الـ route
-      formFieldName: 'document1File', //  أو document_1File
-    );
-  }
-
-  Future<String?> uploadProjectDocument2(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) {
-    return uploadProjectDocument(
-      projectId: projectId,
-      fileBytes: fileBytes,
-      fileName: fileName,
-      apiEndpointSuffix: 'upload-document_2',
-      formFieldName: 'document2File',
-    );
-  }
-
-  Future<String?> uploadProjectDocument3(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) {
-    return uploadProjectDocument(
-      projectId: projectId,
-      fileBytes: fileBytes,
-      fileName: fileName,
-      apiEndpointSuffix: 'upload-document_3',
-      formFieldName: 'document3File',
-    );
-  }
-
-  Future<String?> uploadProjectDocument4(
-    int projectId,
-    Uint8List fileBytes,
-    String fileName,
-  ) {
-    return uploadProjectDocument(
-      projectId: projectId,
-      fileBytes: fileBytes,
-      fileName: fileName,
-      apiEndpointSuffix: 'upload-document_4',
-      formFieldName: 'document4File',
-    );
-  }
 
   Future<ProjectModel> updateProjectProgress(int projectId, int stage) async {
     final token = await Session.getToken(); // توكن المكتب
@@ -787,5 +665,201 @@ class ProjectService {
       } catch (_) {}
       throw Exception(errorMessage);
     }
+  }
+
+  Future<String?> _uploadProjectDocumentInternal({
+    //  جعلتها خاصة ومستدعاة من الدوال العامة
+    required int projectId,
+    required Uint8List fileBytes,
+    required String fileName,
+    required String apiEndpointSuffix,
+    required String formFieldName,
+  }) async {
+    final token = await Session.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found.');
+    }
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/projects/$projectId/$apiEndpointSuffix'),
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        formFieldName,
+        fileBytes,
+        filename: fileName,
+        contentType: MediaType('application', 'octet-stream'),
+      ),
+    );
+    logger.i(
+      "Uploading $formFieldName: $fileName for project $projectId to $apiEndpointSuffix",
+    );
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
+    _logResponse("uploadProjectDocument ($formFieldName)", response);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      return responseData['filePath'] as String?;
+    }
+    _handleError(response, "upload $formFieldName for $apiEndpointSuffix");
+  }
+
+  Future<String?> uploadProjectLicense(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
+    return _uploadProjectDocumentInternal(
+      projectId: projectId,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      apiEndpointSuffix: 'upload-license',
+      formFieldName: 'licenseFile',
+    );
+  }
+
+  Future<String?> uploadArchitecturalDocument(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
+    // Doc 1
+    return _uploadProjectDocumentInternal(
+      projectId: projectId,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      apiEndpointSuffix: 'upload-document1',
+      formFieldName: 'document1File',
+    );
+  }
+
+  Future<String?> uploadStructuralDocument(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
+    // Doc 2
+    return _uploadProjectDocumentInternal(
+      projectId: projectId,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      apiEndpointSuffix: 'upload-document2',
+      formFieldName: 'document2File',
+    );
+  }
+
+  Future<String?> uploadElectricalDocument(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
+    // Doc 3
+    return _uploadProjectDocumentInternal(
+      projectId: projectId,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      apiEndpointSuffix: 'upload-document3',
+      formFieldName: 'document3File',
+    );
+  }
+
+  Future<String?> uploadMechanicalDocument(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
+    // Doc 4
+    return _uploadProjectDocumentInternal(
+      projectId: projectId,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      apiEndpointSuffix: 'upload-document4',
+      formFieldName: 'document4File',
+    );
+  }
+
+  Future<String?> uploadFinal2DDocument(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
+    // Doc 5 (2D Final)
+    return _uploadProjectDocumentInternal(
+      projectId: projectId,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      apiEndpointSuffix: 'upload-final2d',
+      formFieldName: 'final2dFile',
+    );
+  }
+
+  Future<String?> uploadOptional3DDocument(
+    int projectId,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
+    return _uploadProjectDocumentInternal(
+      projectId: projectId,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      apiEndpointSuffix: 'upload-optional3d',
+      formFieldName: 'optional3dFile',
+    );
+  }
+
+  Map<String, String> _authHeaders(
+    String? token, {
+    bool includeContentType = true,
+  }) {
+    /* ... */
+    final headers = <String, String>{};
+    if (includeContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    return headers;
+  }
+
+  void _logResponse(String functionName, http.Response response) {
+    /* ... */
+    logger.d("$functionName - Status: ${response.statusCode}");
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      logger.e("$functionName - Body: ${response.body}");
+    } else {
+      logger.i(
+        "$functionName - Body (Success): ${response.body.length > 300 ? '${response.body.substring(0, 300)}...' : response.body}",
+      ); // زيادة الحد قليلاً
+    }
+  }
+
+  Never _handleError(http.Response response, String operation) {
+    /* ... */
+    String errorMessage = 'Failed to $operation.';
+    // ... (باقي الكود كما هو)
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      errorMessage =
+          'Authentication/Authorization failed for $operation. Please log in again or check permissions.';
+    } else if (response.statusCode == 404) {
+      errorMessage = 'Resource not found for $operation.';
+    } else {
+      try {
+        final responseBody = jsonDecode(response.body) as Map<String, dynamic>;
+        errorMessage =
+            responseBody['message'] ?? responseBody['error'] ?? errorMessage;
+        if (responseBody['details'] != null &&
+            responseBody['details'] is List) {
+          errorMessage +=
+              "\nDetails: ${(responseBody['details'] as List).join(', ')}";
+        } else if (responseBody['errors'] != null &&
+            responseBody['errors'] is List) {
+          errorMessage +=
+              "\nDetails: ${(responseBody['errors'] as List).map((e) => e is Map ? e['message'] : e.toString()).join(', ')}";
+        }
+      } catch (_) {}
+    }
+    throw Exception(errorMessage);
   }
 }
