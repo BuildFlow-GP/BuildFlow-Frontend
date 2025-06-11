@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 import 'package:logger/logger.dart';
 
-import '../../services/create/planner_5d_viewer_screen.dart';
+import 'planner_5d_viewer_screen.dart';
 import '../../services/create/project_service.dart'; // تم تغيير المسار
 import '../../services/session.dart';
 import '../../models/Basic/project_model.dart'; // الموديل المحدث الذي أرسلتيه
@@ -18,12 +18,9 @@ import '../../models/Basic/project_model.dart'; // الموديل المحدث �
 import '../../themes/app_colors.dart';
 import '../../utils/constants.dart';
 
-// شاشات للانتقال إليها
 import 'project_description.dart'; // لتعديل وصف التصميم
 import 'payment_screen.dart'; //  للدفع (TODO)
 import '../Profiles/office_profile.dart'; // لعرض بروفايل المكتب
-// import '../ReadonlyProfiles/user_readonly_profile.dart'; // لعرض بروفايل المستخدم (إذا لزم الأمر)
-// import 'planner_5d_viewer_screen.dart'; // للـ 3D (TODO)
 
 final Logger logger = Logger(
   printer: PrettyPrinter(methodCount: 1, errorMethodCount: 5),
@@ -534,23 +531,55 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     final String? projectPlannerUrl =
         _project!.planner5dUrl; //  ✅  افترضي أن هذا الحقل موجود
 
-    if (projectPlannerUrl != null && projectPlannerUrl.isNotEmpty) {
-      logger.i("Navigating to Planner 5D URL: $projectPlannerUrl");
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder:
-              (context) => Planner5DViewerScreen(plannerUrl: projectPlannerUrl),
-        ),
-      );
-    } else {
-      logger.w(
-        "Planner 5D URL is not available for project ${widget.projectId}",
-      );
+    if (_project == null || _project!.planner5dUrl == null) {
+      logger.w("Planner 5D URL is null or project data not loaded.");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("3D view link is not available for this project yet."),
-        ),
+        const SnackBar(content: Text("3D view link is not available.")),
+      );
+      return;
+    }
+
+    String cleanedUrl = _project!.planner5dUrl!
+        .trim()
+        .replaceAll('\n', '')
+        .replaceAll('\r', '');
+
+    logger.i(
+      "Type of cleanedUrl: ${cleanedUrl.runtimeType}",
+    ); // ✅✅✅ أضيفي هذا ✅✅✅
+    logger.i(
+      "Cleaned Planner 5D URL for WebView: '$cleanedUrl'",
+    ); //  أضيفي علامات اقتباس للتأكد من عدم وجود مسافات خفية
+
+    if (cleanedUrl.isNotEmpty &&
+        (cleanedUrl.startsWith('http://') ||
+            cleanedUrl.startsWith('https://'))) {
+      try {
+        Uri testUri = Uri.parse(cleanedUrl); //  ✅✅✅ اختبار Uri.parse ✅✅✅
+        logger.i(
+          "Uri.parse successful. Scheme: ${testUri.scheme}, Host: ${testUri.host}, Path: ${testUri.path}, IsAbsolute: ${testUri.isAbsolute}",
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Planner5DViewerScreen(plannerUrl: cleanedUrl),
+          ),
+        );
+      } catch (e, s) {
+        logger.e(
+          "Error during Uri.parse('$cleanedUrl')",
+          error: e,
+          stackTrace: s,
+        ); // ✅✅✅
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error parsing 3D link: ${e.toString()}")),
+        );
+      }
+    } else {
+      logger.e("Invalid or empty URL after cleaning: '$cleanedUrl'");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("3D view link is improperly formatted.")),
       );
     }
   }

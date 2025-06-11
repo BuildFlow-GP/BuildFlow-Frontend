@@ -36,6 +36,7 @@ dependencies:
   firebase_storage: ^11.5.6
   flutter_braintree: ^4.0.0
   webview_flutter: ^4.7.0 #  أو أحدث إصدار متوافق
+  webview_flutter_web: ^0.2.2+3 
 
 
   get: ^4.6.6
