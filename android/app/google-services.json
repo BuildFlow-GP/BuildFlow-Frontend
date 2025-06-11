@@ -1,0 +1,32 @@
+{
+  "project_info": {
+    "project_number": "104630339154",
+    "project_id": "buildflow-gp",
+    "storage_bucket": "buildflow-gp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:104630339154:android:98e9852f24ed70ae3e418b",
+        "android_client_info": {
+          "package_name": "com.example.buildflow_frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCF8aT2ZlAu4mhi6wb0g8CDX_tKF4eWmy4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  
+
+  "configuration_version": "1"
+  
+}

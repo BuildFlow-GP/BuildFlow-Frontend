@@ -1,30 +1,30 @@
-// screens/project_details_view_screen.dart
+// screens/Design/my_project_details.dart (أو اسم ملفك الصحيح)
 import 'package:buildflow_frontend/models/Basic/user_model.dart';
-import 'package:buildflow_frontend/services/create/user_update_service.dart'; //  للحصول على المستخدم الحالي
+import 'package:buildflow_frontend/services/create/project_design_service.dart'; // للتعديل على تفاصيل التصميم
+import 'package:buildflow_frontend/services/create/user_update_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:file_picker/file_picker.dart'; //  لرفع الملفات
-import 'dart:typed_data'; //  لـ Uint8List
+import 'package:file_picker/file_picker.dart';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io'; //  لـ File على الموبايل
-
-import '../../services/create/project_service.dart';
-import '../../services/create/project_design_service.dart';
-import '../../services/session.dart'; //  للحصول على المستخدم الحالي
-import '../../models/Basic/project_model.dart';
-
-import '../../themes/app_colors.dart'; //  لتنسيق الألوان
-import '../../utils/constants.dart'; //  لـ BASE_URL إذا احتجتِ لصور المشروع مباشرة
-
-//  شاشات للانتقال إليها
-import 'project_description.dart'; //  لتعديل وصف التصميم
-// import 'payment_screen.dart'; //  شاشة الدفع (ستحتاجين لإنشائها)
-import '../ReadonlyProfiles/office_readonly_profile.dart'; // لعرض بروفايل المكتب
-
-//  للتوضيح، سأضع Logger هنا، يمكنكِ استخدام logger instance الخاص بكِ
+import 'dart:io';
 import 'package:logger/logger.dart';
 
-final logger = Logger();
+import 'planner_5d_viewer_screen.dart';
+import '../../services/create/project_service.dart'; // تم تغيير المسار
+import '../../services/session.dart';
+import '../../models/Basic/project_model.dart'; // الموديل المحدث الذي أرسلتيه
+
+import '../../themes/app_colors.dart';
+import '../../utils/constants.dart';
+
+import 'project_description.dart'; // لتعديل وصف التصميم
+import 'payment_screen.dart'; //  للدفع (TODO)
+import '../Profiles/office_profile.dart'; // لعرض بروفايل المكتب
+
+final Logger logger = Logger(
+  printer: PrettyPrinter(methodCount: 1, errorMethodCount: 5),
+);
 
 class ProjectDetailsViewScreen extends StatefulWidget {
   final int projectId;
@@ -38,44 +38,71 @@ class ProjectDetailsViewScreen extends StatefulWidget {
 class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
   final ProjectService _projectService = ProjectService();
   // ignore: unused_field
-  final ProjectDesignService _projectDesignService =
-      ProjectDesignService(); //  للتعديل المحتمل
-  final UserService _userService = UserService(); //  للحصول على المستخدم الحالي
+  final ProjectDesignService _projectDesignService = ProjectDesignService();
+  final UserService _userService = UserService();
+
   ProjectModel? _project;
-  UserModel? _currentUser; //  لتحديد دور المستخدم الحالي
+  UserModel? _currentUser;
+  String? _sessionUserType;
 
   bool _isLoading = true;
   String? _error;
 
-  //  حالات للـ UI الخاص بالمكتب
+  // حالات UI للمكتب
   bool _isOfficeProposingPayment = false;
   bool _isOfficeUpdatingProgress = false;
-  bool _isOfficeUploadingDoc = false;
+  bool _isOfficeUploadingFile = false; //  حالة عامة لرفع أي ملف من المكتب
   bool _isOfficeEditingName = false;
 
   final TextEditingController _paymentAmountController =
       TextEditingController();
   final TextEditingController _paymentNotesController = TextEditingController();
-  final TextEditingController _projectNameController =
-      TextEditingController(); //  لتعديل اسم المشروع
+  late TextEditingController
+  _projectNameController; //  سيتم تهيئته في initState
 
-  //  لتقدم المشروع (مثال مبسط، يمكنكِ جعله أكثر تفصيلاً)
   final List<String> _progressStageLabels = [
-    "Initial Request", // Stage 0
-    "Design Phase", // Stage 1
-    "2D Drafting", // Stage 2
-    "3D Modeling", // Stage 3
-    "Revisions", // Stage 4
-    "Final Delivery", // Stage 5
+    "Kick-off", // Stage 0
+    "Architectural Design", // Stage 1 (يرفع architectural_file)
+    "Structural Design", // Stage 2 (يرفع structural_file)
+    "Electrical Design", // Stage 3 (يرفع electrical_file)
+    "Mechanical Design", // Stage 4 (يرفع mechanical_file)
+    "Final 2D Drawings", // Stage 5 (يرفع document_2d)
   ];
-  // int _currentProgressStage = 0; // سيتم أخذه من _project.progressStage
-  String? _sessionUserType;
+  //  أسماء حقول الملفات في ProjectModel لمراحل التقدم (للمكتب)
+  //  و formFieldName الذي يتوقعه multer
+  final Map<int, Map<String, String>> _officeProgressFileMapping = {
+    1: {
+      'dbField': 'architectural_file',
+      'formField': 'architecturalFile',
+      'label': 'Architectural Docs',
+    },
+    2: {
+      'dbField': 'structural_file',
+      'formField': 'structuralFile',
+      'label': 'Structural Docs',
+    },
+    3: {
+      'dbField': 'electrical_file',
+      'formField': 'electricalFile',
+      'label': 'Electrical Docs',
+    },
+    4: {
+      'dbField': 'mechanical_file',
+      'formField': 'mechanicalFile',
+      'label': 'Mechanical Docs',
+    },
+    5: {
+      'dbField': 'document_2d',
+      'formField': 'final2dFile',
+      'label': 'Final 2D Drawings',
+    },
+  };
 
   @override
   void initState() {
     super.initState();
-    _loadAllProjectData();
-    _loadSessionUserType();
+    _projectNameController = TextEditingController(); // تهيئة هنا
+    _loadInitialData();
   }
 
   @override
@@ -86,72 +113,70 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     super.dispose();
   }
 
-  Future<void> _loadSessionUserType() async {
-    _sessionUserType =
-        await Session.getUserType(); //  افترض أن Session.getUserType() موجودة
-    if (mounted) setState(() {});
-  }
-
-  Future<void> _loadAllProjectData({bool showLoading = true}) async {
+  Future<void> _loadInitialData({bool showLoadingIndicator = true}) async {
     if (!mounted) return;
-    if (showLoading) {
+    if (showLoadingIndicator) {
       setState(() => _isLoading = true);
     }
     _error = null;
 
     try {
       final results = await Future.wait([
-        _projectService.getProjectDetailscreate(
-          widget.projectId,
-        ), //  يفترض أن هذه ترجع ProjectModel كامل
-        _userService
-            .getCurrentUserDetails(), //  للحصول على المستخدم الحالي وتحديد دوره
+        _projectService.getbyofficeProjectDetails(widget.projectId),
+        _userService.getCurrentUserDetails(),
+        Session.getUserType(),
       ]);
 
       if (mounted) {
         setState(() {
-          _project = results[0] as ProjectModel;
-          _currentUser = results[1] as UserModel;
+          _project = results[0] as ProjectModel?; //  جعل الـ cast اختياري
+          _currentUser = results[1] as UserModel?;
+          _sessionUserType = results[2] as String?;
+
           if (_project != null) {
             _projectNameController.text = _project!.name;
-            // _currentProgressStage = _project!.progressStage ?? 0;
             if (_project!.proposedPaymentAmount != null) {
               _paymentAmountController.text = _project!.proposedPaymentAmount!
                   .toStringAsFixed(2);
             }
             _paymentNotesController.text = _project!.paymentNotes ?? '';
+          } else {
+            _error = "Project data could not be loaded.";
           }
           _isLoading = false;
         });
       }
     } catch (e, s) {
       logger.e(
-        "Error loading project details for view",
+        "Error loading project details for view screen",
         error: e,
         stackTrace: s,
       );
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error =
+              "Failed to load project data. Please try again. (${e.toString()})";
           _isLoading = false;
         });
       }
     }
   }
 
-  // === دوال خاصة بالمكتب ===
+  // === دوال الأفعال للمكتب ===
   Future<void> _handleProposePayment() async {
     if (_isOfficeProposingPayment || _project == null) return;
     final amount = double.tryParse(_paymentAmountController.text);
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a valid payment amount.")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter a valid payment amount.")),
+        );
+      }
       return;
     }
     setState(() => _isOfficeProposingPayment = true);
     try {
-      await _projectService.proposePayment(
+      final updatedProject = await _projectService.proposePayment(
         widget.projectId,
         amount,
         _paymentNotesController.text,
@@ -163,9 +188,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        _loadAllProjectData(
-          showLoading: false,
-        ); //  تحديث البيانات بدون إظهار شاشة تحميل كاملة
+        setState(() => _project = updatedProject);
       }
     } catch (e) {
       logger.e("Error proposing payment", error: e);
@@ -179,71 +202,95 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     }
   }
 
-  Future<void> _handleUploadDocument(String documentType) async {
-    // documentType: 'document_2d' or 'document_3d'
-    if (_isOfficeUploadingDoc || _project == null) return;
+  Future<void> _handleOfficeUploadFile(
+    String dbFieldKey,
+    String formFieldName,
+    String friendlyName,
+  ) async {
+    if (_isOfficeUploadingFile || _project == null) return;
 
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      //  يمكنكِ تحديد allowedExtensions بشكل أكثر دقة لكل نوع
       allowedExtensions:
-          documentType == 'document_2d'
-              ? ['pdf', 'dwg', 'zip']
-              : ['jpg', 'png', 'skp', 'max', 'obj', 'fbx', 'zip'],
+          (dbFieldKey == 'document_3d') //  الـ 3D الاختياري من المكتب
+              ? ['skp', 'max', 'obj', 'fbx', 'glb', 'gltf', 'zip']
+              : ['pdf', 'dwg', 'zip', 'jpg', 'png'],
       withData: kIsWeb,
     );
 
     if (result != null) {
       PlatformFile file = result.files.single;
-      //  يمكنكِ إضافة تحقق من حجم الملف هنا إذا أردتِ
-      if (file.size > 15 * 1024 * 1024) {
-        // مثال: 15MB
+      final fileSizeLimit =
+          (dbFieldKey == 'document_3d')
+              ? (50 * 1024 * 1024)
+              : (10 * 1024 * 1024); // 50MB for 3D, 10MB for others
+      if (file.size > fileSizeLimit) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("File is too large (max 15MB).")),
+            SnackBar(
+              content: Text(
+                "File is too large (max ${fileSizeLimit / (1024 * 1024)}MB).",
+              ),
+            ),
           );
         }
         return;
       }
-
       Uint8List? fileBytes;
       if (kIsWeb) {
         fileBytes = file.bytes;
-      } else {
-        if (file.path != null) fileBytes = await File(file.path!).readAsBytes();
+      } else if (file.path != null) {
+        fileBytes = await File(file.path!).readAsBytes();
       }
 
       if (fileBytes != null) {
-        setState(() => _isOfficeUploadingDoc = true);
+        setState(() => _isOfficeUploadingFile = true);
         try {
-          //  uploadProjectDocument يجب أن تقبل documentType
-          await _projectService.uploadProjectDocument2D(
-            widget.projectId,
-            fileBytes,
-            file.name,
-          );
-          if (mounted) {
+          String? uploadedPath;
+          //  استدعاء دالة الرفع المناسبة من ProjectService
+          if (dbFieldKey == 'architectural_file') {
+            uploadedPath = await _projectService.uploadArchitecturalFile(
+              widget.projectId,
+              fileBytes,
+              file.name,
+            );
+          } else if (dbFieldKey == 'document_2d') {
+            uploadedPath = await _projectService.uploadFinal2DFile(
+              widget.projectId,
+              fileBytes,
+              file.name,
+            );
+          }
+          // else if (dbFieldKey == 'document_3d') uploadedPath = await _projectService.uploadOfficeOptional3DFile(widget.projectId, fileBytes, file.name);
+          //  أضيفي license_file و agreement_file إذا كان المكتب سيرفعها (عادة المستخدم)
+          else {
+            throw Exception(
+              "Unsupported document key for office upload: $dbFieldKey",
+            );
+          }
+
+          if (uploadedPath != null && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text("$documentType uploaded successfully!"),
+                content: Text("$friendlyName uploaded successfully!"),
                 backgroundColor: Colors.green,
               ),
             );
-            _loadAllProjectData(showLoading: false);
+            _loadInitialData(showLoadingIndicator: false);
           }
         } catch (e) {
-          logger.e("Error uploading $documentType", error: e);
+          logger.e("Error uploading $friendlyName", error: e);
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  "Failed to upload $documentType: ${e.toString()}",
+                  "Failed to upload $friendlyName: ${e.toString()}",
                 ),
               ),
             );
           }
         } finally {
-          if (mounted) setState(() => _isOfficeUploadingDoc = false);
+          if (mounted) setState(() => _isOfficeUploadingFile = false);
         }
       }
     }
@@ -251,14 +298,35 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
 
   Future<void> _handleUpdateProgress(int newStage) async {
     if (_isOfficeUpdatingProgress || _project == null) return;
-    //  يمكنكِ إضافة تحقق هنا لمنع الرجوع للخلف في المراحل إذا أردتِ
-    // if (newStage < (_project!.progressStage ?? 0) ) {
-    //   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cannot revert to a previous stage.")));
-    //   return;
-    // }
+    //  التأكد أن المرحلة الجديدة مرتبطة بملف تم رفعه (باستثناء المرحلة 0)
+    if (newStage > 0 && newStage <= 5) {
+      //  للمراحل 1-5 التي لها ملفات
+      String? docKey = _officeProgressFileMapping[newStage]?['dbField'];
+      if (docKey != null) {
+        String? filePath = _getProjectDocumentPath(docKey);
+        if (filePath == null || filePath.isEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  "Please upload the '${_officeProgressFileMapping[newStage]?['label']}' document before marking this stage as current.",
+                ),
+              ),
+            );
+          }
+          return;
+        }
+      }
+    } else if (newStage == 0 && (_project!.progressStage ?? 0) != 0) {
+      //  لا تسمحي بالرجوع للمرحلة 0 إذا لم تكن هي الحالية
+    }
+
     setState(() => _isOfficeUpdatingProgress = true);
     try {
-      await _projectService.updateProjectProgress(widget.projectId, newStage);
+      final updatedProject = await _projectService.updateProjectProgress(
+        widget.projectId,
+        newStage,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -266,7 +334,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        _loadAllProjectData(showLoading: false);
+        setState(() => _project = updatedProject);
       }
     } catch (e) {
       logger.e("Error updating progress", error: e);
@@ -286,22 +354,16 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
         _project == null) {
       return;
     }
-    if (_projectNameController.text == _project!.name) {
-      // لم يتغير الاسم
-      if (mounted) {
-        setState(
-          () => _isOfficeEditingName = false,
-        ); //  فقط لإخفاء مؤشر التحميل إذا كان هناك واحد
-      }
+    if (_projectNameController.text.trim() == _project!.name) {
+      if (mounted) setState(() => _isOfficeEditingName = false);
       return;
     }
-
     setState(() => _isOfficeEditingName = true);
     try {
-      // استخدام updateProjectDetails لتحديث الاسم فقط
-      await _projectService.updateProjectDetails(widget.projectId, {
-        'name': _projectNameController.text,
-      });
+      final updatedProject = await _projectService.updatebyofficeProjectDetails(
+        widget.projectId,
+        {'name': _projectNameController.text.trim()},
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -309,7 +371,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        _loadAllProjectData(showLoading: false); // تحديث البيانات
+        setState(() => _project = updatedProject);
       }
     } catch (e) {
       logger.e("Error updating project name", error: e);
@@ -319,8 +381,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
             content: Text("Failed to update project name: ${e.toString()}"),
           ),
         );
-        _projectNameController.text =
-            _project?.name ?? ''; //  إعادة الاسم القديم عند الفشل
+        _projectNameController.text = _project?.name ?? '';
       }
     } finally {
       if (mounted) setState(() => _isOfficeEditingName = false);
@@ -330,9 +391,9 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
   // === دوال خاصة بالمستخدم ===
   void _handleEditDesignDetails() {
     if (_project == null) return;
-    //  تحديد الحالات التي يمكن فيها للمستخدم تعديل تفاصيل التصميم
     const editableStates = [
-      'Office Approved - Awaiting Details' /*, 'Revision Requested by Office' */,
+      'Office Approved - Awaiting Details',
+      'Details Submitted - Pending Office Review',
     ];
     if (editableStates.contains(_project!.status)) {
       Navigator.push(
@@ -343,42 +404,109 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                   ProjectDescriptionScreen(projectId: widget.projectId),
         ),
       ).then((value) {
-        //  بعد العودة من شاشة تعديل التصميم، قومي بتحديث البيانات
         if (value == true || value == null) {
-          //  إذا تم أي تغيير أو تم الإغلاق
-          _loadAllProjectData();
+          //  افترض أن true تعني أن هناك تحديثاً
+          _loadInitialData(showLoadingIndicator: false);
         }
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "Design details cannot be edited in the current project status: ${_project!.status}",
+            "Design details cannot be edited in project status: '${_project!.status}'",
           ),
         ),
       );
     }
   }
 
+  Future<void> _handleUserUploadLicense() async {
+    if (_isOfficeUploadingFile || _project == null) {
+      return; //  استخدم نفس متغير التحميل مبدئياً
+    }
+
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'png'],
+      withData: kIsWeb,
+    );
+    if (result != null) {
+      PlatformFile file = result.files.single;
+      if (file.size > 5 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("File is too large (max 5MB).")),
+          );
+        }
+        return;
+      }
+      Uint8List? fileBytes;
+      if (kIsWeb) {
+        fileBytes = file.bytes;
+      } else if (file.path != null) {
+        fileBytes = await File(file.path!).readAsBytes();
+      }
+
+      if (fileBytes != null) {
+        setState(
+          () => _isOfficeUploadingFile = true,
+        ); //  إعادة استخدام نفس الـ flag
+        try {
+          final uploadedPath = await _projectService.uploadLicenseFile(
+            widget.projectId,
+            fileBytes,
+            file.name,
+          );
+          if (uploadedPath != null && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("License file uploaded successfully!"),
+                backgroundColor: Colors.green,
+              ),
+            );
+            _loadInitialData(showLoadingIndicator: false);
+          }
+        } catch (e) {
+          logger.e("Error uploading license file", error: e);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Failed to upload license: ${e.toString()}"),
+              ),
+            );
+          }
+        } finally {
+          if (mounted) setState(() => _isOfficeUploadingFile = false);
+        }
+      }
+    }
+  }
+
   void _handleMakePayment() {
     if (_project == null) return;
-    //  الانتقال لصفحة الدفع فقط إذا كان هناك اقتراح دفع والمستخدم لم يدفع بعد
     const paymentRequiredStates = [
       'Payment Proposal Sent',
       'Awaiting User Payment',
     ];
     if (paymentRequiredStates.contains(_project!.status) &&
-        _project!.proposedPaymentAmount != null) {
-      // Navigator.push(
-      //   context,
-      //   MaterialPageRoute(builder: (context) => PaymentScreen(projectId: widget.projectId, amount: _project!.proposedPaymentAmount!)),
-      // );
+        _project!.proposedPaymentAmount != null &&
+        _project!.proposedPaymentAmount! > 0) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => PaymentScreen(
+                projectId: widget.projectId,
+                totalAmount: _project!.proposedPaymentAmount!,
+              ),
+        ),
+      );
       logger.i(
         "TODO: Navigate to PaymentScreen for project ${widget.projectId}, amount: ${_project!.proposedPaymentAmount}",
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Payment Screen (Not Implemented Yet)")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Payment Screen")));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -390,14 +518,72 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     }
   }
 
-  void _handleView3D() {
-    logger.i("TODO: Implement 3D Viewer (e.g., Planner 5D integration)");
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("3D Viewer (Not Implemented Yet)")),
-    );
+  void _handleView3DViaPlanner5D() {
+    if (_project == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Project data not loaded yet.")),
+      );
+      return;
+    }
+
+    //  افترض أن لديك حقل planner_5d_url في ProjectModel
+    //  أو أنكِ ستبنين الـ URL هنا إذا كنتِ تحفظين الـ key فقط
+    final String? projectPlannerUrl =
+        _project!.planner5dUrl; //  ✅  افترضي أن هذا الحقل موجود
+
+    if (_project == null || _project!.planner5dUrl == null) {
+      logger.w("Planner 5D URL is null or project data not loaded.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("3D view link is not available.")),
+      );
+      return;
+    }
+
+    String cleanedUrl = _project!.planner5dUrl!
+        .trim()
+        .replaceAll('\n', '')
+        .replaceAll('\r', '');
+
+    logger.i(
+      "Type of cleanedUrl: ${cleanedUrl.runtimeType}",
+    ); // ✅✅✅ أضيفي هذا ✅✅✅
+    logger.i(
+      "Cleaned Planner 5D URL for WebView: '$cleanedUrl'",
+    ); //  أضيفي علامات اقتباس للتأكد من عدم وجود مسافات خفية
+
+    if (cleanedUrl.isNotEmpty &&
+        (cleanedUrl.startsWith('http://') ||
+            cleanedUrl.startsWith('https://'))) {
+      try {
+        Uri testUri = Uri.parse(cleanedUrl); //  ✅✅✅ اختبار Uri.parse ✅✅✅
+        logger.i(
+          "Uri.parse successful. Scheme: ${testUri.scheme}, Host: ${testUri.host}, Path: ${testUri.path}, IsAbsolute: ${testUri.isAbsolute}",
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Planner5DViewerScreen(plannerUrl: cleanedUrl),
+          ),
+        );
+      } catch (e, s) {
+        logger.e(
+          "Error during Uri.parse('$cleanedUrl')",
+          error: e,
+          stackTrace: s,
+        ); // ✅✅✅
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error parsing 3D link: ${e.toString()}")),
+        );
+      }
+    } else {
+      logger.e("Invalid or empty URL after cleaning: '$cleanedUrl'");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("3D view link is improperly formatted.")),
+      );
+    }
   }
 
-  // === ويدجتس البناء ===
   final dateFormat = DateFormat('dd MMM, yyyy');
   final currencyFormat = NumberFormat.currency(
     locale: 'ar_JO',
@@ -412,21 +598,26 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     bool isLink = false,
     VoidCallback? onLinkTap,
   }) {
-    // ... (نفس الكود من الرد السابق، مع تعديل بسيط لـ onLinkTap)
-    if (value == null || value.isEmpty) return const SizedBox.shrink();
+    if (value == null || value.isEmpty || value.toLowerCase() == 'n/a') {
+      return const SizedBox.shrink();
+    }
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (icon != null) ...[
-            Icon(
-              icon,
-              size: 18,
-              color: AppColors.textSecondary.withOpacity(0.7),
-            ),
-            const SizedBox(width: 10),
-          ],
+          SizedBox(
+            width: 24,
+            child:
+                icon != null
+                    ? Icon(
+                      icon,
+                      size: 16,
+                      color: AppColors.textSecondary.withOpacity(0.8),
+                    )
+                    : null,
+          ),
+          const SizedBox(width: 8),
           Expanded(
             flex: 2,
             child: Text(
@@ -434,7 +625,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
-                fontSize: 14,
+                fontSize: 13.5,
               ),
             ),
           ),
@@ -446,23 +637,34 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                       onTap:
                           onLinkTap ??
                           () {
-                            logger.i(
-                              "Tapped link: $value",
-                            ); /* TODO: Implement open link */
+                            String fullUrl =
+                                value.startsWith('http')
+                                    ? value
+                                    : '${Constants.baseUrl}/$value'; //  استخدم Constants.baseUrl
+                            logger.i("Tapped link: $fullUrl");
+                            // TODO: await launchUrl(Uri.parse(fullUrl));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Open: $fullUrl (Link tap not implemented)",
+                                ),
+                              ),
+                            );
                           },
                       child: Text(
                         value.split('/').last,
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.primary,
                           decoration: TextDecoration.underline,
-                          fontSize: 14,
+                          fontSize: 13.5,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     )
                     : Text(
                       value,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13.5,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -473,11 +675,16 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
   }
 
   Widget _buildSectionTitle(String title, {Widget? trailing}) {
-    // ... (نفس الكود من الرد السابق)
     return Padding(
-      padding: const EdgeInsets.only(top: 24.0, bottom: 10.0),
+      padding: const EdgeInsets.only(
+        top: 20.0,
+        bottom: 8.0,
+        left: 4.0,
+        right: 4.0,
+      ), //  إضافة padding أفقي بسيط
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             title,
@@ -494,12 +701,11 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
   }
 
   Widget _buildStatusChip(String? status) {
-    // ... (نفس الكود)
+    // ... (الكود كما هو)
     if (status == null || status.isEmpty) return const SizedBox.shrink();
-    Color statusColor = Colors.grey;
-    IconData statusIcon = Icons.hourglass_empty_rounded;
+    Color statusColor = Colors.grey.shade600;
+    IconData statusIcon = Icons.info_outline_rounded;
     switch (status.toLowerCase().replaceAll(' ', '').replaceAll('-', '')) {
-      // توحيد الحالة
       case 'pendingofficeapproval':
         statusColor = Colors.orange.shade700;
         statusIcon = Icons.hourglass_top_rounded;
@@ -522,7 +728,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
         statusIcon = Icons.payment_outlined;
         break;
       case 'inprogress':
-        statusColor = Colors.cyan.shade700;
+        statusColor = Colors.lightBlue.shade700;
         statusIcon = Icons.construction_rounded;
         break;
       case 'completed':
@@ -534,25 +740,21 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
         statusColor = Colors.red.shade700;
         statusIcon = Icons.cancel_rounded;
         break;
-      default:
-        statusIcon = Icons.info_outline_rounded;
     }
     return Chip(
-      avatar: Icon(statusIcon, color: Colors.white, size: 16),
+      avatar: Icon(statusIcon, color: Colors.white, size: 15),
       label: Text(
         status,
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 11,
+          fontSize: 10.5,
           fontWeight: FontWeight.w500,
         ),
       ),
       backgroundColor: statusColor,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      labelPadding: const EdgeInsets.only(
-        left: 4,
-        right: 6,
-      ), // تعديل الحشو ليكون متناسقاً
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      labelPadding: const EdgeInsets.only(left: 3, right: 5),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
@@ -563,36 +765,36 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     IconData defaultIcon = Icons.person,
     VoidCallback? onTap,
   }) {
-    // ... (نفس الكود، تأكدي أن imageUrl هو URL كامل)
+    // ... (الكود كما هو)
     ImageProvider? imageProv;
     if (imageUrl != null && imageUrl.isNotEmpty) {
       imageProv = NetworkImage(imageUrl);
     }
     return Card(
-      elevation: 1.5,
-      shadowColor: AppColors.shadow.withOpacity(0.1),
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      elevation: 1,
+      shadowColor: AppColors.shadow.withOpacity(0.05),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: ListTile(
         leading: CircleAvatar(
-          radius: 20,
+          radius: 18,
           backgroundImage: imageProv,
           onBackgroundImageError: imageProv != null ? (_, __) {} : null,
-          backgroundColor: AppColors.background, // لون خلفية مناسب
+          backgroundColor: AppColors.background,
           child:
               imageProv == null
-                  ? Icon(defaultIcon, size: 18, color: AppColors.textSecondary)
+                  ? Icon(defaultIcon, size: 16, color: AppColors.textSecondary)
                   : null,
         ),
         title: Text(
           name,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
+          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
         ),
         subtitle:
             typeLabel != null
                 ? Text(
                   typeLabel,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 )
                 : null,
         onTap: onTap,
@@ -601,29 +803,29 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                 ? Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 14,
-                  color: AppColors.accent,
+                  color: AppColors.accent.withOpacity(0.7),
                 )
                 : null,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 4,
-        ), // تعديل الحشو
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // ... (نفس build)
     return Scaffold(
       appBar: AppBar(
-        title: Text(_project?.name ?? 'Project Details'),
-        elevation: 1,
+        title: Text(
+          _project?.name ?? 'Loading Project...',
+          style: const TextStyle(fontSize: 18),
+        ), // تصغير الخط
+        elevation: 0.5, // تقليل الظل
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh Project Data',
-            onPressed: _isLoading ? null : () => _loadAllProjectData(),
+            onPressed: _isLoading ? null : () => _loadInitialData(),
           ),
         ],
       ),
@@ -634,621 +836,863 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
               ? Center(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    'Error: $_error',
-                    style: const TextStyle(color: Colors.red),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 40,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Error: $_error',
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: _loadInitialData,
+                        child: const Text("Retry"),
+                      ),
+                    ],
                   ),
                 ),
               )
               : _project == null
               ? const Center(
-                child: Text('Project data not found or could not be loaded.'),
-              )
+                child: Text(
+                  'Project data could not be loaded. Please go back and try again.',
+                ),
+              ) // رسالة أوضح
               : _buildProjectContentView(),
     );
   }
 
   Widget _buildProjectContentView() {
-    if (_project == null) {
-      return const Center(child: Text("No project data.")); //  تحقق إضافي
+    if (_project == null || _currentUser == null || _sessionUserType == null) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text(
+            "Required data is missing to display project details. Please try refreshing.",
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
     }
 
     final project = _project!;
-    final design = project.projectDesign;
-    final bool isUserOwner =
-        _currentUser?.id == project.userId &&
-        _sessionUserType?.toLowerCase() == 'individual';
-    final bool isAssignedOffice =
-        _currentUser?.id == project.officeId &&
-        _sessionUserType?.toLowerCase() == 'office';
+    final design =
+        project
+            .projectDesign; //  ProjectModel.projectDesign يجب أن يكون ProjectDesignModel?
+    final isUserOwner =
+        _currentUser!.id == project.userId &&
+        _sessionUserType!.toLowerCase() == 'individual';
+    final isAssignedOffice =
+        _currentUser!.id == project.officeId &&
+        _sessionUserType!.toLowerCase() == 'office';
 
     return RefreshIndicator(
-      // لإضافة السحب للتحديث
-      onRefresh:
-          () => _loadAllProjectData(
-            showLoading: false,
-          ), //  لا تظهري مؤشر التحميل الدائري هنا
+      onRefresh: () => _loadInitialData(showLoadingIndicator: false),
       child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(), //  لتمكين السحب دائماً
-        padding: const EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          70,
-        ), //  إضافة padding سفلي للزر العائم
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 70), // تعديل الحشو
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // === معلومات المشروع الأساسية ===
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child:
-                      isAssignedOffice &&
-                              project.status ==
-                                  'Pending Office Approval' //  السماح للمكتب بتعديل الاسم في هذه الحالة فقط
-                          ? Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _projectNameController,
-                                  decoration: const InputDecoration(
-                                    labelText: "Project Name",
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.zero,
-                                    isDense: true,
+            Card(
+              // تغليف كل قسم بـ Card
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child:
+                              (isAssignedOffice &&
+                                      [
+                                        'Pending Office Approval',
+                                        'Office Approved - Awaiting Details',
+                                        'Details Submitted - Pending Office Review',
+                                        'In Progress',
+                                      ].contains(
+                                        project.status,
+                                      )) // السماح بتعديل الاسم في حالات أكثر
+                                  ? Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          controller: _projectNameController,
+                                          decoration: const InputDecoration(
+                                            hintText: "Project Name",
+                                            border: InputBorder.none,
+                                            isDense: true,
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                  vertical: 4,
+                                                ),
+                                          ),
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.titleLarge?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.textPrimary,
+                                            fontSize: 18,
+                                          ),
+                                          onFieldSubmitted:
+                                              (value) =>
+                                                  _handleUpdateProjectName(),
+                                        ),
+                                      ),
+                                      _isOfficeEditingName
+                                          ? const SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                          : IconButton(
+                                            icon: Icon(
+                                              Icons.save_alt_rounded,
+                                              color: AppColors.accent,
+                                              size: 20,
+                                            ),
+                                            onPressed: _handleUpdateProjectName,
+                                            tooltip: "Save Name",
+                                          ),
+                                    ],
+                                  )
+                                  : Text(
+                                    project.name,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                      fontSize: 18,
+                                    ),
                                   ),
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                  onSubmitted:
-                                      (value) =>
-                                          _handleUpdateProjectName(), //  حفظ عند الضغط على enter
-                                ),
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  Icons.save_outlined,
-                                  color: AppColors.accent,
-                                  size: 20,
-                                ),
-                                onPressed:
-                                    _isOfficeEditingName
-                                        ? null
-                                        : _handleUpdateProjectName,
-                              ),
-                            ],
-                          )
-                          : Text(
-                            project.name,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                ),
-                const SizedBox(width: 8),
-                _buildStatusChip(project.status),
-              ],
-            ),
-            if (project.description!.isNotEmpty) ...[
-              const SizedBox(height: 12.0),
-              Text(
-                project.description ?? '',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 15,
-                ),
-              ),
-            ],
-
-            _buildSectionTitle('Key Information'),
-            _buildInfoRow(
-              'Budget:',
-              project.budget != null
-                  ? currencyFormat.format(project.budget)
-                  : 'N/A',
-              icon: Icons.attach_money_outlined,
-            ),
-            _buildInfoRow(
-              'Start Date:',
-              project.startDate != null
-                  ? dateFormat.format(project.startDate!.toLocal())
-                  : 'N/A',
-              icon: Icons.calendar_today_outlined,
-            ),
-            _buildInfoRow(
-              'Expected End Date:',
-              project.endDate != null
-                  ? dateFormat.format(project.endDate!.toLocal())
-                  : 'N/A',
-              icon: Icons.event_available_outlined,
-            ),
-            _buildInfoRow(
-              'Location:',
-              project.location!.isNotEmpty ? project.location : 'N/A',
-              icon: Icons.location_on_outlined,
-            ),
-            _buildInfoRow(
-              'Created:',
-              dateFormat.format(project.createdAt.toLocal()),
-              icon: Icons.history_rounded,
-            ),
-
-            if (project.landArea != null || project.plotNumber!.isNotEmpty) ...[
-              _buildSectionTitle('Land Details'),
-              _buildInfoRow(
-                'Land Area:',
-                project.landArea != null
-                    ? '${project.landArea!.toStringAsFixed(2)} m²'
-                    : 'N/A',
-                icon: Icons.square_foot_outlined,
-              ),
-              _buildInfoRow(
-                'Plot Number:',
-                project.plotNumber!.isNotEmpty ? project.plotNumber : 'N/A',
-                icon: Icons.map_outlined,
-              ),
-              _buildInfoRow(
-                'Basin Number:',
-                project.basinNumber!.isNotEmpty ? project.basinNumber : 'N/A',
-                icon: Icons.confirmation_number_outlined,
-              ),
-              _buildInfoRow(
-                'Land Location Detail:',
-                project.landLocation!.isNotEmpty ? project.landLocation : 'N/A',
-                icon: Icons.pin_drop_outlined,
-              ),
-            ],
-
-            _buildSectionTitle(
-              'Design Specifications',
-              trailing:
-                  (isUserOwner &&
-                          (project.status ==
-                              'Office Approved - Awaiting Details' /* || حالة طلب التعديل */ ))
-                      ? IconButton(
-                        icon: Icon(
-                          Icons.edit_outlined,
-                          color: AppColors.accent,
-                          size: 20,
                         ),
-                        onPressed: _handleEditDesignDetails,
-                        tooltip: "Edit Design Details",
-                      )
-                      : null,
-            ),
-            if (design != null) ...[
-              _buildInfoRow(
-                'Floors:',
-                design.floorCount?.toString() ?? 'N/A',
-                icon: Icons.layers_outlined,
-              ),
-              _buildInfoRow(
-                'Bedrooms:',
-                design.bedrooms?.toString() ?? 'N/A',
-                icon: Icons.king_bed_outlined,
-              ),
-              _buildInfoRow(
-                'Bathrooms:',
-                design.bathrooms?.toString() ?? 'N/A',
-                icon: Icons.bathtub_outlined,
-              ),
-              _buildInfoRow(
-                'Kitchens:',
-                design.kitchens?.toString() ?? 'N/A',
-                icon: Icons.kitchen_outlined,
-              ),
-              _buildInfoRow(
-                'Balconies:',
-                design.balconies?.toString() ?? 'N/A',
-                icon: Icons.balcony_outlined,
-              ),
-              _buildInfoRow(
-                'Kitchen Type:',
-                design.kitchenType ?? 'N/A',
-                icon: Icons.countertops_outlined,
-              ),
-              _buildInfoRow(
-                'Master Has Bathroom:',
-                design.masterHasBathroom == true
-                    ? 'Yes'
-                    : (design.masterHasBathroom == false ? 'No' : 'N/A'),
-                icon: Icons.wc_outlined,
-              ),
-              if (design.specialRooms != null &&
-                  design.specialRooms!.isNotEmpty)
-                _buildInfoRow(
-                  'Special Rooms:',
-                  design.specialRooms!.join(', '),
-                  icon: Icons.star_border_purple500_outlined,
+                        const SizedBox(width: 8),
+                        _buildStatusChip(project.status),
+                      ],
+                    ),
+                    if (project.description!.isNotEmpty) ...[
+                      const SizedBox(height: 8.0),
+                      Text(
+                        project.description!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                    const Divider(height: 20, thickness: 0.5),
+                    _buildInfoRow(
+                      'Est. Budget (User):',
+                      project.budget != null
+                          ? currencyFormat.format(project.budget)
+                          : 'N/A',
+                      icon: Icons.account_balance_wallet_outlined,
+                    ),
+                    _buildInfoRow(
+                      'Start Date:',
+                      project.startDate != null
+                          ? dateFormat.format(project.startDate!.toLocal())
+                          : 'N/A',
+                      icon: Icons.calendar_today_outlined,
+                    ),
+                    _buildInfoRow(
+                      'Expected End Date:',
+                      project.endDate != null
+                          ? dateFormat.format(project.endDate!.toLocal())
+                          : 'N/A',
+                      icon: Icons.event_busy_outlined,
+                    ),
+                    _buildInfoRow(
+                      'General Location:',
+                      project.location!.isNotEmpty ? project.location : 'N/A',
+                      icon: Icons.location_city_outlined,
+                    ),
+                    _buildInfoRow(
+                      'Created:',
+                      dateFormat.format(project.createdAt.toLocal()),
+                      icon: Icons.history_edu_outlined,
+                    ),
+                  ],
                 ),
-              if (design.directionalRooms != null &&
-                  design.directionalRooms!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+              ),
+            ),
+
+            if (project.landArea != null || project.plotNumber!.isNotEmpty)
+              Card(
+                elevation: 2,
+                margin: const EdgeInsets.only(bottom: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.explore_outlined,
-                            size: 18,
-                            color: AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            'Directional Rooms:',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                      _buildSectionTitle('Land Specifics'),
+                      _buildInfoRow(
+                        'Land Area:',
+                        project.landArea != null
+                            ? '${project.landArea!.toStringAsFixed(2)} m²'
+                            : 'N/A',
+                        icon: Icons.landscape_outlined,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 28, top: 4),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children:
-                              (design.directionalRooms! as List<dynamic>).map((
-                                e,
-                              ) {
-                                final roomMap = e as Map<String, dynamic>;
-                                return Text(
-                                  '• ${roomMap['room']}: ${roomMap['direction']}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppColors.textPrimary,
+                      _buildInfoRow(
+                        'Plot Number:',
+                        project.plotNumber!.isNotEmpty
+                            ? project.plotNumber
+                            : 'N/A',
+                        icon: Icons.signpost_outlined,
+                      ),
+                      _buildInfoRow(
+                        'Basin Number:',
+                        project.basinNumber!.isNotEmpty
+                            ? project.basinNumber
+                            : 'N/A',
+                        icon: Icons.confirmation_number_outlined,
+                      ),
+                      _buildInfoRow(
+                        'Land Location (Detail):',
+                        project.landLocation!.isNotEmpty
+                            ? project.landLocation
+                            : 'N/A',
+                        icon: Icons.explore_outlined,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            Card(
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle(
+                      'Design Specifications (User Input)',
+                      trailing:
+                          (isUserOwner &&
+                                  [
+                                    'Office Approved - Awaiting Details',
+                                    'Details Submitted - Pending Office Review',
+                                  ].contains(project.status))
+                              ? Tooltip(
+                                message: "Edit Design Details",
+                                child: InkWell(
+                                  onTap: _handleEditDesignDetails,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: Icon(
+                                      Icons.edit_note_rounded,
+                                      color: AppColors.accent,
+                                      size: 22,
+                                    ),
                                   ),
-                                );
-                              }).toList(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              if (design.budgetMin != null || design.budgetMax != null) ...[
-                _buildSectionTitle('User\'s Estimated Design Budget'),
-                _buildInfoRow(
-                  'Min Budget:',
-                  design.budgetMin != null
-                      ? currencyFormat.format(design.budgetMin)
-                      : 'N/A',
-                  icon: Icons.money_off_csred_outlined,
-                ),
-                _buildInfoRow(
-                  'Max Budget:',
-                  design.budgetMax != null
-                      ? currencyFormat.format(design.budgetMax)
-                      : 'N/A',
-                  icon: Icons.monetization_on_outlined,
-                ),
-              ],
-              _buildSectionTitle('Design Descriptions (User Input)'),
-              if (design.generalDescription != null &&
-                  design.generalDescription!.isNotEmpty)
-                _buildInfoRow(
-                  'General:',
-                  design.generalDescription,
-                  icon: Icons.description_outlined,
-                ),
-              if (design.interiorDesign != null &&
-                  design.interiorDesign!.isNotEmpty)
-                _buildInfoRow(
-                  'Interior:',
-                  design.interiorDesign,
-                  icon: Icons.chair_outlined,
-                ),
-              if (design.roomDistribution != null &&
-                  design.roomDistribution!.isNotEmpty)
-                _buildInfoRow(
-                  'Distribution:',
-                  design.roomDistribution,
-                  icon: Icons.grid_view_outlined,
-                ),
-            ] else if (project.status == 'Office Approved - Awaiting Details' &&
-                isUserOwner)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10.0),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Text(
-                        "Design details have not been submitted yet.",
-                        style: TextStyle(
-                          fontStyle: FontStyle.italic,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.add_circle_outline),
-                        label: const Text("Add Design Details"),
-                        onPressed: _handleEditDesignDetails,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.accent,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10.0),
-                child: Center(
-                  child: Text(
-                    "No design details available for this project yet.",
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey[700],
+                                ),
+                              )
+                              : null,
                     ),
-                  ),
-                ),
-              ),
-
-            if (project.office != null) ...[
-              _buildSectionTitle('Implementing Office'),
-              _buildEntityCard(
-                name: project.office!.name,
-                imageUrl: project.office!.profileImage,
-                typeLabel: project.office!.location,
-                defaultIcon: Icons.maps_home_work_outlined,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => OfficerProfileScreen(
-                            officeId: project.office!.id,
+                    if (design != null) ...[
+                      _buildInfoRow(
+                        'Floors:',
+                        design.floorCount?.toString() ?? 'N/A',
+                        icon: Icons.stairs_outlined,
+                      ),
+                      _buildInfoRow(
+                        'Bedrooms:',
+                        design.bedrooms?.toString() ?? 'N/A',
+                        icon: Icons.bed_outlined,
+                      ),
+                      _buildInfoRow(
+                        'Bathrooms:',
+                        design.bathrooms?.toString() ?? 'N/A',
+                        icon: Icons.bathtub_outlined,
+                      ),
+                      _buildInfoRow(
+                        'Kitchens:',
+                        design.kitchens?.toString() ?? 'N/A',
+                        icon: Icons.kitchen_outlined,
+                      ),
+                      _buildInfoRow(
+                        'Balconies:',
+                        design.balconies?.toString() ?? 'N/A',
+                        icon: Icons.balcony_outlined,
+                      ),
+                      _buildInfoRow(
+                        'Kitchen Type:',
+                        design.kitchenType ?? 'N/A',
+                        icon: Icons.restaurant_menu_outlined,
+                      ),
+                      _buildInfoRow(
+                        'Master Has Bathroom:',
+                        design.masterHasBathroom == true
+                            ? 'Yes'
+                            : (design.masterHasBathroom == false
+                                ? 'No'
+                                : 'N/A'),
+                        icon: Icons.wc_rounded,
+                      ),
+                      if (design.specialRooms != null &&
+                          design.specialRooms!.isNotEmpty)
+                        _buildInfoRow(
+                          'Special Rooms:',
+                          design.specialRooms!.join(', '),
+                          icon: Icons.meeting_room_outlined,
+                        ),
+                      if (design.directionalRooms != null &&
+                          design.directionalRooms!.isNotEmpty)
+                        Padding(
+                          /* ... directional rooms ... */
+                          padding: const EdgeInsets.symmetric(vertical: 6.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.compass_calibration_outlined,
+                                    size: 16,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Directional Rooms:',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textSecondary,
+                                      fontSize: 13.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 30,
+                                  top: 3,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children:
+                                      (design.directionalRooms!
+                                              as List<dynamic>)
+                                          .map((e) {
+                                            final roomMap =
+                                                e as Map<String, dynamic>;
+                                            return Text(
+                                              '• ${roomMap['room']}: ${roomMap['direction']}',
+                                              style: TextStyle(
+                                                fontSize: 13.5,
+                                                color: AppColors.textPrimary,
+                                              ),
+                                            );
+                                          })
+                                          .toList(),
+                                ),
+                              ),
+                            ],
                           ),
-                    ),
-                  );
-                },
+                        ),
+                      if (design.budgetMin != null ||
+                          design.budgetMax != null) ...[
+                        _buildSectionTitle('User\'s Design Budget Range'),
+                        _buildInfoRow(
+                          'Min:',
+                          design.budgetMin != null
+                              ? currencyFormat.format(design.budgetMin)
+                              : 'N/A',
+                          icon: Icons.remove_circle_outline_outlined,
+                        ),
+                        _buildInfoRow(
+                          'Max:',
+                          design.budgetMax != null
+                              ? currencyFormat.format(design.budgetMax)
+                              : 'N/A',
+                          icon: Icons.add_circle_outline_outlined,
+                        ),
+                      ],
+                      _buildSectionTitle('User\'s Design Descriptions'),
+                      if (design.generalDescription != null &&
+                          design.generalDescription!.isNotEmpty)
+                        _buildInfoRow(
+                          'General:',
+                          design.generalDescription,
+                          icon: Icons.notes_outlined,
+                        ),
+                      if (design.interiorDesign != null &&
+                          design.interiorDesign!.isNotEmpty)
+                        _buildInfoRow(
+                          'Interior:',
+                          design.interiorDesign,
+                          icon: Icons.palette_outlined,
+                        ),
+                      if (design.roomDistribution != null &&
+                          design.roomDistribution!.isNotEmpty)
+                        _buildInfoRow(
+                          'Room Layout:',
+                          design.roomDistribution,
+                          icon: Icons.space_dashboard_outlined,
+                        ),
+                    ] else if ((project.status ==
+                                'Office Approved - Awaiting Details' ||
+                            project.status ==
+                                'Details Submitted - Pending Office Review') &&
+                        isUserOwner)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10.0),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Text(
+                                "You haven't submitted design details yet.",
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              ElevatedButton.icon(
+                                icon: const Icon(Icons.description_outlined),
+                                label: const Text("Submit Design Details Now"),
+                                onPressed: _handleEditDesignDetails,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.accent,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10.0),
+                        child: Center(
+                          child: Text(
+                            "No design details submitted for this project yet.",
+                            style: TextStyle(fontStyle: FontStyle.italic),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ],
-            if (project.user != null) ...[
-              _buildSectionTitle('Project Owner'),
-              _buildEntityCard(
-                name: project.user!.name,
-                imageUrl: project.user!.profileImage,
-                typeLabel: project.user!.email,
-                defaultIcon: Icons.person_outline,
-              ),
-            ],
+            ),
 
-            _buildSectionTitle('Project Documents'),
-            _buildDocumentItem(
-              'Agreement:',
-              project.agreementFile,
-              'agreement_file',
-            ),
-            _buildDocumentItem(
-              'License:',
-              project.licenseFile,
-              'license_file',
-            ), // إذا كان المستخدم يرفعه
-            _buildDocumentItem(
-              '2D Documents:',
-              project.document2D,
-              'document_2d',
-            ),
-            _buildDocumentItem(
-              '3D Model/Renders:',
-              project.document3D,
-              'document_3d',
+            if (project.office != null || project.user != null)
+              Card(
+                elevation: 2,
+                margin: const EdgeInsets.only(bottom: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (project.office != null) ...[
+                        _buildSectionTitle('Assigned Office'),
+                        _buildEntityCard(
+                          name: project.office!.name,
+                          imageUrl: project.office!.profileImage,
+                          typeLabel: project.office!.location,
+                          defaultIcon: Icons.maps_home_work_outlined,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => OfficeProfileScreen(
+                                      officeId: project.office!.id,
+                                      isOwner: true,
+                                    ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                      if (project.user != null && !isUserOwner) ...[
+                        _buildSectionTitle('Project Owner'),
+                        _buildEntityCard(
+                          name: project.user!.name,
+                          imageUrl: project.user!.profileImage,
+                          typeLabel: project.user!.email,
+                          defaultIcon: Icons.person_outline,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+
+            Card(
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Documents'),
+                    _buildDocumentItem(
+                      'Agreement:',
+                      project.agreementFile,
+                      'agreement_file',
+                      canUserUpload:
+                          isUserOwner &&
+                          project.status ==
+                              'Office Approved - Awaiting Details',
+                    ),
+                    _buildDocumentItem(
+                      'License:',
+                      project.licenseFile,
+                      'license_file',
+                      canUserUpload:
+                          isUserOwner &&
+                          project.status !=
+                              'Office Approved - Awaiting Details',
+                    ),
+                    //  ملفات التقدم التي يرفعها المكتب
+                    _buildDocumentItem(
+                      'Architectural (Office):',
+                      project.architectural_file,
+                      'architectural_file',
+                    ),
+                    _buildDocumentItem(
+                      'Structural (Office):',
+                      project.structural_file,
+                      'structural_file',
+                    ),
+                    _buildDocumentItem(
+                      'Electrical (Office):',
+                      project.electrical_file,
+                      'electrical_file',
+                    ),
+                    _buildDocumentItem(
+                      'Mechanical (Office):',
+                      project.mechanical_file,
+                      'mechanical_file',
+                    ),
+                    _buildDocumentItem(
+                      'Final 2D (Office):',
+                      project.document2D,
+                      'document_2d',
+                    ),
+                    _buildDocumentItem(
+                      'Optional 3D (Office):',
+                      project.document3D,
+                      'document_3d',
+                    ),
+                  ],
+                ),
+              ),
             ),
 
             // === أقسام خاصة بالمكتب ===
             if (isAssignedOffice) ...[
               _buildOfficePaymentSection(project),
-              _buildOfficeProgressSection(project),
-              _buildOfficeDocumentUploadSection(project),
+              _buildOfficeProgressSection(project), //  يعرض الـ Slider والنسبة
+              _buildOfficeDocumentUploadSectionForProgress(
+                project,
+              ), //  يعرض أزرار رفع ملفات التقدم
             ],
 
             // === أقسام خاصة بالمستخدم ===
             if (isUserOwner) ...[
               _buildUserPaymentActionSection(project),
+              _buildUserProgressViewSection(
+                project,
+              ), //  ✅✅✅ قسم جديد لعرض التقدم لليوزر ✅✅✅
               _buildUser3DViewSection(project),
             ],
-
             const SizedBox(height: 30),
           ],
         ),
       ),
-      // FloatingActionButton يمكن إضافته هنا لأفعال سريعة
     );
   }
 
   // === ويدجتس فرعية للأقسام الخاصة بالمكتب ===
   Widget _buildOfficePaymentSection(ProjectModel project) {
+    /* ... نفس الكود ... */
     const SizedBoxtiny = SizedBox(height: 8);
-    //  يعرض فقط إذا كانت الحالة تسمح بذلك (مثلاً، بعد أن يرسل المستخدم التفاصيل)
     final bool canProposePayment =
         project.status == 'Details Submitted - Pending Office Review' ||
         project.status == 'Awaiting Payment Proposal by Office';
     final bool paymentAlreadyProposed =
         project.proposedPaymentAmount != null &&
         (project.status == 'Payment Proposal Sent' ||
-            project.status == 'Awaiting User Payment');
-
+            project.status == 'Awaiting User Payment' ||
+            project.status == 'In Progress' ||
+            project.status == 'Completed');
     if (!canProposePayment && !paymentAlreadyProposed) {
       return const SizedBox.shrink();
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle('Payment Proposal (Office)'),
-        if (paymentAlreadyProposed) ...[
-          _buildInfoRow(
-            'Proposed Amount:',
-            currencyFormat.format(project.proposedPaymentAmount!),
-            icon: Icons.price_check_rounded,
-          ),
-          if (project.paymentNotes != null && project.paymentNotes!.isNotEmpty)
-            _buildInfoRow(
-              'Payment Notes:',
-              project.paymentNotes,
-              icon: Icons.notes_rounded,
-            ),
-          _buildInfoRow(
-            'Payment Status:',
-            project.paymentStatus ?? 'Pending User Action',
-            icon: Icons.credit_card_outlined,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            "Payment proposal has been sent to the user.",
-            style: TextStyle(
-              fontStyle: FontStyle.italic,
-              color: Colors.green.shade700,
-            ),
-          ),
-        ] else if (canProposePayment) ...[
-          TextFormField(
-            controller: _paymentAmountController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: 'Proposed Payment Amount (JOD)',
-              prefixText: '${currencyFormat.currencySymbol} ',
-              border: const OutlineInputBorder(),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) return 'Amount is required';
-              if (double.tryParse(value) == null || double.parse(value) <= 0) {
-                return 'Enter a valid positive amount';
-              }
-              return null;
-            },
-          ),
-          SizedBoxtiny,
-          TextFormField(
-            controller: _paymentNotesController,
-            decoration: const InputDecoration(
-              labelText: 'Payment Notes (Optional)',
-              border: OutlineInputBorder(),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-            maxLines: 2,
-          ),
-          SizedBoxtiny,
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon:
-                  _isOfficeProposingPayment
-                      ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                      : const Icon(Icons.send_outlined, size: 18),
-              label: Text(
-                _isOfficeProposingPayment
-                    ? 'Sending...'
-                    : 'Send Payment Proposal',
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle('Payment Proposal (For Office)'),
+            if (paymentAlreadyProposed) ...[
+              _buildInfoRow(
+                'Proposed Amount:',
+                currencyFormat.format(project.proposedPaymentAmount!),
+                icon: Icons.price_check_rounded,
               ),
-              onPressed:
-                  _isOfficeProposingPayment ? null : _handleProposePayment,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
+              if (project.paymentNotes != null &&
+                  project.paymentNotes!.isNotEmpty)
+                _buildInfoRow(
+                  'Office Notes:',
+                  project.paymentNotes,
+                  icon: Icons.notes_rounded,
+                ),
+              _buildInfoRow(
+                'Payment Status:',
+                project.paymentStatus ?? 'N/A',
+                icon: Icons.credit_card_outlined,
               ),
-            ),
-          ),
-        ],
-      ],
+              if (project.paymentStatus?.toLowerCase().contains('pending') ??
+                  true)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    "Payment proposal has been sent to the user.",
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      color: Colors.blue.shade700,
+                      fontSize: 13,
+                    ),
+                  ),
+                )
+              else if (project.paymentStatus?.toLowerCase() == 'paid')
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    "Payment received. Project is active.",
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      color: Colors.green.shade700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+            ] else if (canProposePayment) ...[
+              TextFormField(
+                controller: _paymentAmountController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Propose Payment Amount (JOD)',
+                  prefixText: '${currencyFormat.currencySymbol} ',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Amount is required';
+                  }
+                  final pValue = double.tryParse(value);
+                  if (pValue == null || pValue <= 0) {
+                    return 'Enter a valid positive amount';
+                  }
+                  return null;
+                },
+              ),
+              SizedBoxtiny,
+              TextFormField(
+                controller: _paymentNotesController,
+                decoration: InputDecoration(
+                  labelText: 'Payment Notes (Optional)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                ),
+                maxLines: 2,
+              ),
+              SizedBoxtiny,
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon:
+                      _isOfficeProposingPayment
+                          ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                          : const Icon(
+                            Icons.send_and_archive_outlined,
+                            size: 18,
+                          ),
+                  label: Text(
+                    _isOfficeProposingPayment
+                        ? 'Sending...'
+                        : 'Send Payment Proposal to User',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  onPressed:
+                      _isOfficeProposingPayment ? null : _handleProposePayment,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildOfficeProgressSection(ProjectModel project) {
-    //  يعرض فقط إذا كان المشروع في مراحل معينة (مثلاً، بعد الدفع وبدء العمل)
+    /* ... نفس الكود ... */
     final bool canUpdateProgress = [
       'In Progress',
       'Details Submitted - Pending Office Review',
       'Awaiting User Payment',
       'Payment Proposal Sent',
     ].contains(project.status);
-    if (!canUpdateProgress && project.status != 'Completed')
+    if (!canUpdateProgress &&
+        project.status != 'Completed' &&
+        project.status != 'Pending Office Approval' &&
+        project.status != 'Office Approved - Awaiting Details') {
       return const SizedBox.shrink();
-
+    }
     int currentStage = project.progressStage ?? 0;
-    // التأكد من أن currentStage ضمن الحدود
     if (currentStage < 0) currentStage = 0;
-    if (currentStage >= _progressStageLabels.length)
+    if (currentStage >= _progressStageLabels.length) {
       currentStage = _progressStageLabels.length - 1;
+    }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle('Project Progress (Office Update)'),
-        if (project.status == 'Completed')
-          Center(
-            child: Chip(
-              label: Text(
-                "Project Marked as Completed",
-                style: TextStyle(color: Colors.white),
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle('Update Project Progress (For Office)'),
+            if (project.status == 'Completed')
+              Center(
+                child: Chip(
+                  label: Text(
+                    "Project Marked as Completed",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  backgroundColor: Colors.green,
+                  avatar: Icon(
+                    Icons.verified_user_outlined,
+                    color: Colors.white,
+                  ),
+                ),
+              )
+            else if (project.status == 'Pending Office Approval' ||
+                project.status == 'Office Approved - Awaiting Details')
+              Center(
+                child: Chip(
+                  label: Text(
+                    "Waiting for user to submit details or pay.",
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                  backgroundColor: Colors.grey.shade300,
+                  avatar: Icon(
+                    Icons.hourglass_empty_rounded,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              )
+            else ...[
+              Text(
+                "Current Stage: ${_progressStageLabels[currentStage]} (${((currentStage / (_progressStageLabels.length - 1)) * 100).toStringAsFixed(0)}%)",
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  color: AppColors.textPrimary,
+                ),
               ),
-              backgroundColor: Colors.green,
-              avatar: Icon(Icons.check_circle, color: Colors.white),
-            ),
-          )
-        else ...[
-          Slider(
-            value: currentStage.toDouble(),
-            min: 0,
-            max: (_progressStageLabels.length - 1).toDouble(),
-            divisions: _progressStageLabels.length - 1,
-            label: _progressStageLabels[currentStage],
-            activeColor: AppColors.accent,
-            inactiveColor: AppColors.primary.withOpacity(0.3),
-            onChanged:
-                _isOfficeUpdatingProgress
-                    ? null
-                    : (double value) {
-                      // لا نحدث الـ state هنا مباشرة، بل عند الضغط على زر
-                    },
-            onChangeEnd: (double value) {
-              //  يُستدعى عند انتهاء المستخدم من السحب
-              _handleUpdateProgress(value.toInt());
-            },
-          ),
-          Center(
-            child: Text(
-              'Current Stage: ${_progressStageLabels[currentStage]} (${((currentStage / (_progressStageLabels.length - 1)) * 100).toStringAsFixed(0)}%)',
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ),
-          if (_isOfficeUpdatingProgress)
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Center(child: LinearProgressIndicator()),
-            ),
-        ],
-      ],
+              Slider(
+                value: currentStage.toDouble(),
+                min: 0,
+                max: (_progressStageLabels.length - 1).toDouble(),
+                divisions: _progressStageLabels.length - 1,
+                label: _progressStageLabels[currentStage],
+                activeColor: AppColors.accent,
+                inactiveColor: AppColors.primary.withOpacity(0.3),
+                onChanged:
+                    _isOfficeUpdatingProgress
+                        ? null
+                        : (double value) {}, //  لا نفعل شيئاً هنا
+                onChangeEnd: (double value) {
+                  _handleUpdateProgress(value.toInt());
+                },
+              ),
+              if (_isOfficeUpdatingProgress)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Center(child: LinearProgressIndicator(minHeight: 2)),
+                ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildOfficeDocumentUploadSection(ProjectModel project) {
-    //  يسمح بالرفع إذا كان المكتب هو المنفذ والمشروع في حالة مناسبة
+  Widget _buildOfficeDocumentUploadSectionForProgress(ProjectModel project) {
     final bool canUpload = [
       'In Progress',
       'Details Submitted - Pending Office Review',
@@ -1257,200 +1701,637 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     ].contains(project.status);
     if (!canUpload) return const SizedBox.shrink();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle('Upload Design Documents (Office)'),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ElevatedButton.icon(
-              icon: const Icon(Icons.file_upload_outlined, size: 18),
-              label: const Text('Upload 2D'),
-              onPressed:
-                  _isOfficeUploadingDoc
-                      ? null
-                      : () => _handleUploadDocument('document_2d'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
+            _buildSectionTitle('Upload Stage Documents (For Office)'),
+            //  مرحلة 0 لا يوجد لها ملف
+            _buildUploadButtonForProgressStage(
+              project,
+              1,
+              'architectural_file',
+              _officeProgressFileMapping[1]!['formField']!,
+              _progressStageLabels[1],
             ),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.file_upload_outlined, size: 18),
-              label: const Text('Upload 3D'),
-              onPressed:
-                  _isOfficeUploadingDoc
-                      ? null
-                      : () => _handleUploadDocument('document_3d'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
+            _buildUploadButtonForProgressStage(
+              project,
+              2,
+              'structural_file',
+              _officeProgressFileMapping[2]!['formField']!,
+              _progressStageLabels[2],
             ),
+            _buildUploadButtonForProgressStage(
+              project,
+              3,
+              'electrical_file',
+              _officeProgressFileMapping[3]!['formField']!,
+              _progressStageLabels[3],
+            ),
+            _buildUploadButtonForProgressStage(
+              project,
+              4,
+              'mechanical_file',
+              _officeProgressFileMapping[4]!['formField']!,
+              _progressStageLabels[4],
+            ),
+            _buildUploadButtonForProgressStage(
+              project,
+              5,
+              'document_2d',
+              _officeProgressFileMapping[5]!['formField']!,
+              _progressStageLabels[5],
+            ), //  الـ 2D النهائي
+            const SizedBox(height: 10),
+            _buildSectionTitle('Upload Optional 3D Model (Office)'),
+            _buildUploadButtonForProgressStage(
+              project,
+              -1,
+              'document_3d',
+              'optional3dFile',
+              'Optional 3D Model',
+            ), // -1 لتمييزه
+            if (_isOfficeUploadingFile)
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Center(child: LinearProgressIndicator()),
+              ),
           ],
         ),
-        if (_isOfficeUploadingDoc)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Center(child: LinearProgressIndicator()),
-          ),
-      ],
+      ),
     );
   }
 
-  // === ويدجتس فرعية للأقسام الخاصة بالمستخدم ===
-  Widget _buildUserPaymentActionSection(ProjectModel project) {
-    //  يعرض فقط إذا كان المستخدم هو المالك وحالة المشروع تتطلب الدفع
-    final bool canMakePayment =
-        (project.status == 'Payment Proposal Sent' ||
-            project.status == 'Awaiting User Payment') &&
-        project.proposedPaymentAmount != null;
-    if (!canMakePayment) return const SizedBox.shrink();
+  Widget _buildUploadButtonForProgressStage(
+    ProjectModel project,
+    int stageIndexForLabel,
+    String documentDbKey,
+    String formFieldName,
+    String buttonLabel,
+  ) {
+    String? currentFilePath = _getProjectDocumentPath(
+      documentDbKey,
+    ); // دالة مساعدة لجلب المسار
+    bool fileExists = currentFilePath != null && currentFilePath.isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(vertical: 3.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildSectionTitle('Payment Required'),
-          _buildInfoRow(
-            'Amount Due:',
-            currencyFormat.format(project.proposedPaymentAmount!),
-            icon: Icons.payment_rounded,
+          Row(
+            children: [
+              Icon(
+                fileExists
+                    ? Icons.check_circle_outline_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: fileExists ? Colors.green : Colors.grey,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                buttonLabel,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  color: AppColors.textSecondary,
+                  fontWeight: fileExists ? FontWeight.w500 : FontWeight.normal,
+                ),
+              ),
+            ],
           ),
-          if (project.paymentNotes != null && project.paymentNotes!.isNotEmpty)
-            _buildInfoRow(
-              'Office Notes:',
-              project.paymentNotes,
-              icon: Icons.speaker_notes_outlined,
-            ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.credit_card_rounded, size: 20),
-              label: const Text(
-                'Proceed to Payment',
-                style: TextStyle(fontSize: 16),
+          if (fileExists)
+            TextButton.icon(
+              icon: Icon(
+                Icons.visibility_outlined,
+                size: 16,
+                color: AppColors.accent.withOpacity(0.8),
               ),
-              onPressed: _handleMakePayment,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+              label: Text(
+                "View",
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.accent.withOpacity(0.8),
+                ),
               ),
+              onPressed: () {
+                String fullUrl =
+                    currentFilePath.startsWith('http')
+                        ? currentFilePath
+                        : '${Constants.baseUrl}/$currentFilePath';
+                logger.i("Viewing document: $fullUrl");
+                // TODO: launchUrl(Uri.parse(fullUrl));
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                minimumSize: Size.zero,
+              ),
+            )
+          else
+            const SizedBox(width: 60), //  للمحافظة على التنسيق
+
+          ElevatedButton(
+            onPressed:
+                _isOfficeUploadingFile
+                    ? null
+                    : () => _handleOfficeUploadFile(
+                      documentDbKey,
+                      formFieldName,
+                      buttonLabel,
+                    ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  fileExists ? Colors.orange.shade700 : AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              textStyle: const TextStyle(fontSize: 11),
             ),
+            child: Text(fileExists ? "Re-upload" : "Upload"),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildUser3DViewSection(ProjectModel project) {
-    //  يعرض فقط إذا كان المستخدم هو المالك وهناك ملف 3D
-    if (project.document3D == null || project.document3D!.isEmpty)
-      return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: SizedBox(
-        width: double.infinity,
-        child: OutlinedButton.icon(
-          icon: const Icon(Icons.threed_rotation_rounded, size: 20),
-          label: const Text(
-            'View 3D Model (External)',
-            style: TextStyle(fontSize: 15),
-          ),
-          onPressed: _handleView3D,
-          style: OutlinedButton.styleFrom(
-            side: BorderSide(color: AppColors.accent),
-            foregroundColor: AppColors.accent,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-          ),
+  String? _getProjectDocumentPath(String dbKey) {
+    //  دالة مساعدة لجلب مسار الملف من _project
+    if (_project == null) return null;
+    switch (dbKey) {
+      case 'agreement_file':
+        return _project!.agreementFile;
+      case 'license_file':
+        return _project!.licenseFile;
+      case 'architectural_file':
+        return _project!.architectural_file;
+      case 'structural_file':
+        return _project!.structural_file;
+      case 'electrical_file':
+        return _project!.electrical_file;
+      case 'mechanical_file':
+        return _project!.mechanical_file;
+      case 'document_2d':
+        return _project!.document2D;
+      case 'document_3d':
+        return _project!.document3D;
+      default:
+        return null;
+    }
+  }
+
+  // === ويدجتس فرعية للأقسام الخاصة بالمستخدم ===
+  Widget _buildUserPaymentActionSection(ProjectModel project) {
+    final bool canMakePayment =
+        (project.status == 'Payment Proposal Sent' ||
+            project.status == 'Awaiting User Payment') &&
+        project.proposedPaymentAmount != null &&
+        project.proposedPaymentAmount! > 0;
+    final bool isPaid =
+        project.paymentStatus?.toLowerCase() == 'paid' ||
+        ['In Progress', 'Completed'].contains(project.status);
+    if (!canMakePayment && !isPaid) return const SizedBox.shrink();
+
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle('Payment Information'),
+            _buildInfoRow(
+              'Proposed Amount:',
+              project.proposedPaymentAmount != null
+                  ? currencyFormat.format(project.proposedPaymentAmount!)
+                  : 'N/A',
+              icon: Icons.monetization_on_outlined,
+            ),
+            if (project.paymentNotes != null &&
+                project.paymentNotes!.isNotEmpty)
+              _buildInfoRow(
+                'Office Notes on Payment:',
+                project.paymentNotes,
+                icon: Icons.sticky_note_2_outlined,
+              ),
+            _buildInfoRow(
+              'Payment Status:',
+              project.paymentStatus ?? 'Pending',
+              icon: Icons.credit_score_outlined,
+            ),
+            const SizedBox(height: 12),
+            if (canMakePayment && !isPaid)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.payment_rounded, size: 20),
+                  label: const Text(
+                    'Proceed to Payment',
+                    style: TextStyle(fontSize: 15),
+                  ), // تصغير الخط
+                  onPressed: _handleMakePayment,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ), // تعديل الحشو
+                ),
+              )
+            else if (isPaid)
+              Center(
+                child: Chip(
+                  label: Text(
+                    "Payment Confirmed",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  backgroundColor: Colors.green.shade600,
+                  avatar: Icon(Icons.price_check_rounded, color: Colors.white),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  // لعرض روابط المستندات
+  //  ✅✅✅ قسم عرض التقدم للمستخدم ✅✅✅
+  Widget _buildUserProgressViewSection(ProjectModel project) {
+    if ((project.progressStage ?? -1) < 0 && project.status != 'Completed') {
+      //  لا تعرض شيئاً إذا لم يبدأ التقدم بعد (باستثناء إذا اكتمل)
+      //  أو إذا كانت الحالة لا تشير إلى أن العمل قد بدأ (مثل Pending Office Approval)
+      if ([
+        'Pending Office Approval',
+        'Office Approved - Awaiting Details',
+        'Office Rejected',
+        'Cancelled',
+      ].contains(project.status)) {
+        return const SizedBox.shrink();
+      }
+    }
+
+    int currentStage = project.progressStage ?? 0;
+    if (currentStage < 0) currentStage = 0; //  إذا كان null، اعتبره 0
+    if (currentStage >= _progressStageLabels.length) {
+      currentStage = _progressStageLabels.length - 1;
+    }
+
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle('Project Progress'),
+            if (project.status == 'Completed')
+              Center(
+                child: Chip(
+                  label: Text(
+                    "Project Completed!",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  backgroundColor: Colors.green,
+                  avatar: Icon(Icons.celebration_rounded, color: Colors.white),
+                ),
+              )
+            else ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: LinearProgressIndicator(
+                  value: (currentStage / (_progressStageLabels.length - 1)),
+                  backgroundColor: AppColors.primary.withOpacity(0.2),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.accent),
+                  minHeight: 10, //  جعل الشريط أعرض
+                ),
+              ),
+              Center(
+                child: Text(
+                  'Current Stage: ${_progressStageLabels[currentStage]} (${((currentStage / (_progressStageLabels.length - 1)) * 100).toStringAsFixed(0)}%)',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              //  عرض قائمة بالمراحل والملفات المرفوعة (للقراءة فقط)
+              Text(
+                "Stages & Documents:",
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              for (
+                int i = 1;
+                i < _progressStageLabels.length;
+                i++
+              ) //  ابدأ من المرحلة 1 (بعد Kick-off)
+                _buildUserProgressStageItem(
+                  project,
+                  i,
+                  _officeProgressFileMapping[i]!['dbField']!,
+                  _progressStageLabels[i],
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserProgressStageItem(
+    ProjectModel project,
+    int stageNumber,
+    String documentDbKey,
+    String stageLabel,
+  ) {
+    String? filePath = _getProjectDocumentPath(documentDbKey);
+    bool stageCompleted = (project.progressStage ?? 0) >= stageNumber;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3.0, horizontal: 4.0),
+      child: Row(
+        children: [
+          Icon(
+            stageCompleted
+                ? Icons.check_box_rounded
+                : Icons.check_box_outline_blank_rounded,
+            color:
+                stageCompleted ? Colors.green.shade600 : Colors.grey.shade400,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              stageLabel,
+              style: TextStyle(
+                fontSize: 13.5,
+                color:
+                    stageCompleted
+                        ? AppColors.textPrimary
+                        : Colors.grey.shade600,
+              ),
+            ),
+          ),
+          if (filePath != null && filePath.isNotEmpty)
+            TextButton.icon(
+              icon: Icon(
+                Icons.download_for_offline_outlined,
+                size: 16,
+                color: AppColors.accent.withOpacity(0.8),
+              ),
+              label: Text(
+                "View/Download",
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.accent.withOpacity(0.8),
+                ),
+              ),
+              onPressed: () {
+                String fullUrl =
+                    filePath.startsWith('http')
+                        ? filePath
+                        : '${Constants.baseUrl}/$filePath';
+                logger.i("User viewing/downloading document: $fullUrl");
+                // TODO: launchUrl(Uri.parse(fullUrl));
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                minimumSize: Size.zero,
+              ),
+            )
+          else if (stageCompleted) //  اكتملت المرحلة ولكن لا يوجد ملف (قد لا يكون لكل مرحلة ملف إلزامي)
+            Text(
+              "(Completed)",
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.green.shade600,
+                fontStyle: FontStyle.italic,
+              ),
+            )
+          else
+            Text(
+              "(Pending)",
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey.shade500,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUser3DViewSection(ProjectModel project) {
+    // ... (نفس الكود)
+    //  يعرض فقط إذا كان المستخدم هو المالك وهناك ملف 3D (الذي يرفعه المكتب كـ optional)
+    //  أو إذا كانت خاصية Convert to 3D متاحة
+    bool canConvert = true; //  TODO: حددي متى تكون هذه الخاصية متاحة
+
+    if ((project.document3D == null || project.document3D!.isEmpty) &&
+        // ignore: dead_code
+        !canConvert) {}
+
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle('3D Visualization'),
+            if (project.document3D != null && project.document3D!.isNotEmpty)
+              _buildDocumentItem(
+                'View Office 3D Model:',
+                project.document3D,
+                'document_3d',
+              ),
+            if (canConvert)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    //  تغيير إلى ElevatedButton
+                    icon: const Icon(
+                      Icons.threed_rotation_outlined,
+                      size: 20,
+                    ), //  تغيير الأيقونة
+                    label: const Text(
+                      'Convert to Interactive 3D (Planner 5D)',
+                      style: TextStyle(fontSize: 13.5),
+                    ), // تعديل النص
+                    onPressed: _handleView3DViaPlanner5D,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent, //  لون مختلف
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildDocumentItem(
     String label,
     String? filePath,
-    String documentKey,
-  ) {
+    String documentKey, {
+    bool canUserUpload = false,
+  }) {
+    bool isOfficeViewing =
+        _sessionUserType?.toLowerCase() == 'office' &&
+        _project?.officeId == _currentUser?.id;
+    bool isUserViewingAndOwner =
+        _sessionUserType?.toLowerCase() == 'individual' &&
+        _project?.userId == _currentUser?.id;
+
+    //  تحديد إذا كان يمكن رفع هذا النوع من الملفات بواسطة الطرف الحالي
+    bool canCurrentActorUploadThisDocType = false;
+    String formFieldName = documentKey; //  افتراضي
+
+    if (isUserViewingAndOwner && canUserUpload) {
+      //  المستخدم يرفع (فقط license و agreement)
+      if (documentKey == 'licensefile') {
+        canCurrentActorUploadThisDocType = true;
+        formFieldName = 'licenseFile';
+      } else if (documentKey == 'agreement_file') {
+        // المستخدم رفع الاتفاقية في شاشة سابقة
+        canCurrentActorUploadThisDocType = false; // لا يسمح بإعادة الرفع من هنا
+      }
+    } else if (isOfficeViewing) {
+      // المكتب يرفع
+      final officeUploadableDocs = [
+        'architectural_file',
+        'structural_file',
+        'electrical_file',
+        'mechanical_file',
+        'document_2d',
+        'document_3d',
+      ];
+      if (officeUploadableDocs.contains(documentKey)) {
+        canCurrentActorUploadThisDocType = true;
+        //  تحديد formFieldName للمكتب
+        if (documentKey == 'architectural_file') {
+          formFieldName = 'architecturalFile';
+        } else if (documentKey == 'structural_file') {
+          formFieldName = 'structuralFile';
+        } else if (documentKey == 'electrical_file') {
+          formFieldName = 'electricalFile';
+        } else if (documentKey == 'mechanical_file') {
+          formFieldName = 'mechanicalFile';
+        } else if (documentKey == 'document_2d') {
+          formFieldName = 'final2dFile';
+        } else if (documentKey == 'document_3d') {
+          formFieldName = 'optional3dFile';
+        }
+      }
+    }
+
+    // حالة المشروع التي تسمح بالرفع
+    bool canUploadBasedOnStatus = false;
+    if (isUserViewingAndOwner && canUserUpload) {
+      canUploadBasedOnStatus = [
+        'Office Approved - Awaiting Details',
+      ].contains(_project?.status ?? '');
+    } else if (isOfficeViewing && canCurrentActorUploadThisDocType) {
+      canUploadBasedOnStatus = [
+        'In Progress',
+        'Details Submitted - Pending Office Review',
+        'Awaiting User Payment',
+        'Payment Proposal Sent',
+      ].contains(_project?.status ?? '');
+    }
+
     if (filePath == null || filePath.isEmpty) {
-      //  إذا كان المكتب هو الذي يشاهد، يمكنه رفع الملف إذا لم يكن موجوداً
-      if (_sessionUserType?.toLowerCase() == 'office' &&
-          _project?.officeId == _currentUser?.id) {
-        final bool canUploadDoc = [
-          'In Progress',
-          'Details Submitted - Pending Office Review',
-          'Awaiting User Payment',
-          'Payment Proposal Sent',
-        ].contains(_project?.status ?? '');
-        if (canUploadDoc &&
-            (documentKey == 'document_2d' ||
-                documentKey == 'document_3d' ||
-                documentKey ==
-                    'license_file' /* أو agreement_file إذا المكتب يرفعه*/ )) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.attach_file_outlined,
-                  size: 18,
-                  color: Colors.grey.shade600,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  '$label:',
+      if (canCurrentActorUploadThisDocType && canUploadBasedOnStatus) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3.0),
+          child: Row(
+            children: [
+              Icon(
+                Icons.attach_file_outlined,
+                size: 16,
+                color: Colors.grey.shade600,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  label,
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
-                    fontSize: 14,
+                    fontSize: 13.5,
                   ),
                 ),
-                const Spacer(),
-                TextButton(
-                  onPressed:
-                      _isOfficeUploadingDoc
-                          ? null
-                          : () => _handleUploadDocument(documentKey),
-                  child: Text(
-                    'Upload $label',
-                    style: TextStyle(fontSize: 12, color: AppColors.accent),
+              ),
+              TextButton(
+                onPressed:
+                    _isOfficeUploadingFile
+                        ? null
+                        : () => _handleOfficeUploadFile(
+                          documentKey,
+                          formFieldName,
+                          label.replaceAll(':', ''),
+                        ), // استخدام _isOfficeUploadingFile كحالة تحميل عامة للملفات
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  minimumSize: Size(70, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'Upload',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ],
-            ),
-          );
-        }
+              ),
+            ],
+          ),
+        );
       }
       return _buildInfoRow(
         label,
-        'Not available',
-        icon: Icons.file_present_outlined,
+        'Not Uploaded',
+        icon: Icons.file_copy_rounded,
+        onLinkTap: null,
       );
     }
     return _buildInfoRow(
       label,
-      filePath,
-      icon: Icons.insert_drive_file_outlined,
+      filePath.split('/').last,
+      icon: Icons.visibility_outlined, // أيقونة للعرض
       isLink: true,
       onLinkTap: () {
-        // TODO: Implement actual file opening/downloading logic
-        //  مؤقتاً، يمكن طباعة الـ URL الكامل إذا كان filePath هو مسار نسبي
         String fullUrl =
             filePath.startsWith('http')
                 ? filePath
                 : '${Constants.baseUrl}/$filePath';
         logger.i("Attempting to open document: $fullUrl");
-        // await launchUrl(Uri.parse(fullUrl)); // يتطلب url_launcher package
+        // TODO: await launchUrl(Uri.parse(fullUrl));
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Link to: $fullUrl (Open link not implemented)"),
-          ),
+          SnackBar(content: Text("View/Download: $fullUrl (Not implemented)")),
         );
       },
     );

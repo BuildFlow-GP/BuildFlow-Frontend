@@ -957,7 +957,7 @@ class _ChooseOfficeScreenState extends State<ChooseOfficeScreen> {
                           : _filteredOffices.isEmpty
                           ? _buildNoResultsState(
                             _searchQuery.isNotEmpty
-                                ? 'No offices found matching "${_searchQuery}"'
+                                ? 'No offices found matching "$_searchQuery"'
                                 : 'No offices available.',
                             () => _onSearchChanged(
                               '',

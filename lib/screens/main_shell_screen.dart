@@ -77,10 +77,8 @@ class _MainShellScreenState extends State<MainShellScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      //  الـ AppBar يمكن أن يكون هنا أو داخل كل شاشة فرعية
-      // appBar: AppBar(
-      //   title: Text('My App'),
-      // ),
+      extendBody: true,
+
       body: Center(
         //  عرض الشاشة المحددة من القائمة
         //  تأكدي أن _selectedIndex لا يتجاوز حدود القائمة

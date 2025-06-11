@@ -30,6 +30,22 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+             <activity android:name="com.braintreepayments.api.DropInActivity"
+        android:launchMode="singleTask"
+        android:exported="true"> <!-- ✅ أضيفي android:exported="true" إذا كنتِ تستهدفين Android 12 (API 31) أو أعلى -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="${applicationId}.braintree" /> 
+            <!-- تأكدي أن ${applicationId} يتم استبداله بشكل صحيح بمعرف تطبيقك -->
+            <!-- وأن الـ scheme كله بالأحرف الصغيرة، وأزيلي أي underscores من الـ package ID -->
+        </intent-filter>
+    </activity>
+    <activity android:name="com.braintreepayments.api.ThreeDSecureActivity" 
+        android:theme="@style/Theme.AppCompat.Light" 
+        android:exported="true"> <!-- ✅ أضيفي android:exported="true" -->
+    </activity>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

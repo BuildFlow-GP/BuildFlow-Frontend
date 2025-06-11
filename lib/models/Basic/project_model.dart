@@ -25,6 +25,11 @@ class ProjectModel {
   String? agreementFile;
   String? document2D;
   String? document3D;
+  String? planner5dUrl;
+  String? architectural_file;
+  String? structural_file; //  أو document_2
+  String? electrical_file; //  أو document_3
+  String? mechanical_file; //  أو document_4
 
   String? rejectionReason; //  إذا أضفتيه في الـ backend model
   // ✅✅✅ الحقول الجديدة للدفع والتقدم ✅✅✅
@@ -59,6 +64,10 @@ class ProjectModel {
     this.agreementFile,
     this.document2D,
     this.document3D,
+    this.architectural_file,
+    this.structural_file, //  أو document_2
+    this.electrical_file, //  أو document_3
+    this.mechanical_file, //  أو document_4
     this.landArea,
     this.plotNumber = '', // قيمة افتراضية
     this.basinNumber = '', // قيمة افتراضية
@@ -69,6 +78,7 @@ class ProjectModel {
     this.paymentStatus,
     this.progressStage,
     required this.createdAt,
+    this.planner5dUrl,
     this.userId, //  تمت الإضافة
     this.officeId, //  تمت الإضافة
     // this.companyId,
@@ -111,12 +121,16 @@ class ProjectModel {
       agreementFile: json['agreement_file'] as String?,
       document2D: json['document_2d'] as String?,
       document3D: json['document_3d'] as String?,
+      architectural_file: json['architectural_file'] as String?,
+      structural_file: json['structural_file'] as String?,
+      electrical_file: json['electrical_file'] as String?,
+      mechanical_file: json['mechanical_file'] as String?,
 
       landArea: parseDouble(json['land_area']),
       plotNumber: json['plot_number'] as String? ?? '',
       basinNumber: json['basin_number'] as String? ?? '',
       landLocation: json['land_location'] as String? ?? '',
-
+      planner5dUrl: json['planner5dUrl'] as String?,
       rejectionReason: json['rejection_reason'] as String?,
 
       createdAt:
@@ -147,19 +161,15 @@ class ProjectModel {
   }
 
   Map<String, dynamic> toJson() {
-    // هذا الـ toJson يستخدم لإرسال البيانات للـ backend
-    // يجب أن يعكس الحقول التي يتوقعها الـ API عند الإنشاء أو التحديث
     final Map<String, dynamic> data = <String, dynamic>{};
     data['name'] = name;
     if (description!.isNotEmpty) data['description'] = description;
-    // status عادة لا يتم إرساله من المستخدم عند التحديث الجزئي، الـ backend يديره
     // if (status.isNotEmpty && status != 'Unknown') data['status'] = status;
     if (budget != null) data['budget'] = budget;
     if (startDate != null) data['start_date'] = startDate!.toIso8601String();
     if (endDate != null) data['end_date'] = endDate!.toIso8601String();
     if (location!.isNotEmpty) data['location'] = location;
 
-    // لا نرسل عادة مسارات الملفات هنا، الرفع وتحديث المسار يتم بعملية منفصلة
     // if (licenseFile != null) data['license_file'] = licenseFile;
     // if (agreementFile != null) data['agreement_file'] = agreementFile;
     // if (document2D != null) data['document_2d'] = document2D;
@@ -175,12 +185,7 @@ class ProjectModel {
     if (paymentNotes != null) data['payment_notes'] = paymentNotes;
     if (paymentStatus != null) data['payment_status'] = paymentStatus;
     if (progressStage != null) data['progress_stage'] = progressStage;
-    // لا نرسل user_id أو office_id عند تحديث المستخدم للتفاصيل، هذه يتم تعيينها عند الإنشاء
-    // if (userId != null) data['user_id'] = userId;
-    // if (officeId != null) data['office_id'] = officeId;
 
-    // إذا كان API الإنشاء المبدئي يتوقع office_id، يجب أن يكون في toJson آخر أو يتم تمريره بشكل منفصل
-    // في حالتنا، `requestInitialProject` في السيرفس يبني الـ body بشكل مخصص.
     return data;
   }
 }
