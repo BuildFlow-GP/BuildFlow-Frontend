@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 import 'package:logger/logger.dart';
 
+import '../../services/create/planner_5d_viewer_screen.dart';
 import '../../services/create/project_service.dart'; // تم تغيير المسار
 import '../../services/session.dart';
 import '../../models/Basic/project_model.dart'; // الموديل المحدث الذي أرسلتيه
@@ -499,16 +500,16 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
           builder:
               (context) => PaymentScreen(
                 projectId: widget.projectId,
-                amount: _project!.proposedPaymentAmount!,
+                totalAmount: _project!.proposedPaymentAmount!,
               ),
         ),
       );
       logger.i(
         "TODO: Navigate to PaymentScreen for project ${widget.projectId}, amount: ${_project!.proposedPaymentAmount}",
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Payment Screen (Not Implemented Yet)")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Payment Screen")));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -521,14 +522,37 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
   }
 
   void _handleView3DViaPlanner5D() {
-    logger.i(
-      "TODO: Implement Planner 5D integration for project ${widget.projectId}",
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("3D Viewer (Planner 5D - Not Implemented Yet)"),
-      ),
-    );
+    if (_project == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Project data not loaded yet.")),
+      );
+      return;
+    }
+
+    //  افترض أن لديك حقل planner_5d_url في ProjectModel
+    //  أو أنكِ ستبنين الـ URL هنا إذا كنتِ تحفظين الـ key فقط
+    final String? projectPlannerUrl =
+        _project!.planner5dUrl; //  ✅  افترضي أن هذا الحقل موجود
+
+    if (projectPlannerUrl != null && projectPlannerUrl.isNotEmpty) {
+      logger.i("Navigating to Planner 5D URL: $projectPlannerUrl");
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => Planner5DViewerScreen(plannerUrl: projectPlannerUrl),
+        ),
+      );
+    } else {
+      logger.w(
+        "Planner 5D URL is not available for project ${widget.projectId}",
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("3D view link is not available for this project yet."),
+        ),
+      );
+    }
   }
 
   final dateFormat = DateFormat('dd MMM, yyyy');
@@ -1323,7 +1347,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                       'license_file',
                       canUserUpload:
                           isUserOwner &&
-                          project.status ==
+                          project.status !=
                               'Office Approved - Awaiting Details',
                     ),
                     //  ملفات التقدم التي يرفعها المكتب

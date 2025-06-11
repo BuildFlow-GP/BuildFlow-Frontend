@@ -1,6 +1,5 @@
 // widgets/bottom_nav_item.dart
 import 'package:flutter/material.dart';
-//  import '../themes/app_colors.dart'; //  إذا كنتِ ستستخدمين AppColors هنا
 
 class BottomNavItem extends StatelessWidget {
   final IconData icon;

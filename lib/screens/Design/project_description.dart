@@ -1,4 +1,5 @@
 // screens/ProjectDescriptionScreen.dart
+import 'package:buildflow_frontend/screens/Basic/home_page.dart';
 import 'package:buildflow_frontend/screens/Design/app_strings.dart';
 import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -249,16 +250,14 @@ class _ProjectDescriptionScreenState extends State<ProjectDescriptionScreen> {
         );
         //  ✅✅✅ الانتقال إلى شاشة تفاصيل المشروع النهائية (أو أي شاشة تالية) ✅✅✅
         //  افترض أن لديك شاشة اسمها ProjectFinalDetailsScreen أو ما شابه
-        // Navigator.pushReplacement(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => ProjectFinalDetailsScreen(projectId: widget.projectId),
-        //   ),
-        // );
-        //  أو العودة للشاشة السابقة أو الهوم
-        Navigator.of(
+        Navigator.pushReplacement(
           context,
-        ).pop(true); // إرجاع true للإشارة إلى أن شيئاً ما تم بنجاح
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
+        //  أو العودة للشاشة السابقة أو الهوم
+        // Navigator.of(
+        //   context,
+        // ).pop(true); // إرجاع true للإشارة إلى أن شيئاً ما تم بنجاح
       }
     } catch (e) {
       logger.e("Error submitting project design details: $e");

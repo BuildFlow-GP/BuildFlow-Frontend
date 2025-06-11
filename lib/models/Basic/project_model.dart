@@ -25,6 +25,7 @@ class ProjectModel {
   String? agreementFile;
   String? document2D;
   String? document3D;
+  String? planner5dUrl;
   String? architectural_file;
   String? structural_file; //  أو document_2
   String? electrical_file; //  أو document_3
@@ -77,6 +78,7 @@ class ProjectModel {
     this.paymentStatus,
     this.progressStage,
     required this.createdAt,
+    this.planner5dUrl,
     this.userId, //  تمت الإضافة
     this.officeId, //  تمت الإضافة
     // this.companyId,
@@ -128,7 +130,7 @@ class ProjectModel {
       plotNumber: json['plot_number'] as String? ?? '',
       basinNumber: json['basin_number'] as String? ?? '',
       landLocation: json['land_location'] as String? ?? '',
-
+      planner5dUrl: json['planner5dUrl'] as String?,
       rejectionReason: json['rejection_reason'] as String?,
 
       createdAt:
