@@ -1636,12 +1636,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
           child: Row(
             children: [
-              // زر الرجوع
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 28),
-                color: AppColors.accent, // لون زر الرجوع من AppColors
-                onPressed: () => Navigator.of(context).pop(),
-              ),
               Expanded(
                 child: Text(
                   'Notifications', // عنوان الصفحة

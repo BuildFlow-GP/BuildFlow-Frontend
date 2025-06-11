@@ -624,11 +624,6 @@ class _SearchScreenState extends State<SearchScreen>
           ),
           child: Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 28),
-                color: AppColors.accent, // لون زر الرجوع من AppColors
-                onPressed: () => Navigator.of(context).pop(),
-              ),
               Expanded(
                 child: Text(
                   "Search", // عنوان الصفحة
