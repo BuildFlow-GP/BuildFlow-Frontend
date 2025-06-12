@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:logger/logger.dart';
 
+import '../../themes/app_colors.dart';
+
 final Logger logger = Logger(printer: PrettyPrinter(methodCount: 1));
 
 class Planner5DViewerScreen extends StatefulWidget {
@@ -97,6 +99,8 @@ class _Planner5DViewerScreenState extends State<Planner5DViewerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('3D Project View'),
+        backgroundColor: AppColors.accent,
+
         actions: [
           // IconButton(
           //   icon: const Icon(Icons.arrow_back_ios),
@@ -131,7 +135,7 @@ class _Planner5DViewerScreenState extends State<Planner5DViewerScreen> {
             // إذا كان _controller لا يزال غير مهيأ بسبب خطأ في initState، هذا قد يسبب مشكلة
             // ولكن _setErrorState يجب أن يمنع هذا
             WebViewWidget(controller: _controller),
-          if (_isLoadingPage) const Center(child: CircularProgressIndicator()),
+          //  if (_isLoadingPage) const Center(child: CircularProgressIndicator()),
           if (_loadingError != null)
             Center(
               child: Padding(

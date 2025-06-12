@@ -261,23 +261,14 @@ class _ContactUsSectionState extends State<ContactUsSection> {
           color: AppColors.textSecondary.withOpacity(0.3),
         ), // خط فاصل أنيق
         const SizedBox(height: 24),
-        _buildContactInfoRow(
-          Icons.phone,
-          '+972 568051019', // رقم هاتف افتراضي
-        ),
+        _buildContactInfoRow(Icons.phone, '+972 568051019'),
+        const SizedBox(height: 12),
+        _buildContactInfoRow(Icons.email, 'support@buildflow.com'),
+        const SizedBox(height: 12),
+        _buildContactInfoRow(Icons.location_on, 'Nablus, Palestine'),
         const SizedBox(height: 12),
         _buildContactInfoRow(
-          Icons.email,
-          'support@buildflow.com', // البريد الإلكتروني الأصلي
-        ),
-        const SizedBox(height: 12),
-        _buildContactInfoRow(
-          Icons.location_on,
-          'Asira, Nablus, Palestine', // عنوان افتراضي
-        ),
-        const SizedBox(height: 12),
-        _buildContactInfoRow(
-          Icons.access_time, // أيقونة لساعات العمل
+          Icons.access_time,
           'Business Hours: Sat-Thu, 9 AM - 5 PM',
         ),
       ],

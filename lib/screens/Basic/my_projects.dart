@@ -61,7 +61,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
       } else {
         throw Exception("Unknown user type: $_sessionUserType");
       }
-    } catch (e, s) {
+    } catch (e) {
       // logger.e("Error in _loadDataBasedOnUserType", error: e, stackTrace: s);
       rethrow;
     } finally {
@@ -356,7 +356,15 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
             // ولا يجب أن تحتوي على padding أو margin خاص بها إذا كنت تريد هذا الـ wrapper للتحكم في التباعد
             // قد تحتاج لتعديل MyProjectCard لتكون "pure" widget (أي لا تحتوي على تزيينات خارجية أو منطق onTap)
             onTap: () {
-              /* لا تفعل شيئًا هنا لأن الـ InkWell الخارجي سيتعامل مع الـ tap */
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) =>
+                          ProjectDetailsViewScreen(projectId: project.id),
+                  /* لا تفعل شيئًا هنا لأن الـ InkWell الخارجي سيتعامل مع الـ tap */
+                ),
+              );
             },
           ),
         ),

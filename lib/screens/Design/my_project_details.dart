@@ -9,6 +9,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 import 'package:logger/logger.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'planner_5d_viewer_screen.dart';
 import '../../services/create/project_service.dart'; // تم تغيير المسار
@@ -528,6 +529,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
 
     //  افترض أن لديك حقل planner_5d_url في ProjectModel
     //  أو أنكِ ستبنين الـ URL هنا إذا كنتِ تحفظين الـ key فقط
+    // ignore: unused_local_variable
     final String? projectPlannerUrl =
         _project!.planner5dUrl; //  ✅  افترضي أن هذا الحقل موجود
 
@@ -636,19 +638,15 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                     ? InkWell(
                       onTap:
                           onLinkTap ??
-                          () {
+                          () async {
                             String fullUrl =
                                 value.startsWith('http')
                                     ? value
-                                    : '${Constants.baseUrl}/$value'; //  استخدم Constants.baseUrl
+                                    : '${Constants.baseUrl}/$value';
                             logger.i("Tapped link: $fullUrl");
-                            // TODO: await launchUrl(Uri.parse(fullUrl));
+                            await launchUrl(Uri.parse(fullUrl));
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  "Open: $fullUrl (Link tap not implemented)",
-                                ),
-                              ),
+                              SnackBar(content: Text("Open: $fullUrl")),
                             );
                           },
                       child: Text(
@@ -701,7 +699,6 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
   }
 
   Widget _buildStatusChip(String? status) {
-    // ... (الكود كما هو)
     if (status == null || status.isEmpty) return const SizedBox.shrink();
     Color statusColor = Colors.grey.shade600;
     IconData statusIcon = Icons.info_outline_rounded;
@@ -820,6 +817,8 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
           _project?.name ?? 'Loading Project...',
           style: const TextStyle(fontSize: 18),
         ), // تصغير الخط
+        backgroundColor: AppColors.accent,
+
         elevation: 0.5, // تقليل الظل
         actions: [
           IconButton(
@@ -1256,10 +1255,8 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                           design.roomDistribution,
                           icon: Icons.space_dashboard_outlined,
                         ),
-                    ] else if ((project.status ==
-                                'Office Approved - Awaiting Details' ||
-                            project.status ==
-                                'Details Submitted - Pending Office Review') &&
+                    ] else if ((project.status == 'Office Approved' ||
+                            project.status == 'Details Submitted') &&
                         isUserOwner)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -1375,9 +1372,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                       project.licenseFile,
                       'license_file',
                       canUserUpload:
-                          isUserOwner &&
-                          project.status !=
-                              'Office Approved - Awaiting Details',
+                          isUserOwner && project.status != 'Office Approved',
                     ),
                     //  ملفات التقدم التي يرفعها المكتب
                     _buildDocumentItem(
@@ -2178,8 +2173,9 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                       style: TextStyle(fontSize: 13.5),
                     ), // تعديل النص
                     onPressed: _handleView3DViaPlanner5D,
+
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent, //  لون مختلف
+                      backgroundColor: AppColors.accent,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
