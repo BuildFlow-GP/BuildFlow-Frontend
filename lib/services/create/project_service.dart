@@ -862,4 +862,112 @@ class ProjectService {
     }
     _handleError(response, "upload final 2D file");
   }
+
+  Future<ProjectModel> requestSupervision({
+    required int projectId,
+    required int supervisingOfficeId,
+    int? assignedCompanyId, // اختياري
+  }) async {
+    final token = await Session.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found. Please log in.');
+    }
+
+    final Map<String, dynamic> requestBody = {
+      'supervising_office_id': supervisingOfficeId,
+      //  لا نرسل assigned_company_id إذا كان null لتجنب إرسال مفتاح بقيمة null
+      //  الـ backend route يمكنه التعامل مع هذا إذا كان الحقل allowNull: true
+    };
+    if (assignedCompanyId != null) {
+      requestBody['assigned_company_id'] = assignedCompanyId;
+    }
+
+    logger.i(
+      "Requesting supervision for project $projectId with data: ${jsonEncode(requestBody)}",
+    );
+
+    final response = await http.post(
+      //  الـ route هو POST
+      Uri.parse('$_baseUrl/projects/$projectId/request-supervision'),
+      headers: _authHeaders(
+        token,
+      ), //  افترض أن _authHeaders موجودة وتضيف Content-Type
+      body: jsonEncode(
+        _cleanRequestBody(requestBody),
+      ), //  استخدام _cleanRequestBody جيد هنا
+    );
+
+    _logResponse(
+      "requestSupervision for project $projectId",
+      response,
+    ); //  افترض أن _logResponse موجودة
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      //  الـ backend قد يرجع 200 إذا كان تحديثاً
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      //  الـ API يرجع { message: '...', project: { ... } }
+      if (responseData.containsKey('project')) {
+        return ProjectModel.fromJson(
+          responseData['project'] as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception(
+          'Project data not found in supervision request response.',
+        );
+      }
+    }
+    //  استخدام _handleError إذا كانت موجودة لتوحيد معالجة الأخطاء
+    _handleError(response, "request project supervision");
+    //  السطر أعلاه سيرمي Exception، لذا لن يصل الكود لما بعده في حالة الخطأ
+    //  احتياطي
+  }
+
+  // ✅✅✅ دالة جديدة: المكتب يرد على طلب الإشراف ✅✅✅
+  // (هذه الدالة موجودة لديكِ بالفعل، فقط نتأكد من أنها صحيحة)
+  Future<ProjectModel> respondToSupervisionRequest(
+    int projectId,
+    String action, { // "approve" or "reject"
+    String? rejectionReason,
+  }) async {
+    final token = await Session.getToken(); //  التوكن الخاص بالمكتب
+    if (token == null || token.isEmpty) {
+      throw Exception('Office authentication token not found.');
+    }
+
+    Map<String, dynamic> requestBody = {'action': action.toLowerCase()};
+    if (action.toLowerCase() == 'reject' &&
+        rejectionReason != null &&
+        rejectionReason.isNotEmpty) {
+      requestBody['rejection_reason'] = rejectionReason;
+    }
+
+    logger.i(
+      "Responding to supervision for project $projectId with action: $action, data: ${jsonEncode(requestBody)}",
+    );
+
+    final response = await http.put(
+      Uri.parse(
+        '$_baseUrl/projects/$projectId/respond-supervision',
+      ), //  تأكدي أن هذا هو المسار الصحيح
+      headers: _authHeaders(token),
+      body: jsonEncode(_cleanRequestBody(requestBody)),
+    );
+
+    _logResponse("respondToSupervisionRequest for $projectId", response);
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      if (responseData.containsKey('project')) {
+        return ProjectModel.fromJson(
+          responseData['project'] as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Project data not found in supervision response.');
+      }
+    }
+    _handleError(
+      response,
+      "respond to supervision request (${action.toLowerCase()})",
+    );
+  }
 }

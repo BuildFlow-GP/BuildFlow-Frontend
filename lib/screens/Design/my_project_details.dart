@@ -9,6 +9,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 import 'package:logger/logger.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'planner_5d_viewer_screen.dart';
 import '../../services/create/project_service.dart'; // تم تغيير المسار
@@ -299,27 +300,27 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
   Future<void> _handleUpdateProgress(int newStage) async {
     if (_isOfficeUpdatingProgress || _project == null) return;
     //  التأكد أن المرحلة الجديدة مرتبطة بملف تم رفعه (باستثناء المرحلة 0)
-    if (newStage > 0 && newStage <= 5) {
-      //  للمراحل 1-5 التي لها ملفات
-      String? docKey = _officeProgressFileMapping[newStage]?['dbField'];
-      if (docKey != null) {
-        String? filePath = _getProjectDocumentPath(docKey);
-        if (filePath == null || filePath.isEmpty) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  "Please upload the '${_officeProgressFileMapping[newStage]?['label']}' document before marking this stage as current.",
-                ),
+    //   if (newStage > 0 && newStage <= 5) {
+    //  للمراحل 1-5 التي لها ملفات
+    String? docKey = _officeProgressFileMapping[newStage]?['dbField'];
+    if (docKey != null) {
+      String? filePath = _getProjectDocumentPath(docKey);
+      if (filePath == null || filePath.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "Please upload the '${_officeProgressFileMapping[newStage]?['label']}' document before marking this stage as current.",
               ),
-            );
-          }
-          return;
+            ),
+          );
         }
+        return;
       }
-    } else if (newStage == 0 && (_project!.progressStage ?? 0) != 0) {
-      //  لا تسمحي بالرجوع للمرحلة 0 إذا لم تكن هي الحالية
     }
+    // } else if (newStage == 0 && (_project!.progressStage ?? 0) != 0) {
+    //   //  لا تسمحي بالرجوع للمرحلة 0 إذا لم تكن هي الحالية
+    // }
 
     setState(() => _isOfficeUpdatingProgress = true);
     try {
@@ -394,6 +395,8 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     const editableStates = [
       'Office Approved - Awaiting Details',
       'Details Submitted - Pending Office Review',
+      'Payment Proposal Sent',
+      'Awaiting User Payment',
     ];
     if (editableStates.contains(_project!.status)) {
       Navigator.push(
@@ -432,10 +435,10 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     );
     if (result != null) {
       PlatformFile file = result.files.single;
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size > 20 * 1024 * 1024) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("File is too large (max 5MB).")),
+            const SnackBar(content: Text("File is too large (max 20MB).")),
           );
         }
         return;
@@ -528,6 +531,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
 
     //  افترض أن لديك حقل planner_5d_url في ProjectModel
     //  أو أنكِ ستبنين الـ URL هنا إذا كنتِ تحفظين الـ key فقط
+    // ignore: unused_local_variable
     final String? projectPlannerUrl =
         _project!.planner5dUrl; //  ✅  افترضي أن هذا الحقل موجود
 
@@ -636,19 +640,15 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                     ? InkWell(
                       onTap:
                           onLinkTap ??
-                          () {
+                          () async {
                             String fullUrl =
                                 value.startsWith('http')
                                     ? value
-                                    : '${Constants.baseUrl}/$value'; //  استخدم Constants.baseUrl
+                                    : '${Constants.baseUrl}/$value';
                             logger.i("Tapped link: $fullUrl");
-                            // TODO: await launchUrl(Uri.parse(fullUrl));
+                            await launchUrl(Uri.parse(fullUrl));
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  "Open: $fullUrl (Link tap not implemented)",
-                                ),
-                              ),
+                              SnackBar(content: Text("Open: $fullUrl")),
                             );
                           },
                       child: Text(
@@ -701,7 +701,6 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
   }
 
   Widget _buildStatusChip(String? status) {
-    // ... (الكود كما هو)
     if (status == null || status.isEmpty) return const SizedBox.shrink();
     Color statusColor = Colors.grey.shade600;
     IconData statusIcon = Icons.info_outline_rounded;
@@ -820,6 +819,8 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
           _project?.name ?? 'Loading Project...',
           style: const TextStyle(fontSize: 18),
         ), // تصغير الخط
+        backgroundColor: AppColors.accent,
+
         elevation: 0.5, // تقليل الظل
         actions: [
           IconButton(
@@ -1099,6 +1100,8 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                                   [
                                     'Office Approved - Awaiting Details',
                                     'Details Submitted - Pending Office Review',
+                                    'Payment Proposal Sent',
+                                    'Awaiting User Payment',
                                   ].contains(project.status))
                               ? Tooltip(
                                 message: "Edit Design Details",
@@ -1256,10 +1259,8 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                           design.roomDistribution,
                           icon: Icons.space_dashboard_outlined,
                         ),
-                    ] else if ((project.status ==
-                                'Office Approved - Awaiting Details' ||
-                            project.status ==
-                                'Details Submitted - Pending Office Review') &&
+                    ] else if ((project.status == 'Office Approved' ||
+                            project.status == 'Details Submitted') &&
                         isUserOwner)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -1372,12 +1373,11 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                     ),
                     _buildDocumentItem(
                       'License:',
+
                       project.licenseFile,
                       'license_file',
                       canUserUpload:
-                          isUserOwner &&
-                          project.status !=
-                              'Office Approved - Awaiting Details',
+                          isUserOwner && project.status != 'Completed',
                     ),
                     //  ملفات التقدم التي يرفعها المكتب
                     _buildDocumentItem(
@@ -1824,7 +1824,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                         ? currentFilePath
                         : '${Constants.baseUrl}/$currentFilePath';
                 logger.i("Viewing document: $fullUrl");
-                // TODO: launchUrl(Uri.parse(fullUrl));
+                launchUrl(Uri.parse(fullUrl));
               },
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -2106,7 +2106,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                         ? filePath
                         : '${Constants.baseUrl}/$filePath';
                 logger.i("User viewing/downloading document: $fullUrl");
-                // TODO: launchUrl(Uri.parse(fullUrl));
+                launchUrl(Uri.parse(fullUrl));
               },
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -2140,7 +2140,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     // ... (نفس الكود)
     //  يعرض فقط إذا كان المستخدم هو المالك وهناك ملف 3D (الذي يرفعه المكتب كـ optional)
     //  أو إذا كانت خاصية Convert to 3D متاحة
-    bool canConvert = true; //  TODO: حددي متى تكون هذه الخاصية متاحة
+    bool canConvert = true;
 
     if ((project.document3D == null || project.document3D!.isEmpty) &&
         // ignore: dead_code
@@ -2178,8 +2178,9 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                       style: TextStyle(fontSize: 13.5),
                     ), // تعديل النص
                     onPressed: _handleView3DViaPlanner5D,
+
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent, //  لون مختلف
+                      backgroundColor: AppColors.accent,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
@@ -2323,16 +2324,30 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
       filePath.split('/').last,
       icon: Icons.visibility_outlined, // أيقونة للعرض
       isLink: true,
-      onLinkTap: () {
+      onLinkTap: () async {
+        //  ✅ جعلها async
+        // ignore: unused_local_variable
+        String relativePath =
+            filePath; //  filePath هو المسار النسبي من قاعدة البيانات
         String fullUrl =
-            filePath.startsWith('http')
-                ? filePath
-                : '${Constants.baseUrl}/$filePath';
-        logger.i("Attempting to open document: $fullUrl");
-        // TODO: await launchUrl(Uri.parse(fullUrl));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("View/Download: $fullUrl (Not implemented)")),
-        );
+            '${Constants.baseUrl}/documents/archdocument'; //  تكوين الـ URL
+        logger.i("Attempting to open document link: $fullUrl");
+
+        final uri = Uri.parse(fullUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(
+            uri,
+            mode: LaunchMode.externalApplication,
+          ); //  يفتح في المتصفح/التطبيق المناسب
+        } else {
+          logger.e('Could not launch $fullUrl');
+          if (mounted) {
+            // تأكدي أن mounted متاح إذا كنتِ داخل State
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Could not open the document link.')),
+            );
+          }
+        }
       },
     );
   }
