@@ -262,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // دالة التمرير لليسار
-    void _scrollLeft() {
+    void scrollLeft() {
       final currentPosition = scrollController.offset;
       final targetPosition =
           currentPosition -
@@ -276,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // دالة التمرير لليمين
-    void _scrollRight() {
+    void scrollRight() {
       final currentPosition = scrollController.offset;
       final targetPosition =
           currentPosition +
@@ -340,7 +340,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 onPressed:
                                     canScrollLeft
-                                        ? _scrollLeft
+                                        ? scrollLeft
                                         : null, // تعطيل الزر إذا لا يمكن التمرير
                                 style: IconButton.styleFrom(
                                   backgroundColor: AppColors.card.withOpacity(
@@ -449,7 +449,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 //  تعطيل الزر إذا لا يمكن التمرير (onPressed: null)
                                 //  وإزالة تأثير الضغط إذا كان معطلاً
-                                onPressed: canScrollRight ? _scrollRight : null,
+                                onPressed: canScrollRight ? scrollRight : null,
                                 style: IconButton.styleFrom(
                                   backgroundColor: AppColors.card.withAlpha(
                                     (0.8 * 255).round(),
@@ -785,8 +785,7 @@ class _QuickActionButton extends StatefulWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    Key? key,
-  }) : super(key: key);
+  });
 
   @override
   State<_QuickActionButton> createState() => _QuickActionButtonState();

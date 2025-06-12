@@ -68,8 +68,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _loadNotifications({bool isRefresh = false}) async {
     if (!mounted) return;
-    if (_isFetchingMore && !isRefresh)
+    if (_isFetchingMore && !isRefresh) {
       return; // لا تجلب المزيد إذا كان الجلب قيد التقدم ولم يكن تحديثًا
+    }
 
     setState(() {
       if (isRefresh) {
@@ -134,8 +135,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   // دالة لمعالجة الضغط على أيقونة "Mark as Read"
   Future<void> _handleMarkAsReadIconTap(NotificationModel notification) async {
-    if (notification.isRead || _isProcessingAction)
+    if (notification.isRead || _isProcessingAction) {
       return; // لا تفعل شيئًا إذا كان مقروءًا أو عملية أخرى قيد التقدم
+    }
     setState(() => _isProcessingAction = true); // إظهار التحميل
     try {
       final updatedNotification = await _notificationService
@@ -1019,8 +1021,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
             );
           }
-          if (index >= _notifications.length)
+          if (index >= _notifications.length) {
             return const SizedBox.shrink(); // تجنب أي تجاوزات
+          }
 
           final notification = _notifications[index];
           return _buildNotificationItem(notification);

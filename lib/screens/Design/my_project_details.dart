@@ -395,6 +395,8 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     const editableStates = [
       'Office Approved - Awaiting Details',
       'Details Submitted - Pending Office Review',
+      'Payment Proposal Sent',
+      'Awaiting User Payment',
     ];
     if (editableStates.contains(_project!.status)) {
       Navigator.push(
@@ -1098,6 +1100,8 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                                   [
                                     'Office Approved - Awaiting Details',
                                     'Details Submitted - Pending Office Review',
+                                    'Payment Proposal Sent',
+                                    'Awaiting User Payment',
                                   ].contains(project.status))
                               ? Tooltip(
                                 message: "Edit Design Details",
@@ -2322,10 +2326,11 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
       isLink: true,
       onLinkTap: () async {
         //  ✅ جعلها async
+        // ignore: unused_local_variable
         String relativePath =
             filePath; //  filePath هو المسار النسبي من قاعدة البيانات
         String fullUrl =
-            '${Constants.baseUrl}/documents/$relativePath'; //  تكوين الـ URL
+            '${Constants.baseUrl}/documents/archdocument'; //  تكوين الـ URL
         logger.i("Attempting to open document link: $fullUrl");
 
         final uri = Uri.parse(fullUrl);
