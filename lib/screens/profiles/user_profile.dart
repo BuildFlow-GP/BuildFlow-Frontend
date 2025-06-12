@@ -274,6 +274,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Navbar(),
+
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         vertical: 20.0,
@@ -383,6 +384,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           ),
                         ),
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 28,
+                      ),
+                      color: AppColors.accent, // لون زر الرجوع من AppColors
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
