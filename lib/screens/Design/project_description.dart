@@ -1,12 +1,12 @@
 // screens/ProjectDescriptionScreen.dart
-import 'package:buildflow_frontend/screens/Basic/home_page.dart';
 import 'package:buildflow_frontend/screens/Design/app_strings.dart';
 import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 
 import '../../services/create/project_design_service.dart'; //  تأكدي من المسار الصحيح
-import '../../models/create/project_design_model.dart'; //  تأكدي من المسار الصحيح
+import '../../models/create/project_design_model.dart';
+import 'my_project_details.dart'; //  تأكدي من المسار الصحيح
 
 // import 'project_details_final_screen.dart'; //  أو اسم شاشتك الفعلية
 
@@ -252,7 +252,11 @@ class _ProjectDescriptionScreenState extends State<ProjectDescriptionScreen> {
         //  افترض أن لديك شاشة اسمها ProjectFinalDetailsScreen أو ما شابه
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(
+            builder:
+                (context) =>
+                    ProjectDetailsViewScreen(projectId: widget.projectId),
+          ),
         );
         //  أو العودة للشاشة السابقة أو الهوم
         // Navigator.of(

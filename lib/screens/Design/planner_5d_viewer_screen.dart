@@ -19,6 +19,7 @@ class Planner5DViewerScreen extends StatefulWidget {
 
 class _Planner5DViewerScreenState extends State<Planner5DViewerScreen> {
   late final WebViewController _controller; //  استخدام late final
+  // ignore: unused_field
   bool _isLoadingPage = true;
   String? _loadingError; //  لتخزين رسالة الخطأ إذا حدث
 
