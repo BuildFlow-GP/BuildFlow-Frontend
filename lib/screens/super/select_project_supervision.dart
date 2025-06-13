@@ -6,6 +6,8 @@ import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 
+import 'select_company_supervision.dart';
+
 //  افترض أن هذه هي الشاشة التالية
 
 final Logger logger = Logger();
@@ -331,15 +333,15 @@ class _SelectProjectForSupervisionScreenState
                   );
                   //  الانتقال لشاشة اختيار الشركة (الخطوة التالية في التراك)
                   //  مرري projectId
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //     builder:
-                  //         (context) => SelectCompanyForSupervisionScreen(
-                  //           projectId: project.id,
-                  //         ),
-                  //   ),
-                  // );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => SelectCompanyForSupervisionScreen(
+                            projectId: project.id,
+                          ),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accent,
