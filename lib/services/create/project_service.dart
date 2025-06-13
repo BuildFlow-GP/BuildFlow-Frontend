@@ -922,8 +922,6 @@ class ProjectService {
     //  احتياطي
   }
 
-  // ✅✅✅ دالة جديدة: المكتب يرد على طلب الإشراف ✅✅✅
-  // (هذه الدالة موجودة لديكِ بالفعل، فقط نتأكد من أنها صحيحة)
   Future<ProjectModel> respondToSupervisionRequest(
     int projectId,
     String action, { // "approve" or "reject"
@@ -969,5 +967,69 @@ class ProjectService {
       response,
       "respond to supervision request (${action.toLowerCase()})",
     );
+  }
+
+  Future<List<ProjectModel>> getMyProjectsu() async {
+    logger.i("getMyProjects CALLED");
+    final token = await Session.getToken();
+    logger.i("Token for getMyProjects: $token");
+
+    if (token == null || token.isEmpty) {
+      logger.w("getMyProjects: No token found, throwing exception.");
+      throw Exception('Authentication token not found. Please log in.');
+    }
+
+    final String url = '$_baseUrl/users/me/projects';
+    logger.i("getMyProjects: Requesting URL: $url");
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      logger.i("getMyProjects: Response status: ${response.statusCode}");
+      if (response.statusCode != 200) {
+        logger.w("getMyProjects: Response body: ${response.body}");
+      }
+
+      if (response.statusCode == 200) {
+        List<dynamic> body = jsonDecode(response.body);
+        return body
+            .map(
+              (dynamic item) =>
+                  ProjectModel.fromJson(item as Map<String, dynamic>),
+            )
+            .toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('Unauthorized. Please log in again.');
+      } else if (response.statusCode == 404) {
+        logger.w('My Projects endpoint not found (404): $url');
+        throw Exception(
+          'Could not find your projects. The service might be unavailable (404). URL: $url',
+        );
+      } else {
+        logger.w(
+          'Failed to load my projects (Status: ${response.statusCode}): ${response.body}',
+        );
+        throw Exception(
+          'Failed to load your projects. Please try again later.',
+        );
+      }
+    } catch (e) {
+      logger.e(
+        "getMyProjects: HTTP request FAILED or error during processing: $e",
+      );
+      // أعد رمي الخطأ الأصلي أو خطأ مخصص
+      if (e is Exception) {
+        rethrow; // أعد رمي الخطأ الأصلي إذا كان Exception
+      }
+      throw Exception(
+        "An unexpected error occurred in getMyProjects: ${e.toString()}",
+      );
+    }
   }
 }

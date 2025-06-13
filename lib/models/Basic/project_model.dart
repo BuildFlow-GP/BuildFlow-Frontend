@@ -26,14 +26,15 @@ class ProjectModel {
   String? document2D;
   String? document3D;
   String? planner5dUrl;
-  String? architectural_file;
-  String? structural_file; //  أو document_2
-  String? electrical_file; //  أو document_3
-  String? mechanical_file; //  أو document_4
+  String? architecturalfile;
+  String? structuralfile; //  أو document_2
+  String? electricalfile; //  أو document_3
+  String? mechanicalfile; //  أو document_4
 
   String? rejectionReason; //  إذا أضفتيه في الـ backend model
-  // ✅✅✅ الحقول الجديدة للدفع والتقدم ✅✅✅
   final double? proposedPaymentAmount;
+  final double? supervisionPaymentAmount;
+  final String? supervisionPaymentStatus;
   final String? paymentNotes;
   final String? paymentStatus;
   final int? progressStage; //  (0-5 مثلاً)
@@ -42,6 +43,8 @@ class ProjectModel {
   // IDs للربط (مهمة جداً)
   final int? userId;
   final int? officeId;
+  final int? supervisingOfficeId;
+  final int? companyId;
   ProjectDesignModel? projectDesign; // ✅✅✅ أضيفي هذا الحقل ✅✅✅
 
   // final int? companyId; // إذا كنتِ ستضيفينه
@@ -64,10 +67,10 @@ class ProjectModel {
     this.agreementFile,
     this.document2D,
     this.document3D,
-    this.architectural_file,
-    this.structural_file, //  أو document_2
-    this.electrical_file, //  أو document_3
-    this.mechanical_file, //  أو document_4
+    this.architecturalfile,
+    this.structuralfile, //  أو document_2
+    this.electricalfile, //  أو document_3
+    this.mechanicalfile, //  أو document_4
     this.landArea,
     this.plotNumber = '', // قيمة افتراضية
     this.basinNumber = '', // قيمة افتراضية
@@ -79,13 +82,16 @@ class ProjectModel {
     this.progressStage,
     required this.createdAt,
     this.planner5dUrl,
-    this.userId, //  تمت الإضافة
-    this.officeId, //  تمت الإضافة
-    // this.companyId,
+    this.userId,
+    this.officeId,
+    this.companyId,
     this.office,
     this.company,
     this.user,
     this.projectDesign,
+    this.supervisingOfficeId,
+    this.supervisionPaymentAmount,
+    this.supervisionPaymentStatus,
   });
 
   factory ProjectModel.fromJson(Map<String, dynamic> json) {
@@ -121,10 +127,10 @@ class ProjectModel {
       agreementFile: json['agreement_file'] as String?,
       document2D: json['document_2d'] as String?,
       document3D: json['document_3d'] as String?,
-      architectural_file: json['architectural_file'] as String?,
-      structural_file: json['structural_file'] as String?,
-      electrical_file: json['electrical_file'] as String?,
-      mechanical_file: json['mechanical_file'] as String?,
+      architecturalfile: json['architectural_file'] as String?,
+      structuralfile: json['structural_file'] as String?,
+      electricalfile: json['electrical_file'] as String?,
+      mechanicalfile: json['mechanical_file'] as String?,
 
       landArea: parseDouble(json['land_area']),
       plotNumber: json['plot_number'] as String? ?? '',
@@ -139,6 +145,13 @@ class ProjectModel {
 
       userId: json['user_id'] as int?, //  قراءة الـ ID
       officeId: json['office_id'] as int?, //  قراءة الـ ID
+
+      supervisingOfficeId:
+          json['supervising_office_id'] as int?, //  قراءة الـ ID
+      companyId: json['assigned_company_id'] as int?, //  قراءة الـ ID
+      supervisionPaymentAmount: parseDouble(json['supervision_payment_amount']),
+      supervisionPaymentStatus: json['supervision_payment_status'] as String?,
+
       projectDesign:
           json['projectDesign'] != null
               ? ProjectDesignModel.fromJson(

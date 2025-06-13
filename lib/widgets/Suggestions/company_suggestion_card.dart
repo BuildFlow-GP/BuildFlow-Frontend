@@ -18,13 +18,6 @@ class CompanySuggestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // بما أن _isHovered كانت تُستخدم فقط للـ UI، يمكننا إبقاؤها كـ StatefulWidget إذا أردتِ
-    // أو تبسيطها وإزالة تأثيرات الـ hover إذا لم تكن ضرورية جداً للـ MVP.
-    // للتبسيط الآن، سأفترض أننا لا نحتاج لـ _isHovered داخل الكرت نفسه،
-    // لكن يمكن إضافتها مرة أخرى إذا أردتِ.
-    // إذا أردتِ الاحتفاظ بتأثيرات الـ hover، يجب أن يبقى StatefulWidget.
-    // سأبقيه StatefulWidget للاحتفاظ بتأثيرات الـ hover كما كانت.
-
     return _CompanySuggestionCardContent(
       company: company,
       isFavorite: isFavorite,
