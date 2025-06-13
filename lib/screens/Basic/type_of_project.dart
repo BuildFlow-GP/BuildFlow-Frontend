@@ -3,6 +3,8 @@ import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../super/select_project_supervision.dart';
+
 class TypeOfProjectPage extends StatelessWidget {
   const TypeOfProjectPage({super.key});
 
@@ -190,7 +192,7 @@ class _SupervisionCard extends StatelessWidget {
       opacity: 1.0,
       child: _HoverEffect(
         child: GestureDetector(
-          onTap: () => Get.toNamed('/supervision-page'),
+          onTap: () => Get.to(() => const SelectProjectForSupervisionScreen()),
           child: Hero(
             tag: 'project_Supervision',
             child: Card(
@@ -317,7 +319,7 @@ class _SupervisionCardMobile extends StatelessWidget {
       opacity: 1.0,
       child: _HoverEffect(
         child: GestureDetector(
-          onTap: () => Get.toNamed('/supervision-page'),
+          onTap: () => Get.to(() => const SelectProjectForSupervisionScreen()),
           child: Hero(
             tag: 'project_Supervision',
             child: Card(

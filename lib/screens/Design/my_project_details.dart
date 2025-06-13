@@ -1382,22 +1382,22 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                     //  ملفات التقدم التي يرفعها المكتب
                     _buildDocumentItem(
                       'Architectural (Office):',
-                      project.architectural_file,
+                      project.architecturalfile,
                       'architectural_file',
                     ),
                     _buildDocumentItem(
                       'Structural (Office):',
-                      project.structural_file,
+                      project.structuralfile,
                       'structural_file',
                     ),
                     _buildDocumentItem(
                       'Electrical (Office):',
-                      project.electrical_file,
+                      project.electricalfile,
                       'electrical_file',
                     ),
                     _buildDocumentItem(
                       'Mechanical (Office):',
-                      project.mechanical_file,
+                      project.mechanicalfile,
                       'mechanical_file',
                     ),
                     _buildDocumentItem(
@@ -1866,13 +1866,13 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
       case 'license_file':
         return _project!.licenseFile;
       case 'architectural_file':
-        return _project!.architectural_file;
+        return _project!.architecturalfile;
       case 'structural_file':
-        return _project!.structural_file;
+        return _project!.structuralfile;
       case 'electrical_file':
-        return _project!.electrical_file;
+        return _project!.electricalfile;
       case 'mechanical_file':
-        return _project!.mechanical_file;
+        return _project!.mechanicalfile;
       case 'document_2d':
         return _project!.document2D;
       case 'document_3d':
