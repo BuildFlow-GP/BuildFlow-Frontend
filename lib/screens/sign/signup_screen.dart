@@ -217,22 +217,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                     ),
-                                    onPressed:
-                                        areFieldsFilled
-                                            ? () {
-                                              // Handle sign-up logic
-                                            }
-                                            : null,
+                                    onPressed: () {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => SignInScreen(),
+                                        ),
+                                      );
+                                    },
                                     child: const Text('Sign Up'),
                                   ),
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    Navigator.push(
+                                    Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
-                                        builder:
-                                            (context) => const SignInScreen(),
+                                        builder: (context) => SignInScreen(),
                                       ),
                                     );
                                   },

@@ -42,6 +42,7 @@ class _NoPermitScreenState extends State<NoPermitScreen> {
     bool allStepsDone = step1 && step2 && step3 && step4;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [

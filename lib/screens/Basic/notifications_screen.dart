@@ -6,18 +6,19 @@ import 'package:intl/intl.dart';
 import '../../services/Basic/notifications_service.dart';
 import '../../models/Basic/notifications_model.dart';
 import '../../utils/constants.dart'; // أو api_config.dart
+import 'package:buildflow_frontend/themes/app_colors.dart'; // استيراد ملف الألوان
 
 // استيراد صفحات التفاصيل والانتقال إليها
 import '../ReadonlyProfiles/office_readonly_profile.dart';
 import '../ReadonlyProfiles/company_readonly_profile.dart';
-import '../ReadonlyProfiles/project_readonly_profile.dart';
+import '../ReadonlyProfiles/project_readonly_profile.dart'; // تأكد من وجوده ومساره الصحيح
 
 // إضافة سيرفس المشروع
-import '../../services/create/project_service.dart';
+import '../../services/create/project_service.dart'; // تأكد من وجوده ومساره الصحيح
 
 // شاشات سيتم الانتقال إليها بناءً على الإجراء (للمستخدم)
-import '../design/no_permit_screen.dart'; // شاشة استكمال البيانات بعد موافقة المكتب
-import '../design/choose_office.dart'; // شاشة اختيار مكتب آخر عند الرفض
+import '../design/no_permit_screen.dart'; // شاشة استكمال البيانات بعد موافقة المكتب، تأكد من وجودها ومسارها
+import '../design/choose_office.dart'; // شاشة اختيار مكتب آخر عند الرفض، تأكد من وجودها ومسارها
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -35,7 +36,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   int _currentPage = 1;
   int _totalPages = 1;
   bool _isFetchingMore = false;
-  bool _isProcessingAction = false; // لمنع الضغط المتكرر
+  bool _isProcessingAction = false; // لمنع الضغط المتكرر على الأزرار
   final ScrollController _scrollController = ScrollController();
 
   // مجموعة لتخزين IDs الإشعارات التي تم التعامل معها (Approve/Reject)
@@ -46,11 +47,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     super.initState();
     _loadNotifications(isRefresh: true);
     _scrollController.addListener(() {
+      // التحقق من الوصول إلى نهاية القائمة لجلب المزيد من الإشعارات
       if (_scrollController.position.pixels >=
-              _scrollController.position.maxScrollExtent - 200 &&
-          _currentPage < _totalPages &&
-          !_isLoading &&
+              _scrollController.position.maxScrollExtent -
+                  200 && // قرب النهاية بـ 200 بكسل
+          _currentPage < _totalPages && // لم نصل بعد إلى آخر صفحة
+          !_isLoading && // لا يوجد تحميل حالي
           !_isFetchingMore) {
+        // لا يوجد جلب بيانات حالي
         _loadNotifications();
       }
     });
@@ -64,23 +68,27 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _loadNotifications({bool isRefresh = false}) async {
     if (!mounted) return;
-    if (_isFetchingMore && !isRefresh) return;
+    if (_isFetchingMore && !isRefresh) {
+      return; // لا تجلب المزيد إذا كان الجلب قيد التقدم ولم يكن تحديثًا
+    }
 
     setState(() {
       if (isRefresh) {
+        // تهيئة الحالة عند التحديث
         _isLoading = true;
         _error = null;
         _notifications = [];
         _currentPage = 1;
         _totalPages = 1;
-        _processedNotificationIds.clear();
+        _processedNotificationIds.clear(); // مسح الإشعارات المعالجة عند التحديث
       } else {
-        _isFetchingMore = true;
+        _isFetchingMore = true; // تعيين حالة الجلب للمزيد
       }
     });
 
     try {
       final response = await _notificationService.getMyNotifications(
+        // حساب الـ offset بناءً على الصفحة الحالية والـ limit
         offset: (isRefresh ? 0 : (_currentPage - 1)) * 20,
         limit: 20,
       );
@@ -89,24 +97,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           if (isRefresh) {
             _notifications = response.notifications;
           } else {
-            _notifications.addAll(response.notifications);
+            _notifications.addAll(
+              response.notifications,
+            ); // إضافة الإشعارات الجديدة
           }
           _totalPages = response.totalPages;
           if (!isRefresh && response.notifications.isNotEmpty) {
-            _currentPage++;
+            _currentPage++; // زيادة رقم الصفحة إذا تم جلب بيانات جديدة
           } else if (isRefresh && response.notifications.isNotEmpty) {
-            _currentPage = 1;
+            _currentPage = 1; // إعادة تعيين الصفحة الأولى عند التحديث
             if (response.totalPages == 0 && response.totalItems > 0) {
-              _totalPages = 1;
+              _totalPages =
+                  1; // تأكد من أن هناك صفحة واحدة على الأقل إذا كان هناك عناصر
             }
           } else if (isRefresh && response.notifications.isEmpty) {
-            _currentPage = 1;
+            _currentPage =
+                1; // إذا لم تكن هناك إشعارات بعد التحديث، ابدأ من الصفحة 1 و Total 0
             _totalPages = 0;
           }
 
           _isLoading = false;
           _isFetchingMore = false;
-          _error = null;
+          _error = null; // مسح الأخطاء
         });
       }
     } catch (e) {
@@ -121,9 +133,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  // دالة لمعالجة الضغط على أيقونة "Mark as Read"
   Future<void> _handleMarkAsReadIconTap(NotificationModel notification) async {
-    if (notification.isRead || _isProcessingAction) return;
-    setState(() => _isProcessingAction = true);
+    if (notification.isRead || _isProcessingAction) {
+      return; // لا تفعل شيئًا إذا كان مقروءًا أو عملية أخرى قيد التقدم
+    }
+    setState(() => _isProcessingAction = true); // إظهار التحميل
     try {
       final updatedNotification = await _notificationService
           .markNotificationAsRead(notification.id);
@@ -133,73 +148,91 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             (n) => n.id == notification.id,
           );
           if (index != -1) {
-            _notifications[index] = updatedNotification;
+            _notifications[index] =
+                updatedNotification; // تحديث الإشعار في القائمة
           }
         });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to mark as read: ${e.toString()}')),
+          SnackBar(
+            content: Text('Failed to mark as read: ${e.toString()}'),
+            backgroundColor: AppColors.error, // لون الخطأ من AppColors
+          ),
         );
       }
     } finally {
-      if (mounted) setState(() => _isProcessingAction = false);
+      if (mounted) setState(() => _isProcessingAction = false); // إخفاء التحميل
     }
   }
 
+  // دالة لتمييز جميع الإشعارات كمقروءة
   Future<void> _markAllAsRead() async {
     if (_isProcessingAction) return;
-    setState(() => _isProcessingAction = true);
+    setState(() => _isProcessingAction = true); // إظهار التحميل
     try {
       final count = await _notificationService.markAllNotificationsAsRead();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$count notifications marked as read.')),
+          SnackBar(
+            content: Text('$count notifications marked as read.'),
+            backgroundColor: AppColors.success, // لون النجاح من AppColors
+          ),
         );
-        _loadNotifications(isRefresh: true);
+        _loadNotifications(
+          isRefresh: true,
+        ); // إعادة تحميل الإشعارات بعد التحديث
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to mark all as read: ${e.toString()}'),
+            backgroundColor: AppColors.error, // لون الخطأ من AppColors
           ),
         );
       }
     } finally {
-      if (mounted) setState(() => _isProcessingAction = false);
+      if (mounted) setState(() => _isProcessingAction = false); // إخفاء التحميل
     }
   }
 
+  // دالة لتمييز الإشعار كمقروء ثم تنفيذ إجراء معين
   Future<void> _markAsReadAndThen(
     NotificationModel notification,
     Future<void> Function() onReadCompleteActionAsync,
   ) async {
     if (_isProcessingAction) return;
-    setState(() => _isProcessingAction = true);
+    setState(() => _isProcessingAction = true); // إظهار التحميل
 
+    // دالة مساعدة لتنفيذ الإجراء بعد التمييز كمقروء أو إذا كان مقروءًا بالفعل
     Future<void> executeActionAfterReadLogic() async {
       try {
         await onReadCompleteActionAsync();
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Action failed: ${e.toString()}')),
+            SnackBar(
+              content: Text('Action failed: ${e.toString()}'),
+              backgroundColor: AppColors.error,
+            ),
           );
         }
         debugPrint("Error during onReadCompleteActionAsync: $e");
       } finally {
         if (mounted && _isProcessingAction) {
-          setState(() => _isProcessingAction = false);
+          setState(() => _isProcessingAction = false); // إخفاء التحميل
         }
       }
     }
 
     if (notification.isRead) {
+      // إذا كان الإشعار مقروءًا بالفعل، نفذ الإجراء مباشرة
       await executeActionAfterReadLogic();
       return;
     }
+    // إذا لم يكن مقروءًا، قم بتمييزه كمقروء أولاً ثم نفذ الإجراء
     try {
       final updatedNotification = await _notificationService
           .markNotificationAsRead(notification.id);
@@ -209,11 +242,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             (n) => n.id == notification.id,
           );
           if (index != -1) {
-            _notifications[index] = updatedNotification;
+            _notifications[index] =
+                updatedNotification; // تحديث الإشعار في القائمة
           }
         });
-        await executeActionAfterReadLogic();
+        await executeActionAfterReadLogic(); // نفذ الإجراء بعد التحديث
       } else {
+        // إذا فشل تمييز الإشعار كمقروء
         if (mounted) setState(() => _isProcessingAction = false);
       }
     } catch (e) {
@@ -223,6 +258,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             content: Text(
               'Failed to mark as read before action: ${e.toString()}',
             ),
+            backgroundColor: AppColors.error,
           ),
         );
         setState(() => _isProcessingAction = false);
@@ -230,9 +266,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  // دالة لمعالجة رد المكتب على طلب مشروع (قبول/رفض)
   Future<void> _handleProjectRequestResponse(
     NotificationModel notification,
-    String action,
+    String action, // 'approve' أو 'reject'
   ) async {
     if (notification.targetEntityId == null ||
         notification.targetEntityType != 'project' ||
@@ -251,10 +288,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               content: Text(
                 'Project request has been ${action}ed successfully.',
               ),
+              backgroundColor: AppColors.success, // لون النجاح من AppColors
             ),
           );
           setState(() {
-            _processedNotificationIds.add(notification.id);
+            _processedNotificationIds.add(
+              notification.id,
+            ); // إضافة الإشعار إلى قائمة المعالجة
           });
         }
       } catch (e) {
@@ -264,6 +304,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               content: Text(
                 'Failed to $action project request: ${e.toString()}',
               ),
+              backgroundColor: AppColors.error, // لون الخطأ من AppColors
             ),
           );
         }
@@ -272,20 +313,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
   }
 
+  // دالة عامة لتنفيذ إجراءات المستخدم أو الإجراءات العامة
   Future<void> _performUserOrGeneralAction(
     NotificationModel notification,
   ) async {
-    //  الدالة موجودة بهذا الاسم
+    // هذه الدالة ستنفذ الإجراء المحدد بعد تمييز الإشعار كمقروء
     await _markAsReadAndThen(
       notification,
       () async => _proceedWithUserOrGeneralAction(notification),
     );
   }
 
+  // دالة لمعالجة الانتقال بناءً على نوع الإشعار للمستخدم
   Future<void> _proceedWithUserOrGeneralAction(
     NotificationModel notification,
   ) async {
-    // الدالة موجودة بهذا الاسم
     if (!mounted) return;
     if (notification.targetEntityId == null ||
         notification.targetEntityType == null) {
@@ -303,7 +345,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             "Complete project (ID: ${notification.targetEntityId}) details";
         break;
       case 'PROJECT_REJECTED_BY_OFFICE':
-        targetScreen = const ChooseOfficeScreen();
+        targetScreen = const ChooseOfficeScreen(); // شاشة اختيار مكتب آخر
         routeDescription =
             "Choose another office for project (ID: ${notification.targetEntityId})";
         break;
@@ -316,6 +358,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             "View project (ID: ${notification.targetEntityId}) documents";
         break;
       default:
+        // إذا لم يكن هناك إجراء محدد لهذا النوع من الإشعارات، انتقل إلى الكيان المستهدف العام
         debugPrint(
           "No specific general action defined for notification type: ${notification.notificationType}",
         );
@@ -331,9 +374,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
+  // دالة عامة للانتقال إلى صفحة تفاصيل الكيان المستهدف
   Future<void> _navigateToTargetEntity(
     NotificationModel notification, {
-    bool skipMarkAsRead = false,
+    bool skipMarkAsRead =
+        false, // لتخطي تمييز الإشعار كمقروء إذا تم التعامل معه بطريقة أخرى
   }) async {
     Future<void> navigateAction() async {
       if (!mounted) return;
@@ -381,22 +426,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  // دالة لتنسيق الوقت بصيغة "منذ كذا"
   String _formatTimeAgo(DateTime dateTime) {
     final now = DateTime.now();
-    final difference = now.difference(dateTime.toLocal());
+    final difference = now.difference(
+      dateTime.toLocal(),
+    ); // التأكد من استخدام الوقت المحلي
+
     if (difference.inSeconds < 5) return 'just now';
     if (difference.inSeconds < 60) return '${difference.inSeconds}s ago';
     if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
     if (difference.inHours < 24) return '${difference.inHours}h ago';
     if (difference.inDays < 7) return '${difference.inDays}d ago';
-    return DateFormat('dd MMM').format(dateTime.toLocal());
+    return DateFormat(
+      'dd MMM, yyyy',
+    ).format(dateTime.toLocal()); // تنسيق كامل للتاريخ بعد أسبوع
   }
 
+  // بناء عنصر الإشعار الفردي
   Widget _buildNotificationItem(NotificationModel notification) {
     final timeAgo = _formatTimeAgo(notification.createdAt);
     ImageProvider? actorImageProvider;
     IconData actorDefaultIcon = Icons.person_outline;
 
+    // تحديد مسار صورة الممثل (Actor) أو أيقونة افتراضية
     if (notification.actor?.profileImage != null &&
         notification.actor!.profileImage!.isNotEmpty) {
       actorImageProvider = NetworkImage(
@@ -419,18 +472,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
     }
 
+    // تحديد نوع الإشعار لإظهار أزرار معينة
     bool isNewProjectRequestForOffice =
         notification.notificationType == 'NEW_PROJECT_REQUEST' &&
-        !_processedNotificationIds.contains(notification.id) &&
-        notification.recipientType == 'office';
+        !_processedNotificationIds.contains(
+          notification.id,
+        ) && // لم يتم التعامل معه بعد
+        notification.recipientType == 'office'; // موجه للمكتب
     bool isProjectResponseForUser =
         (notification.notificationType == 'PROJECT_APPROVED_BY_OFFICE' ||
             notification.notificationType == 'PROJECT_REJECTED_BY_OFFICE') &&
-        notification.recipientType == 'individual';
+        notification.recipientType == 'individual'; // موجه للمستخدم الفردي
 
     String? generalActionButtonText;
     IconData? generalActionButtonIcon;
 
+    // تحديد نص وأيقونة الزر العام للإجراءات الأخرى
     if (!isNewProjectRequestForOffice && !isProjectResponseForUser) {
       switch (notification.notificationType) {
         case 'OFFICE_UPLOADED_2D_DOCUMENT':
@@ -438,35 +495,58 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           generalActionButtonText = 'View Project';
           generalActionButtonIcon = Icons.visibility_outlined;
           break;
+        // أضف المزيد من الحالات هنا إذا كان هناك أزرار عامة أخرى لأنواع إشعارات معينة
       }
     }
 
-    return Material(
-      color:
-          notification.isRead
-              ? Theme.of(context).cardColor
-              : Theme.of(
-                context,
-              ).primaryColorLight.withAlpha((0.3 * 255).round()),
+    return Container(
+      // استخدم Container بدلاً من Material لإعطاء مظهر الكارت
+      margin: const EdgeInsets.symmetric(
+        horizontal: 16.0,
+        vertical: 8.0,
+      ), // هامش حول الكارت
+      decoration: BoxDecoration(
+        color:
+            notification.isRead
+                ? AppColors
+                    .card // لون خلفية الكارت للإشعارات المقروءة
+                : AppColors.primary.withOpacity(
+                  0.1,
+                ), // لون خفيف للإشعارات غير المقروءة
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow.withOpacity(0.05), // ظل خفيف
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
       child: InkWell(
-        onTap: () => _navigateToTargetEntity(notification),
+        onTap:
+            () => _navigateToTargetEntity(
+              notification,
+            ), // الانتقال عند الضغط على الكارت
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          padding: const EdgeInsets.all(16.0), // Padding داخل الكارت
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start, // محاذاة للأعلى
             children: [
+              // صورة الممثل أو الأيقونة الافتراضية
               CircleAvatar(
-                radius: 22,
+                radius: 24, // حجم أكبر قليلاً
                 backgroundImage: actorImageProvider,
-                backgroundColor: Colors.grey[300],
-                onBackgroundImageError:
-                    actorImageProvider != null ? (_, __) {} : null,
+                backgroundColor: AppColors.background, // لون خلفية من AppColors
+                onBackgroundImageError: (exception, stackTrace) {
+                  debugPrint('Error loading actor image: $exception');
+                },
                 child:
                     actorImageProvider == null
                         ? Icon(
                           actorDefaultIcon,
-                          size: 20,
-                          color: Colors.grey[700],
+                          size: 24, // حجم أيقونة أكبر
+                          color: AppColors.textSecondary, // لون من AppColors
                         )
                         : null,
               ),
@@ -475,48 +555,68 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // اسم الممثل
                     Text(
-                      notification.actor?.name ?? 'System Notification',
+                      notification.actor?.name ??
+                          'System', // 'System' كقيمة افتراضية
                       style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
+                        fontWeight: FontWeight.w700, // خط أثقل
+                        fontSize: 16,
                         color:
                             notification.isRead
-                                ? Theme.of(context).textTheme.bodySmall?.color
-                                    ?.withAlpha((0.7 * 255).round())
-                                : Theme.of(
-                                  context,
-                                ).textTheme.titleMedium?.color,
+                                ? AppColors
+                                    .textSecondary // لون نص المقروء
+                                : AppColors.textPrimary, // لون نص غير المقروء
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
+                    // رسالة الإشعار
                     Text(
                       notification.message,
                       style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: 14,
                         color:
                             notification.isRead
-                                ? Colors.grey[700]
-                                : Theme.of(context).textTheme.bodyMedium?.color,
+                                ? AppColors.textSecondary.withOpacity(
+                                  0.8,
+                                ) // لون نص المقروء
+                                : AppColors.textPrimary, // لون نص غير المقروء
                         fontWeight:
                             notification.isRead
                                 ? FontWeight.normal
-                                : FontWeight.w500,
+                                : FontWeight.w500, // خط أثقل لغير المقروء
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      maxLines: 3, // عرض 3 أسطر كحد أقصى
+                      overflow:
+                          TextOverflow.ellipsis, // إضافة ... إذا تجاوز النص
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
+                    // عرض الأزرار بناءً على نوع الإشعار
                     if (isNewProjectRequestForOffice)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           ElevatedButton.icon(
-                            icon: const Icon(
-                              Icons.check_circle_outline,
-                              size: 16,
+                            icon:
+                                _isProcessingAction
+                                    ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                      ),
+                                    )
+                                    : const Icon(
+                                      Icons.check_circle_outline,
+                                      size: 18,
+                                    ),
+                            label: Text(
+                              _isProcessingAction ? 'Processing...' : 'Approve',
                             ),
-                            label: const Text('Approve'),
                             onPressed:
                                 _isProcessingAction
                                     ? null
@@ -525,25 +625,45 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                       'approve',
                                     ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green.shade600,
+                              backgroundColor:
+                                  AppColors.success, // لون النجاح من AppColors
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
+                                horizontal: 14,
+                                vertical: 8,
                               ),
                               textStyle: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(10),
                               ),
+                              elevation: 2,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 12),
                           OutlinedButton.icon(
-                            icon: const Icon(Icons.cancel_outlined, size: 16),
-                            label: const Text('Reject'),
+                            icon:
+                                _isProcessingAction
+                                    ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                      ),
+                                    )
+                                    : const Icon(
+                                      Icons.cancel_outlined,
+                                      size: 18,
+                                    ),
+                            label: Text(
+                              _isProcessingAction ? 'Processing...' : 'Reject',
+                            ),
                             onPressed:
                                 _isProcessingAction
                                     ? null
@@ -552,32 +672,36 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                       'reject',
                                     ),
                             style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: Colors.red.shade400),
-                              foregroundColor: Colors.red.shade700,
+                              side: BorderSide(
+                                color: AppColors.error,
+                              ), // حدود بلون الخطأ من AppColors
+                              foregroundColor:
+                                  AppColors
+                                      .error, // لون نص بلون الخطأ من AppColors
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
+                                horizontal: 14,
+                                vertical: 8,
                               ),
                               textStyle: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
                           ),
                         ],
                       )
-                    else if (isProjectResponseForUser)
+                    else if (isProjectResponseForUser) // أزرار استجابة المشروع للمستخدم
                       TextButton.icon(
                         icon: Icon(
                           notification.notificationType ==
                                   'PROJECT_APPROVED_BY_OFFICE'
                               ? Icons.edit_note_outlined
                               : Icons.find_replace_outlined,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.primary,
+                          size: 18,
+                          color: AppColors.accent, // لون الأيقونة من AppColors
                         ),
                         label: Text(
                           notification.notificationType ==
@@ -585,86 +709,95 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               ? 'Complete Project Info'
                               : 'Choose Another Office',
                           style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.primary,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.accent, // لون النص من AppColors
                           ),
                         ),
                         onPressed:
                             _isProcessingAction
                                 ? null
-                                : () => _performUserOrGeneralAction(
-                                  notification,
-                                ), //  الاسم الصحيح
+                                : () =>
+                                    _performUserOrGeneralAction(notification),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
-                            vertical: 2,
+                            vertical: 4,
                           ),
-                          minimumSize: const Size(0, 28),
+                          minimumSize: const Size(0, 30),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                       )
-                    else if (generalActionButtonText != null)
+                    else if (generalActionButtonText !=
+                        null) // الأزرار العامة الأخرى
                       TextButton.icon(
                         icon: Icon(
-                          generalActionButtonIcon ?? Icons.arrow_forward_ios,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.secondary,
+                          generalActionButtonIcon ??
+                              Icons.arrow_forward_ios_rounded,
+                          size: 18,
+                          color: AppColors.accent, // لون الأيقونة من AppColors
                         ),
                         label: Text(
                           generalActionButtonText,
                           style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.secondary,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.accent, // لون النص من AppColors
                           ),
                         ),
                         onPressed:
                             _isProcessingAction
                                 ? null
-                                : () => _performUserOrGeneralAction(
-                                  notification,
-                                ), //  الاسم الصحيح
+                                : () =>
+                                    _performUserOrGeneralAction(notification),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
-                            vertical: 2,
+                            vertical: 4,
                           ),
-                          minimumSize: const Size(0, 28),
+                          minimumSize: const Size(0, 30),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                       )
                     else
+                      // عرض الوقت فقط إذا لم تكن هناك أزرار خاصة
                       Text(
                         timeAgo,
                         style: TextStyle(
                           fontSize: 12.0,
-                          color: Colors.grey[600],
+                          color: AppColors.textSecondary.withOpacity(
+                            0.7,
+                          ), // لون من AppColors
                         ),
                       ),
                   ],
                 ),
               ),
-              const SizedBox(width: 4.0),
+              const SizedBox(
+                width: 8.0,
+              ), // مسافة بين المحتوى وأيقونة "Mark as Read"
+              // أيقونة "Mark as Read"
               SizedBox(
-                width: 40,
-                height: 40,
+                width: 36, // حجم ثابت للأيقونة
+                height: 36,
                 child: IconButton(
                   padding: EdgeInsets.zero,
                   icon: Icon(
                     notification.isRead
-                        ? Icons.check_circle
-                        : Icons.circle_outlined,
+                        ? Icons
+                            .check_circle_rounded // أيقونة مقروء
+                        : Icons.circle_outlined, // أيقونة غير مقروء
                     color:
                         notification.isRead
-                            ? Colors.green.shade600
-                            : Theme.of(context).colorScheme.primary,
-                    size: 20,
+                            ? AppColors
+                                .success // لون النجاح من AppColors
+                            : AppColors.primary, // لون رئيسي من AppColors
+                    size: 24, // حجم أيقونة أكبر
                   ),
                   tooltip: notification.isRead ? 'Read' : 'Mark as Read',
                   onPressed:
-                      (notification.isRead || _isProcessingAction)
+                      (notification.isRead ||
+                              _isProcessingAction) // زر معطل إذا كان مقروءًا أو عملية قيد التقدم
                           ? null
                           : () => _handleMarkAsReadIconTap(notification),
                 ),
@@ -678,41 +811,115 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ضبط عرض المحتوى بناءً على حجم الشاشة (متجاوب)
+    double screenWidth = MediaQuery.of(context).size.width;
+    // أقصى عرض 800px في الشاشات الكبيرة، أو 100% من عرض الشاشة في الموبايل
+    double contentMaxWidth = screenWidth > 800 ? 800 : screenWidth;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        actions: [
-          if (_notifications.any((n) => !n.isRead) &&
-              !_isLoading &&
-              !_isFetchingMore)
-            TextButton(
-              onPressed: _isProcessingAction ? null : _markAllAsRead,
-              child: Text(
-                'Mark All Read',
-                style: TextStyle(
-                  color:
-                      Theme.of(context).appBarTheme.foregroundColor ??
-                      Colors.white,
+      backgroundColor: AppColors.background, // خلفية الشاشة من AppColors
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(100.0), // ارتفاع AppBar المخصص
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            40,
+            16,
+            20,
+          ), // Padding أعلى لأزرار الحالة (Status bar)
+          decoration: BoxDecoration(
+            color: AppColors.primary, // لون خلفية AppBar من AppColors
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadow.withOpacity(0.2), // ظل أغمق
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Notifications', // عنوان الصفحة
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.accent, // لون العنوان من AppColors
+                    letterSpacing: 0.8,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
-            onPressed:
-                _isLoading || _isFetchingMore || _isProcessingAction
-                    ? null
-                    : () => _loadNotifications(isRefresh: true),
+              // أزرار الإجراءات في الـ AppBar
+              if (_notifications.any(
+                    (n) => !n.isRead,
+                  ) && // إظهار الزر فقط إذا كان هناك إشعارات غير مقروءة
+                  !_isLoading && // لا يوجد تحميل عام
+                  !_isFetchingMore) // لا يوجد جلب المزيد من البيانات
+                SizedBox(
+                  // استخدام SizedBox لضمان حجم ثابت للزر
+                  width: 48, // حجم ثابت ليتناسق مع زر الرجوع
+                  height: 48,
+                  child: TextButton(
+                    onPressed:
+                        _isProcessingAction
+                            ? null
+                            : _markAllAsRead, // زر معطل إذا كان هناك عملية قيد التقدم
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero, // إزالة Padding الافتراضي
+                      alignment: Alignment.center, // توسيط النص والأيقونة
+                    ),
+                    child:
+                        _isProcessingAction
+                            ? CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.accent,
+                              ), // لون مؤشر التحميل
+                            )
+                            : Icon(
+                              Icons
+                                  .done_all_rounded, // أيقونة "تمييز الكل كمقروء"
+                              color:
+                                  AppColors.accent, // لون الأيقونة من AppColors
+                              size: 24,
+                            ),
+                  ),
+                )
+              else
+                const SizedBox(width: 48), // مسافة فارغة لتوازن زر الرجوع
+            ],
           ),
-        ],
+        ),
       ),
-      body: _buildBody(),
+      body: Center(
+        // توسيط المحتوى أفقياً
+        child: ConstrainedBox(
+          // تحديد عرض أقصى للمحتوى ليكون متجاوباً (Responsive)
+          constraints: BoxConstraints(
+            maxWidth: contentMaxWidth,
+          ), // استخدام العرض المتجاوب
+          child: _buildBody(), // بناء محتوى الشاشة
+        ),
+      ),
     );
   }
 
+  // دالة بناء جسم الشاشة (حالات التحميل، الخطأ، النتائج)
   Widget _buildBody() {
     if (_isLoading && _notifications.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(
+            AppColors.primary,
+          ), // لون من AppColors
+        ),
+      );
     }
     if (_error != null && _notifications.isEmpty) {
       return Center(
@@ -721,18 +928,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, color: Colors.red[700], size: 50),
+              Icon(
+                Icons.error_outline_rounded,
+                color: AppColors.error,
+                size: 60,
+              ), // أيقونة خطأ بلون AppColors
               const SizedBox(height: 16),
               Text(
                 _error!,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.red[700], fontSize: 16),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.error, // لون نص الخطأ من AppColors
+                ),
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Retry'),
                 onPressed: () => _loadNotifications(isRefresh: true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary, // لون الزر من AppColors
+                  foregroundColor: AppColors.background, // لون نص الزر
+                ),
               ),
             ],
           ),
@@ -748,13 +965,34 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             children: [
               Icon(
                 Icons.notifications_off_outlined,
-                color: Colors.grey[600],
-                size: 60,
+                color: AppColors.textSecondary, // لون من AppColors
+                size: 80,
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'You have no notifications yet.',
-                style: TextStyle(fontSize: 18.0, color: Colors.grey),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.textPrimary, // لون من AppColors
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Check back later for updates.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary, // لون من AppColors
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Refresh'),
+                onPressed: () => _loadNotifications(isRefresh: true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary, // لون الزر من AppColors
+                  foregroundColor: AppColors.background, // لون نص الزر
+                ),
               ),
             ],
           ),
@@ -765,25 +1003,40 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       onRefresh: () => _loadNotifications(isRefresh: true),
       child: ListView.separated(
         controller: _scrollController,
-        itemCount: _notifications.length + (_isFetchingMore ? 1 : 0),
+        itemCount:
+            _notifications.length +
+            (_isFetchingMore ? 1 : 0), // إضافة عنصر للتحميل إذا كنا نجلب المزيد
         itemBuilder: (context, index) {
+          // عرض مؤشر تحميل في نهاية القائمة عند جلب المزيد
           if (index == _notifications.length && _isFetchingMore) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16.0),
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2.0)),
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.0,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColors.primary,
+                  ), // لون من AppColors
+                ),
+              ),
             );
           }
-          if (index >= _notifications.length) return const SizedBox.shrink();
+          if (index >= _notifications.length) {
+            return const SizedBox.shrink(); // تجنب أي تجاوزات
+          }
 
           final notification = _notifications[index];
           return _buildNotificationItem(notification);
         },
         separatorBuilder:
-            (context, index) => const Divider(
+            (context, index) => Divider(
               height: 0,
-              thickness: 0.5,
-              indent: 70,
-              endIndent: 16,
+              thickness: 0.8, // سمك أكبر قليلاً للفاصل
+              color: AppColors.primary.withOpacity(
+                0.3,
+              ), // لون فاصل من AppColors
+              indent: 70, // المسافة البادئة
+              endIndent: 16, // المسافة النهائية
             ),
       ),
     );

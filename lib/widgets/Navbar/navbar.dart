@@ -180,7 +180,7 @@ class Navbar extends StatelessWidget {
         Get.toNamed('/contact-us');
         break;
       case 'Chat':
-        Get.toNamed('/chat');
+        // Get.offAll(() => const ChatScreen(contact: Session.getUserId()));
         break;
       case 'Logout':
         await Session.clear();

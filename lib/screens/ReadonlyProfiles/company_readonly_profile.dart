@@ -8,12 +8,12 @@ import '../../models/Basic/review_model.dart';
 import '../../services/ReadonlyProfiles/company_readonly.dart';
 import '../../services/session.dart';
 import 'project_readonly_profile.dart';
-import '../../themes/app_colors.dart'; // ****** تم إضافة هذا الاستيراد ******
+import '../../themes/app_colors.dart';
+import 'package:logger/logger.dart';
 
 class CompanyrProfileScreen extends StatefulWidget {
   final int companyId;
   final bool isOwner;
-
   const CompanyrProfileScreen({
     super.key,
     required this.companyId,
@@ -30,6 +30,7 @@ class _CompanyrProfileScreenState extends State<CompanyrProfileScreen> {
   CompanyModel? _company;
   List<ProjectModel> _projects = [];
   List<Review> _reviews = [];
+  final Logger logger = Logger();
 
   bool _isLoadingCompany = true;
   bool _isLoadingProjects = true;
@@ -86,7 +87,9 @@ class _CompanyrProfileScreenState extends State<CompanyrProfileScreen> {
           _companyError = e.toString();
         });
       }
-      // print("Error fetching company details: $e"); // تم التعليق لتقليل المخرجات في Console
+      logger.e(
+        "Error fetching company details: $e",
+      ); // تم التعليق لتقليل المخرجات في Console
     }
   }
 
@@ -111,7 +114,9 @@ class _CompanyrProfileScreenState extends State<CompanyrProfileScreen> {
           _projectsError = e.toString();
         });
       }
-      // print("Error fetching company projects: $e"); // تم التعليق لتقليل المخرجات في Console
+      logger.e(
+        "Error fetching company projects: $e",
+      ); // تم التعليق لتقليل المخرجات في Console
     }
   }
 
@@ -136,7 +141,9 @@ class _CompanyrProfileScreenState extends State<CompanyrProfileScreen> {
           _reviewsError = e.toString();
         });
       }
-      // print("Error fetching company reviews: $e"); // تم التعليق لتقليل المخرجات في Console
+      logger.e(
+        "Error fetching company reviews: $e",
+      ); // تم التعليق لتقليل المخرجات في Console
     }
   }
 
@@ -809,8 +816,7 @@ class _CompanyrProfileScreenState extends State<CompanyrProfileScreen> {
                       style: const TextStyle(fontSize: 11, color: Colors.white),
                     ),
                   ),
-                  if (project.endDate != null &&
-                      DateTime.tryParse(project.endDate!) != null)
+                  if (project.endDate != null)
                     Row(
                       children: [
                         Icon(
@@ -822,9 +828,7 @@ class _CompanyrProfileScreenState extends State<CompanyrProfileScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          DateFormat.yMd().format(
-                            DateTime.parse(project.endDate!),
-                          ),
+                          DateFormat.yMd().format(project.endDate!),
                           style: TextStyle(
                             fontSize: 11,
                             color:

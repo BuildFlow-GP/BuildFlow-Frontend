@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:buildflow_frontend/screens/Design/payment_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -33,17 +32,6 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.payment),
-            title: const Text('Make Payment'),
-            onTap: () {
-              Navigator.pop(context); // إغلاق القائمة
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const PaymentScreen()),
-              );
-            },
-          ),
-          ListTile(
             leading: const Icon(Icons.info),
             title: const Text('About Us'),
             onTap: () {
@@ -59,9 +47,10 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.category),
-            title: const Text('Categories'),
+            title: const Text('Chat'),
             onTap: () {
-              Navigator.pop(context);
+              // TODO: Replace with a real Contact object as needed
+              //   Navigator.push(context, MaterialPageRoute(builder: (context) => ChatScreen(contact: Contact(/* initialize fields here */),)));
             },
           ),
           ListTile(

@@ -9,6 +9,7 @@ import '../../services/session.dart';
 
 class OfficeProfileScreen extends StatefulWidget {
   final bool isOwner;
+
   final int officeId;
 
   const OfficeProfileScreen({
