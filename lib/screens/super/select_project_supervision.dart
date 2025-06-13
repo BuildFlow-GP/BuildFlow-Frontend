@@ -6,7 +6,7 @@ import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 
-import 'select_company_supervision.dart'; //  افترض أن هذه هي الشاشة التالية
+//  افترض أن هذه هي الشاشة التالية
 
 final Logger logger = Logger();
 
