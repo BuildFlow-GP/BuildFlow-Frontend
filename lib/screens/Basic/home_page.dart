@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:buildflow_frontend/themes/app_colors.dart';
+
 import '../../services/Basic/favorite_service.dart'; // تمت الإضافة
 //import '../models/fav/detailed_fav_model.dart';
 //import '../models/fav/userfav_model.dart'; // تمت الإضافة (افترض أن هذا هو اسم ملف الموديل)
@@ -326,6 +328,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.accent,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
