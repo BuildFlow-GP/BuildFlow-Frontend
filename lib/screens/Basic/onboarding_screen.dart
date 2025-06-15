@@ -1,6 +1,5 @@
 // lib/screens/onboarding_screen.dart
 import 'package:buildflow_frontend/screens/sign/signin_screen.dart';
-import 'package:buildflow_frontend/screens/sign/user_type.dart';
 import 'package:buildflow_frontend/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -233,9 +232,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder:
-                                    (context) =>
-                                        const UserTypeSelectionScreen(),
+                                builder: (context) => const SignInScreen(),
                               ),
                             );
                           } else {
