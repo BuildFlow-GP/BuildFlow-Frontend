@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widgets/Basic/about_section.dart';
 import '../../widgets/Basic/contact_us.dart';
-import '../Design/type_of_project.dart';
+import 'type_of_project.dart';
 import '../../widgets/Navbar/navbar.dart';
 
 import '../../models/Basic/office_model.dart';
