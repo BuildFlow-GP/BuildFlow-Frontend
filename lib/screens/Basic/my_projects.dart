@@ -356,15 +356,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
             // ولا يجب أن تحتوي على padding أو margin خاص بها إذا كنت تريد هذا الـ wrapper للتحكم في التباعد
             // قد تحتاج لتعديل MyProjectCard لتكون "pure" widget (أي لا تحتوي على تزيينات خارجية أو منطق onTap)
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) =>
-                          ProjectDetailsViewScreen(projectId: project.id),
-                  /* لا تفعل شيئًا هنا لأن الـ InkWell الخارجي سيتعامل مع الـ tap */
-                ),
-              );
+              /* لا تفعل شيئًا هنا لأن الـ InkWell الخارجي سيتعامل مع الـ tap */
             },
           ),
         ),
