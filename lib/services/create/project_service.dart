@@ -1032,4 +1032,65 @@ class ProjectService {
       );
     }
   }
+
+  Future<ProjectModel> uploadSupervisionReport(
+    int projectId,
+    int weekNumber,
+    Uint8List fileBytes,
+    String fileName,
+  ) async {
+    final token = await Session.getToken();
+    if (token == null) throw Exception('Not authenticated');
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('baseUrl/projects/$projectId/supervision-report'),
+    );
+
+    request.headers['Authorization'] = 'Bearer $token';
+    request.fields['week_number'] = weekNumber.toString();
+    String? mimeType = lookupMimeType(fileName);
+    MediaType? contentType =
+        mimeType != null
+            ? MediaType.parse(mimeType)
+            : MediaType('application', 'octet-stream');
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'reportFile',
+        fileBytes,
+        filename: fileName,
+        contentType: contentType,
+      ),
+    );
+    logger.i(
+      "Uploading supervision report for week $weekNumber, project $projectId",
+    );
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
+    _logResponse("uploadSupervisionReport", response);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      return ProjectModel.fromJson(
+        responseData['project'] as Map<String, dynamic>,
+      );
+    }
+    _handleError(response, "upload supervision report for week $weekNumber");
+  }
+
+  Future<ProjectModel> setSupervisionTarget(int projectId, int weeks) async {
+    final token = await Session.getToken();
+    if (token == null) throw Exception('Not authenticated');
+    final response = await http.put(
+      Uri.parse(
+        'baseUrl/projects/$projectId/set-supervision-target',
+      ), // افترض أن لديك هذا الـ API
+      headers: _authHeaders(token),
+      body: jsonEncode({'weeks_target': weeks}),
+    );
+    _logResponse("setSupervisionTarget", response);
+    if (response.statusCode == 200) {
+      final rd = jsonDecode(response.body) as Map<String, dynamic>;
+      return ProjectModel.fromJson(rd['project'] as Map<String, dynamic>);
+    }
+    _handleError(response, "set supervision target weeks");
+  }
 }
