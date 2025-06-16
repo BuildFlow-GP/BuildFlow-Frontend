@@ -138,7 +138,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
               ),
               Expanded(
                 child: Text(
-                  'My Projects', // عنوان الصفحة
+                  'Previous Projects', // عنوان الصفحة
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,

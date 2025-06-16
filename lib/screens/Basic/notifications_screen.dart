@@ -17,9 +17,9 @@ import 'package:logger/logger.dart';
 import '../../services/create/project_service.dart'; // تأكد من وجوده ومساره الصحيح
 
 // شاشات سيتم الانتقال إليها بناءً على الإجراء (للمستخدم)
-import '../design/my_project_details.dart';
 import '../design/no_permit_screen.dart'; // شاشة استكمال البيانات بعد موافقة المكتب، تأكد من وجودها ومسارها
 import '../design/choose_office.dart';
+import '../super/project_details_super.dart';
 import '../super/select_company_supervision.dart'; // شاشة اختيار مكتب آخر عند الرفض، تأكد من وجودها ومسارها
 
 class NotificationsScreen extends StatefulWidget {
@@ -373,9 +373,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         break;
       // ✅✅✅ حالات جديدة خاصة بمسار الإشراف (للمستخدم) ✅✅✅
       case 'SUPERVISION_REQUEST_APPROVED':
-        // المستخدم ينتقل لصفحة تفاصيل المشروع الذي تتم مراقبته
-        // (هذه الشاشة ProjectDetailsViewScreen التي نعمل عليها)
-        targetScreen = ProjectDetailsViewScreen(
+        targetScreen = ProjectSupervisionDetailsScreen(
           projectId: notification.targetEntityId!,
         );
         routeDescription =

@@ -423,6 +423,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
     }
   }
 
+  // ignore: unused_element
   Future<void> _handleUserUploadLicense() async {
     if (_isOfficeUploadingFile || _project == null) {
       return; //  استخدم نفس متغير التحميل مبدئياً
@@ -1376,8 +1377,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
 
                       project.licenseFile,
                       'license_file',
-                      canUserUpload:
-                          isUserOwner && project.status != 'Completed',
+                      canUserUpload: isUserOwner && project.status != '',
                     ),
                     //  ملفات التقدم التي يرفعها المكتب
                     _buildDocumentItem(
