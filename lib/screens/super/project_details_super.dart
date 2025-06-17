@@ -163,10 +163,11 @@ class _ProjectSupervisionDetailsScreenState
       }
     } catch (e) {
       logger.e("Error setting supervision target", error: e);
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Failed to set target: ${e.toString()}")),
         );
+      }
     } finally {
       if (mounted) setState(() => _isOfficeSettingTarget = false);
     }
@@ -1083,11 +1084,12 @@ class _ProjectSupervisionDetailsScreenState
                                   project.agreementFile!.startsWith('http')
                                       ? project.agreementFile!
                                       : '${Constants.baseUrl}/${project.agreementFile!}';
-                              if (await canLaunchUrl(Uri.parse(fullUrl)))
+                              if (await canLaunchUrl(Uri.parse(fullUrl))) {
                                 await launchUrl(
                                   Uri.parse(fullUrl),
                                   mode: LaunchMode.externalApplication,
                                 );
+                              }
                             },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
