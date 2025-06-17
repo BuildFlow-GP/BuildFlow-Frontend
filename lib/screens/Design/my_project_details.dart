@@ -255,16 +255,37 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
               fileBytes,
               file.name,
             );
+          } else if (dbFieldKey == 'structural_file') {
+            uploadedPath = await _projectService.uploadArchitecturalFile(
+              widget.projectId,
+              fileBytes,
+              file.name,
+            );
           } else if (dbFieldKey == 'document_2d') {
             uploadedPath = await _projectService.uploadFinal2DFile(
               widget.projectId,
               fileBytes,
               file.name,
             );
-          }
-          // else if (dbFieldKey == 'document_3d') uploadedPath = await _projectService.uploadOfficeOptional3DFile(widget.projectId, fileBytes, file.name);
-          //  أضيفي license_file و agreement_file إذا كان المكتب سيرفعها (عادة المستخدم)
-          else {
+          } else if (dbFieldKey == 'electrical_file') {
+            uploadedPath = await _projectService.uploadArchitecturalFile(
+              widget.projectId,
+              fileBytes,
+              file.name,
+            );
+          } else if (dbFieldKey == 'mechanical_file') {
+            uploadedPath = await _projectService.uploadArchitecturalFile(
+              widget.projectId,
+              fileBytes,
+              file.name,
+            );
+          } else if (dbFieldKey == 'document_3d') {
+            uploadedPath = await _projectService.uploadArchitecturalFile(
+              widget.projectId,
+              fileBytes,
+              file.name,
+            );
+          } else {
             throw Exception(
               "Unsupported document key for office upload: $dbFieldKey",
             );
@@ -642,8 +663,6 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                       onTap:
                           onLinkTap ??
                           () async {
-                            //  ✅ جعلها async
-                            // ignore: unused_local_variable
                             String fullUrl =
                                 '${Constants.baseUrl}/documents/archdocument'; //  تكوين الـ URL
                             logger.i(
@@ -2365,7 +2384,7 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
         String relativePath =
             filePath; //  filePath هو المسار النسبي من قاعدة البيانات
         String fullUrl =
-            '${Constants.baseUrl}/documents/archdocument'; //  تكوين الـ URL
+            '${Constants.baseUrl}/documents/2ddocument'; //  تكوين الـ URL
         logger.i("Attempting to open document link: $fullUrl");
 
         final uri = Uri.parse(fullUrl);

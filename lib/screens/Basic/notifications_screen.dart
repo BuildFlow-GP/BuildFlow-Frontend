@@ -17,6 +17,7 @@ import 'package:logger/logger.dart';
 import '../../services/create/project_service.dart'; // تأكد من وجوده ومساره الصحيح
 
 // شاشات سيتم الانتقال إليها بناءً على الإجراء (للمستخدم)
+import '../design/my_project_details.dart';
 import '../design/no_permit_screen.dart'; // شاشة استكمال البيانات بعد موافقة المكتب، تأكد من وجودها ومسارها
 import '../design/choose_office.dart';
 import '../super/project_details_super.dart';
@@ -394,7 +395,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case 'USER_SUBMITTED_PROJECT_DETAILS': //  إشعار للمكتب
       case 'OFFICE_PROPOSED_PAYMENT': // إشعار للمستخدم
       case 'PROJECT_PROGRESS_UPDATED': // إشعار للمستخدم
-        targetScreen = ProjectreadDetailsScreen(
+        targetScreen = ProjectDetailsViewScreen(
           projectId: notification.targetEntityId!,
         );
         routeDescription =
