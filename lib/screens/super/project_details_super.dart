@@ -475,6 +475,7 @@ class _ProjectSupervisionDetailsScreenState
           _project?.name ?? 'Supervision Details',
           style: const TextStyle(fontSize: 18),
         ),
+        backgroundColor: AppColors.accent,
         elevation: 0.5,
         actions: [
           IconButton(
@@ -852,7 +853,33 @@ class _ProjectSupervisionDetailsScreenState
                               ),
                             ),
                             onPressed: () async {
-                              /* ... نفس منطق فتح الملف ... */
+                              //  ✅ جعلها async
+                              // ignore: unused_local_variable
+                              String fullUrl =
+                                  '${Constants.baseUrl}/documents/archdocument'; //  تكوين الـ URL
+                              logger.i(
+                                "Attempting to open document link: $fullUrl",
+                              );
+
+                              final uri = Uri.parse(fullUrl);
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(
+                                  uri,
+                                  mode: LaunchMode.externalApplication,
+                                ); //  يفتح في المتصفح/التطبيق المناسب
+                              } else {
+                                logger.e('Could not launch $fullUrl');
+                                if (mounted) {
+                                  // تأكدي أن mounted متاح إذا كنتِ داخل State
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Could not open the document link.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
                             },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
@@ -1080,15 +1107,32 @@ class _ProjectSupervisionDetailsScreenState
                               ),
                             ),
                             onPressed: () async {
+                              //  ✅ جعلها async
+                              // ignore: unused_local_variable
                               String fullUrl =
-                                  project.agreementFile!.startsWith('http')
-                                      ? project.agreementFile!
-                                      : '${Constants.baseUrl}/${project.agreementFile!}';
-                              if (await canLaunchUrl(Uri.parse(fullUrl))) {
+                                  '${Constants.baseUrl}/documents/archdocument'; //  تكوين الـ URL
+                              logger.i(
+                                "Attempting to open document link: $fullUrl",
+                              );
+
+                              final uri = Uri.parse(fullUrl);
+                              if (await canLaunchUrl(uri)) {
                                 await launchUrl(
-                                  Uri.parse(fullUrl),
+                                  uri,
                                   mode: LaunchMode.externalApplication,
-                                );
+                                ); //  يفتح في المتصفح/التطبيق المناسب
+                              } else {
+                                logger.e('Could not launch $fullUrl');
+                                if (mounted) {
+                                  // تأكدي أن mounted متاح إذا كنتِ داخل State
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Could not open the document link.',
+                                      ),
+                                    ),
+                                  );
+                                }
                               }
                             },
                             style: TextButton.styleFrom(

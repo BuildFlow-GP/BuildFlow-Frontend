@@ -1107,7 +1107,7 @@ class ProjectService {
     if (token == null) throw Exception('Not authenticated');
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse('baseUrl/projects/$projectId/supervision-report'),
+      Uri.parse('$_baseUrl/projects/$projectId/supervision-report'),
     );
 
     request.headers['Authorization'] = 'Bearer $token';
@@ -1145,10 +1145,10 @@ class ProjectService {
     if (token == null) throw Exception('Not authenticated');
     final response = await http.put(
       Uri.parse(
-        'baseUrl/projects/$projectId/set-supervision-target',
+        '$_baseUrl/projects/$projectId/set-supervision-target',
       ), // افترض أن لديك هذا الـ API
       headers: _authHeaders(token),
-      body: jsonEncode({'weeks_target': weeks}),
+      body: jsonEncode({'supervision_weeks_target': weeks}),
     );
     _logResponse("setSupervisionTarget", response);
     if (response.statusCode == 200) {

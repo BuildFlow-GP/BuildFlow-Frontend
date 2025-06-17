@@ -642,15 +642,33 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                       onTap:
                           onLinkTap ??
                           () async {
+                            //  ✅ جعلها async
+                            // ignore: unused_local_variable
                             String fullUrl =
-                                value.startsWith('http')
-                                    ? value
-                                    : '${Constants.baseUrl}/$value';
-                            logger.i("Tapped link: $fullUrl");
-                            await launchUrl(Uri.parse(fullUrl));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Open: $fullUrl")),
+                                '${Constants.baseUrl}/documents/archdocument'; //  تكوين الـ URL
+                            logger.i(
+                              "Attempting to open document link: $fullUrl",
                             );
+
+                            final uri = Uri.parse(fullUrl);
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              ); //  يفتح في المتصفح/التطبيق المناسب
+                            } else {
+                              logger.e('Could not launch $fullUrl');
+                              if (mounted) {
+                                // تأكدي أن mounted متاح إذا كنتِ داخل State
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Could not open the document link.',
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
                           },
                       child: Text(
                         value.split('/').last,
@@ -2100,13 +2118,30 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                   color: AppColors.accent.withOpacity(0.8),
                 ),
               ),
-              onPressed: () {
+              onPressed: () async {
+                //  ✅ جعلها async
+                // ignore: unused_local_variable
                 String fullUrl =
-                    filePath.startsWith('http')
-                        ? filePath
-                        : '${Constants.baseUrl}/$filePath';
-                logger.i("User viewing/downloading document: $fullUrl");
-                launchUrl(Uri.parse(fullUrl));
+                    '${Constants.baseUrl}/documents/archdocument'; //  تكوين الـ URL
+                logger.i("Attempting to open document link: $fullUrl");
+
+                final uri = Uri.parse(fullUrl);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(
+                    uri,
+                    mode: LaunchMode.externalApplication,
+                  ); //  يفتح في المتصفح/التطبيق المناسب
+                } else {
+                  logger.e('Could not launch $fullUrl');
+                  if (mounted) {
+                    // تأكدي أن mounted متاح إذا كنتِ داخل State
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Could not open the document link.'),
+                      ),
+                    );
+                  }
+                }
               },
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
