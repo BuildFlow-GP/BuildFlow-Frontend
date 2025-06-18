@@ -1,3 +1,5 @@
+import 'package:buildflow_frontend/screens/map/license_form_screen.dart';
+import 'package:buildflow_frontend/screens/map/parcel_viewer_screen.dart';
 import 'package:buildflow_frontend/themes/app_colors.dart'; // تأكد من المسار الصحيح
 import '../services/Basic/favorite_service.dart';
 import 'ReadonlyProfiles/project_readonly_profile.dart';
