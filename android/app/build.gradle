@@ -6,8 +6,8 @@ android {    namespace = "com.example.buildflow_frontend"
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-؛
-    kotlinOptions {
+
+kotlinOptions {
         jvmTarget = "17"
     }
 
