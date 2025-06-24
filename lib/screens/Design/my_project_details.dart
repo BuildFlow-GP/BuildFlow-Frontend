@@ -1855,13 +1855,28 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
                   color: AppColors.accent.withOpacity(0.8),
                 ),
               ),
-              onPressed: () {
+              onPressed: () async {
                 String fullUrl =
-                    currentFilePath.startsWith('http')
-                        ? currentFilePath
-                        : '${Constants.baseUrl}/$currentFilePath';
-                logger.i("Viewing document: $fullUrl");
-                launchUrl(Uri.parse(fullUrl));
+                    '${Constants.baseUrl}/documents/archdocument'; //  تكوين الـ URL
+                logger.i("Attempting to open document link: $fullUrl");
+
+                final uri = Uri.parse(fullUrl);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(
+                    uri,
+                    mode: LaunchMode.externalApplication,
+                  ); //  يفتح في المتصفح/التطبيق المناسب
+                } else {
+                  logger.e('Could not launch $fullUrl');
+                  if (mounted) {
+                    // تأكدي أن mounted متاح إذا كنتِ داخل State
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Could not open the document link.'),
+                      ),
+                    );
+                  }
+                }
               },
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -2379,12 +2394,8 @@ class _ProjectDetailsViewScreenState extends State<ProjectDetailsViewScreen> {
       icon: Icons.visibility_outlined, // أيقونة للعرض
       isLink: true,
       onLinkTap: () async {
-        //  ✅ جعلها async
-        // ignore: unused_local_variable
-        String relativePath =
-            filePath; //  filePath هو المسار النسبي من قاعدة البيانات
         String fullUrl =
-            '${Constants.baseUrl}/documents/2ddocument'; //  تكوين الـ URL
+            '${Constants.baseUrl}/documents/archdocument'; //  تكوين الـ URL
         logger.i("Attempting to open document link: $fullUrl");
 
         final uri = Uri.parse(fullUrl);

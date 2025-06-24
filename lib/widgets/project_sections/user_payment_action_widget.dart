@@ -7,8 +7,9 @@ import '../../themes/app_colors.dart';
 //  الدوال المساعدة (يفضل utils)
 Widget _buildInfoRow(String label, String? value, {IconData? icon}) {
   /* ... نفس الدالة ... */
-  if (value == null || value.isEmpty || value.toLowerCase() == 'n/a')
+  if (value == null || value.isEmpty || value.toLowerCase() == 'n/a') {
     return const SizedBox.shrink();
+  }
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 5.0),
     child: Row(

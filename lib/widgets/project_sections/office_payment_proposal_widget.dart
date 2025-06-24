@@ -8,8 +8,9 @@ import '../../themes/app_colors.dart';
 //  (يفضل وضعها في ملف utils مشترك)
 Widget _buildInfoRow(String label, String? value, {IconData? icon}) {
   /* ... نفس الدالة ... */
-  if (value == null || value.isEmpty || value.toLowerCase() == 'n/a')
+  if (value == null || value.isEmpty || value.toLowerCase() == 'n/a') {
     return const SizedBox.shrink();
+  }
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 5.0),
     child: Row(
@@ -202,11 +203,13 @@ class OfficePaymentProposalWidget extends StatelessWidget {
                   ),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty)
+                  if (value == null || value.isEmpty) {
                     return 'Amount is required';
+                  }
                   final pValue = double.tryParse(value);
-                  if (pValue == null || pValue <= 0)
+                  if (pValue == null || pValue <= 0) {
                     return 'Enter a valid positive amount';
+                  }
                   return null;
                 },
               ),
