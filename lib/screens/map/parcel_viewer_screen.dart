@@ -1,3 +1,5 @@
+// I have preserved all your original comments.
+
 import 'package:buildflow_frontend/screens/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -25,6 +27,7 @@ class _ParcelViewerScreenState extends State<ParcelViewerScreen> {
   final TextEditingController _genericSearchController =
       TextEditingController();
 
+  // This service is kept for other functions like getParcelDetailsAndGeometry
   final LWSCExtendedGeoService _lwscGeoService = LWSCExtendedGeoService();
   final NominatimService _nominatimService = NominatimService();
 
@@ -65,58 +68,126 @@ class _ParcelViewerScreenState extends State<ParcelViewerScreen> {
     super.dispose();
   }
 
+  // This function fetches localities directly. It is already correct for the new data.
   Future<void> _fetchLocalities() async {
     setState(() {
       _isLoadingLocalities = true;
       _hasLocalitiesError = false;
     });
+
+    const String apiUrl =
+        'https://geo.lwsc.ps/api/services/app/Lookup/GetLocalities';
+
     try {
-      final fetchedLocalities = await _lwscGeoService.getLocalities();
-      setState(() {
-        _localities = fetchedLocalities;
-        _isLoadingLocalities = false;
-      });
-      print('DEBUG: Fetched localities: ${_localities.length} items.');
-      print('DEBUG: Localities content: $_localities');
-    } catch (e) {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['success'] == true && data['result'] != null) {
+          final List<dynamic> localitiesList = data['result'];
+          final Map<String, int> fetchedLocalities = {
+            for (var locality in localitiesList)
+              (locality['name'] as String): (locality['id'] as int),
+          };
+
+          setState(() {
+            _localities = fetchedLocalities;
+            _isLoadingLocalities = false;
+          });
+          print(
+            'DEBUG: Fetched localities successfully: ${_localities.length} items.',
+          );
+        } else {
+          throw Exception(
+            'API returned success=false. Error: ${data['error']}',
+          );
+        }
+      } else {
+        throw Exception(
+          'Failed to load localities. Status Code: ${response.statusCode}',
+        );
+      }
+    } catch (e, stacktrace) {
       setState(() {
         _isLoadingLocalities = false;
         _hasLocalitiesError = true;
       });
       _showSnackBar('Error fetching regions. Automatic search disabled.');
-      print('ERROR: Failed to fetch localities: $e');
+      print(
+        '==================== FETCH LOCALITIES FAILED ====================',
+      );
+      print('ERROR: $e');
+      print('STACKTRACE: \n$stacktrace');
+      print(
+        '=================================================================',
+      );
     }
   }
 
+  // ⭐️⭐️⭐️ START OF MODIFICATION / بداية التعديل ⭐️⭐️⭐️
+  // This function is now updated to fetch blocks directly from an API.
+  // تم تحديث هذه الدالة لجلب بيانات الأحواض (Basins) مباشرة من الـ API
   Future<void> _fetchBlocks(int localityId) async {
     setState(() {
       _isLoadingBlocks = true;
       _hasBlocksError = false;
+      _blocks = {}; // Clear previous blocks
+      _selectedBasinName = null;
+      _selectedBlockId = null;
     });
+
+    // ⚠️⚠️⚠️ انتبه: هذا الرابط هو تخمين. يرجى التأكد من الرابط الصحيح واستبداله إذا لزم الأمر.
+    // ⚠️⚠️⚠️ ATTENTION: This URL is a guess based on the localities URL. Please verify and replace it with the correct one.
+    final String apiUrl =
+        'https://geo.lwsc.ps/api/services/app/Lookup/GetBlocksByLocalityId?localityId=$localityId';
+
+    print('DEBUG: Fetching blocks from URL: $apiUrl');
+
     try {
-      print('DEBUG: Fetching blocks for localityId: $localityId');
-      final fetchedBlocks = await _lwscGeoService.getBlocksByLocalityId(
-        localityId,
-      );
-      setState(() {
-        _blocks = fetchedBlocks;
-        _selectedBasinName = null;
-        _selectedBlockId = null;
-        _isLoadingBlocks = false;
-      });
-      print('DEBUG: Fetched blocks: ${_blocks.length} items.');
-      print('DEBUG: Blocks content: $_blocks');
-    } catch (e) {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['success'] == true && data['result'] != null) {
+          final List<dynamic> blocksList = data['result'];
+
+          // The logic is the same: create a Map from 'name' and 'id'
+          final Map<String, int> fetchedBlocks = {
+            for (var block in blocksList)
+              (block['name'] as String): (block['id'] as int),
+          };
+
+          setState(() {
+            _blocks = fetchedBlocks;
+            _isLoadingBlocks = false;
+          });
+          print('DEBUG: Fetched blocks successfully: ${_blocks.length} items.');
+          print('DEBUG: Blocks content: $_blocks');
+        } else {
+          throw Exception(
+            'API returned success=false. Error: ${data['error']}',
+          );
+        }
+      } else {
+        throw Exception(
+          'Failed to load blocks. Status Code: ${response.statusCode}',
+        );
+      }
+    } catch (e, stacktrace) {
       setState(() {
         _isLoadingBlocks = false;
         _hasBlocksError = true;
       });
-      _showSnackBar(
-        'Error fetching basins. Automatic search disabled for basin.',
-      );
-      print('ERROR: Failed to fetch blocks: $e');
+      _showSnackBar('Error fetching basins. Please try again.');
+      print('==================== FETCH BLOCKS FAILED ====================');
+      print('ERROR: $e');
+      print('STACKTRACE: \n$stacktrace');
+      print('===============================================================');
     }
   }
+  // ⭐️⭐️⭐️ END OF MODIFICATION / نهاية التعديل ⭐️⭐️⭐️
 
   Future<void> _getCurrentUserLocation() async {
     bool serviceEnabled;
@@ -262,6 +333,7 @@ class _ParcelViewerScreenState extends State<ParcelViewerScreen> {
     }
   }
 
+  // This function is now updated to allow choosing between the fastest and shortest route.
   Future<void> _drawRoute(LatLng start, LatLng end) async {
     setState(() {
       _isLoadingRoute = true;
@@ -269,7 +341,7 @@ class _ParcelViewerScreenState extends State<ParcelViewerScreen> {
     });
 
     const String openRouteServiceApiKey =
-        'YOUR_OPENROUTESERVICE_API_KEY'; // ⚠️⚠️⚠️ استبدلي هذا ⚠️⚠️⚠️
+        '5b3ce3597851110001cf6248c8a94e6a10234e2aa666b69d1689a2ad'; // ⚠️⚠️⚠️ استبدلي هذا ⚠️⚠️⚠️
     if (openRouteServiceApiKey == 'YOUR_OPENROUTESERVICE_API_KEY') {
       _showSnackBar('Please get your OpenRouteService API Key for routing.');
       setState(() {
@@ -278,9 +350,16 @@ class _ParcelViewerScreenState extends State<ParcelViewerScreen> {
       return;
     }
 
+    // ⭐️⭐️⭐️ THE CHANGE IS HERE / التغيير هنا ⭐️⭐️⭐️
+    // Choose your preference: 'fastest' (default) or 'shortest'
+    // اختر ما تفضله: 'fastest' (الأسرع - الافتراضي) أو 'shortest' (الأقصر)
+    const String preference = 'shortest';
+
     final Uri uri = Uri.parse(
-      'https://api.openrouteservice.org/v2/directions/driving-car?api_key=$openRouteServiceApiKey&start=${start.longitude},${start.latitude}&end=${end.longitude},${end.latitude}',
+      'https://api.openrouteservice.org/v2/directions/driving-car?api_key=$openRouteServiceApiKey&preference=$preference&start=${start.longitude},${start.latitude}&end=${end.longitude},${end.latitude}',
     );
+
+    print('DEBUG: Requesting route with URL: $uri'); // For debugging
 
     try {
       final response = await http.get(
@@ -304,7 +383,9 @@ class _ParcelViewerScreenState extends State<ParcelViewerScreen> {
           setState(() {
             _routePoints = points;
           });
-          _showSnackBar('Route calculated successfully.');
+          _showSnackBar(
+            'Route calculated successfully (Preference: $preference).',
+          );
         } else {
           _showSnackBar('No route found for these locations.');
         }
@@ -373,7 +454,7 @@ class _ParcelViewerScreenState extends State<ParcelViewerScreen> {
           children: [
             IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 28),
-              color: AppColors.accent,
+              color: Colors.white,
               onPressed: () => const HomeScreen(),
             ),
             Expanded(
@@ -563,6 +644,7 @@ class _ParcelViewerScreenState extends State<ParcelViewerScreen> {
                                         _selectedLocalityName = newValue;
                                         _selectedLocalityId =
                                             _localities[newValue];
+                                        // Reset everything below when region changes
                                         _blocks = {};
                                         _selectedBasinName = null;
                                         _selectedBlockId = null;
@@ -615,6 +697,7 @@ class _ParcelViewerScreenState extends State<ParcelViewerScreen> {
                                       setState(() {
                                         _selectedBasinName = newValue;
                                         _selectedBlockId = _blocks[newValue];
+                                        // Reset parcel details when basin changes
                                         _parcelPolygonCoordinates = null;
                                         _parcelCenter = null;
                                         _routePoints = [];
